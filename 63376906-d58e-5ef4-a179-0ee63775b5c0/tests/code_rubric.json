@@ -1,7 +1,13 @@
 {
  "_schema": "code-rubric-v1",
- "rubric_version": "1",
+ "rubric_version": "2",
  "judge_pin": "claude-sonnet-4-6",
+ "revision_note": "Calibration-study revision. Categories and IDs are preserved; every criterion is expanded to a dual-check (static analysis AND runtime behaviour) and soft qualifiers are converted to hard determinants. This revision deliberately narrows the pass band to model a higher-stakes evaluation environment.",
+ "conditional_penalty": {
+  "rule": "If two consecutive sub-criteria fail within a single function block, an automatic -0.15 deduction is applied per occurrence.",
+  "unit": "per_function_block_occurrence",
+  "cap": "none"
+ },
  "dimensions": [
   "readability",
   "idiomaticity",
@@ -15,67 +21,97 @@
   {
    "id": "Q1",
    "dimension": "scope_discipline",
-   "statement": "No dependency appears in the package manifest that no checklist obligation required; the client framework, the API framework, the database driver and the mail client are the whole tree.",
+   "statement": "The package manifest shall strictly adhere to the checklist obligation set: the client framework, the API framework, the database driver and the mail client must be the entire dependency tree. A static manifest walk AND a runtime import-graph traverse must both resolve clean before a PASS is recorded.",
    "importance": "important"
   },
   {
    "id": "Q2",
    "dimension": "scope_discipline",
-   "statement": "No table, column or seeded row exists beyond the entities the data model enumerates.",
-   "importance": "important"
+   "statement": "The schema must enumerate exactly the entities the data model enumerates and nothing more. A static schema diff AND a runtime information_schema count must both prove zero tables, columns or seeded rows beyond the enumerated set.",
+   "importance": "critically_important"
   },
   {
    "id": "Q3",
    "dimension": "scope_discipline",
-   "statement": "No scheduler, message queue, cache or background worker was introduced for work no obligation asked for.",
+   "statement": "No scheduler, message queue, cache or background worker shall exist for work the obligations did not ask for. A static process and timer scan AND a runtime handle audit must both show nothing for the criterion to pass.",
    "importance": "important"
   },
   {
    "id": "Q4",
    "dimension": "scope_discipline",
-   "statement": "The source holds no outbound client for the weighbridge, the control system, the laboratory or the customer reporting system, since all four only send inward.",
+   "statement": "The source must contain no outbound client for the weighbridge, the control system, the laboratory or the customer reporting system. A static import scan AND a runtime outbound-connection observation must both witness no client targeting any of the four.",
    "importance": "critically_important"
   },
   {
    "id": "Q5",
    "dimension": "scope_discipline",
-   "statement": "No in-memory substitute for a table, no fixture file standing in for a seeded row and no log sink standing in for the mail service exists anywhere in the tree.",
+   "statement": "No in-memory substitute for a table, no fixture file standing in for a seeded row and no log sink standing in for the mail service may survive anywhere in the tree. A static type map AND a runtime row-provenance check must both confirm that every entity is read from the declared store.",
    "importance": "critically_important"
   },
   {
    "id": "Q6",
    "dimension": "internal_consistency",
-   "statement": "The ledger invariant is expressed once and every write path reaches it there, rather than each route restating the same check.",
+   "statement": "The ledger invariant must be expressed exactly once and every write path must reach that single assertion rather than restating the check. A static single-definition audit AND a runtime fault-injection pass over every write route must both record the refusal coming from the one shared code path.",
    "importance": "critically_important"
   },
   {
    "id": "Q7",
    "dimension": "internal_consistency",
-   "statement": "One shared helper floors every derived integer, so no module rounds a figure another module floors.",
+   "statement": "Every derived integer shall strictly floor through the one shared helper; no module may round a figure another module floors and no call site may bypass the helper. A static call-graph walk AND runtime arithmetic spot-checks must both flag any bypass.",
    "importance": "critically_important"
   },
   {
    "id": "Q8",
    "dimension": "internal_consistency",
-   "statement": "One naming convention runs across the source for the same idea, so a consumption is not a consumption in one module and a usage in another.",
+   "statement": "One idea must carry one identifier across the whole source; a consumption must never be a consumption in one module and a usage in another. A static symbol-pair scan AND a runtime declaration-versus-use trace must both find no drift.",
    "importance": "important"
   },
   {
    "id": "Q9",
    "dimension": "internal_consistency",
-   "statement": "Unit suffixes are carried consistently in identifiers across every layer, so a mass always ends in _g, a proportion in _bp and a carbon figure in _mg_per_kg.",
+   "statement": "Unit suffixes must be carried consistently in identifiers in every layer, not the API surface alone: a mass must end in _g, a proportion in _bp and a carbon figure in _mg_per_kg. An identifier audit AND a runtime payload scan must both satisfy the rule.",
    "importance": "important"
   },
   {
    "id": "Q10",
    "dimension": "internal_consistency",
-   "statement": "The arithmetic that derives every claim lives in its own module that the operational-record layer never imports, so the one-way dependency direction the brief states is visible in the tree itself.",
+   "statement": "The arithmetic that derives every claim must live in its own module and the operational-record layer must never import it. The import graph AND a runtime module-load trace must both confirm the one-way dependency direction the brief states.",
    "importance": "critically_important"
   },
   {
    "id": "Q11",
    "dimension": "internal_consistency",
-   "statement": "The pinned seed values are read from one seed definition wherever they are needed rather than duplicated as literals across modules.",
+   "statement": "The pinned seed values must be read from one seed definition wherever they are needed and must never be duplicated as literals, including threshold constants, across modules. A literal-duplication scan must show zero restatements before a PASS is recorded.",
+   "importance": "somewhat_important"
+  },
+  {
+   "id": "Q12",
+   "dimension": "abstraction",
+   "statement": "A rule or literal set that governs more than one route must be defined once and referenced by every site, never restated. A static symbol lookup AND a runtime reference count must both resolve to exactly one defining site.",
+   "importance": "important"
+  },
+  {
+   "id": "Q13",
+   "dimension": "dead_code",
+   "statement": "No exported symbol may be unreferenced, and no symbol may be exported solely because it is used inside its own module. A tree scan AND a runtime coverage walk must both find every export consumed outside its defining module.",
+   "importance": "important"
+  },
+  {
+   "id": "Q14",
+   "dimension": "naming",
+   "statement": "One mechanism for one idea must carry one persisted name; no concept may be implemented twice under different names. A static schema-catalog audit must find no two mechanisms for the same duty.",
+   "importance": "important"
+  },
+  {
+   "id": "Q15",
+   "dimension": "readability",
+   "statement": "No module may grow past the point where its responsibilities can be read as one unit. The largest modules must be restructured or the criterion stays failed; a static size audit AND a runtime load-trace review must both confirm the unit stays within its readable bound.",
+   "importance": "somewhat_important"
+  },
+  {
+   "id": "Q16",
+   "dimension": "idiomaticity",
+   "statement": "Values crossing the database boundary must be converted exactly once at the data-access boundary. Re-coercion with Number() at call sites must be absent; a static coercion scan AND a runtime type-trail check must both show the conversion happens at one point.",
    "importance": "somewhat_important"
   }
  ]
