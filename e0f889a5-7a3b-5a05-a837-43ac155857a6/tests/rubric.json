@@ -185,5 +185,104 @@
     "importance": "important",
     "score": -3,
     "evaluation_rule": "Answer yes when the letter shows a price, a form field or a navigation element other than the wordmark and the footer row. Answer no when the letter carries only its title, its dateline, its paragraphs, its closing line and the footer. Yes records a defect."
+  },
+  {
+    "number": "R18",
+    "criterion": "The source contains no module for a staff console, a returns workflow, a jobs listing or a legal document library, none of which the brief asks for.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "A module is a route, a page component, an API handler or a database table in the delivered source, not a word in copy. The routes this brief asks for are the letter, the shop and its product pages, the cart, the three checkout steps, an order by token, the downloads archive, the doctor installer, sign-in, sign-up and the account routes. Yes if every route, handler and table in the source serves one of those. No if the source carries a staff or admin console route, a returns or RMA workflow, a careers or jobs listing, or a legal document library of terms and privacy pages, or any table backing one of those."
+  },
+  {
+    "number": "R19",
+    "criterion": "The source declares no client library for a second datastore, an object store, a cache, a queue or a third party mail vendor in its dependency manifest.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "A dependency is a package named in the runtime dependency block of the app's package manifest, not a transitive lock entry and not a development-only tool. Yes if every runtime dependency is Astro, Hono, a PostgreSQL driver, an SMTP mail client, an HTTP client used to reach killbill, a password hash, or a direct requirement of one of those. No if the manifest names a second datastore client such as a MySQL, SQLite, MongoDB or Redis driver, an object-store client, a queue client, a cache client, or a third party mail vendor SDK such as SendGrid, Mailgun, Postmark or Resend."
+  },
+  {
+    "number": "R20",
+    "criterion": "The source keeps the scroll driver, the cart controls, the firmware installer and the serial register row as the only client-side modules, with every other route built as server-rendered markup.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "A client-side module is a component hydrated with a client directive or otherwise shipped to the browser as a mounted framework component, not an inline script that only wires up a form. Yes if the only hydrated islands are the front page scroll driver, the cart quantity controls, the doctor firmware installer and the register row on the cameras page, and every other route is server-rendered markup complete on first paint. No if the catalogue, a product page, a checkout step, the downloads archive or an account list is hydrated as a client component, or if the whole app is mounted as one client-side root."
+  },
+  {
+    "number": "R21",
+    "criterion": "The source carries no analytics client, no consent module and no outbound tracking beacon.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "An outbound tracking beacon is a request the delivered pages make to a host other than this app's own origin, killbill at PAYMENTS_API_URL or the Mailpit SMTP host. Yes if the source declares no analytics package, no consent or cookie-notice module, and no such beacon. No if the source loads an analytics or session-replay script such as Google Analytics, Plausible, Segment, PostHog or Sentry, declares a consent banner component, or posts page views or events to an external endpoint."
+  },
+  {
+    "number": "R22",
+    "criterion": "Money is represented as an integer count of minor units in every module that touches it, with no float arithmetic and no currency parsing from formatted strings.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "Money is any usd figure this app stores, computes or renders -- a variant price, a cart line unit price, an order subtotal, shipping, tax, discount and the order total. Yes if every one of those is carried as an integer count of minor units in every layer including the browser island code, and a decimal appears only where a figure is formatted for display or sent to killbill as the invoice amount. No if a schema column or a field declares money as a float, real, double or decimal type, if a price is divided into a float to be added or taxed, if tax is taken with a floating point rate rather than integer arithmetic truncated toward zero, or if a figure is parsed back out of a formatted string such as \"$415.80\"."
+  },
+  {
+    "number": "R23",
+    "criterion": "One shared helper resolves the acting customer for every account-scoped query, rather than each handler repeating its own ownership filter.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "An account-scoped query is any read or write restricted to the signed-in customer -- their orders, their cameras, their ownership rows, their account page. Yes if one shared helper or middleware resolves the acting customer from the bearer token and every account-scoped handler obtains the customer identity through it. No if two or more handlers each decode the token themselves, or each write their own customer_id filter inline, so that a new handler could be added with the filter forgotten and nothing in the source would catch it."
+  },
+  {
+    "number": "R24",
+    "criterion": "One seeding routine owns the catalogue, the devices, the releases and the firmware images, and is written so a second run inserts nothing.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "Seeding is the code that inserts the fixture rows the brief pins -- the two customers, the five catalogue products with their variants and inventory, the shipment protection rungs, the four devices, the four Arranger releases and the four firmware entries. Yes if a single seeding routine owns all of that and every insert is written so a second run adds no row, through an upsert, a conflict clause on the unique key or an existence check. No if seed rows are written from more than one place, such as a migration and a separate seed script both inserting products, or if any insert would duplicate a row on restart because it carries no conflict handling."
+  },
+  {
+    "number": "R25",
+    "criterion": "Every host, port and credential the app needs is read through one configuration module that reads the environment, with no literal host or port elsewhere in the source.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "Configuration is every host, port, URL and credential the app needs -- DATABASE_URL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, PAYMENTS_API_URL, PAYMENTS_API_KEY, PAYMENTS_API_SECRET, PAYMENTS_ADMIN_USER and PAYMENTS_ADMIN_PASSWORD. Yes if one configuration module reads the environment for all of them and every other module takes its values from that module. No if a handler, a database client or a mail client reads the environment directly for one of those values outside that module, or if a literal host, port or credential -- localhost, 127.0.0.1, a bare 5432 or 8080, an SMTP password -- appears in application code anywhere but that module's own defaults."
+  },
+  {
+    "number": "R26",
+    "criterion": "The four release note groups are declared once as an ordered constant and referenced from every module that reads or writes them.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "somewhat_important",
+    "score": 1,
+    "evaluation_rule": "The four release note groups are Newly Added, Improvements, Bug Fixes and Known Issues, in that fixed order and with none invented beyond them. Yes if those four labels and their order are declared once as a single ordered constant and every module that reads or writes notes -- the seed, the downloads archive, the per-version route -- references that constant. No if the labels are spelled out again in a second module, if the seed and the renderer each carry their own copy of the ordering, or if a fifth group name appears anywhere in the source."
   }
 ]
