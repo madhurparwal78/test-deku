@@ -1,0 +1,671 @@
+{
+  "judge_score": 0.533333,
+  "advisory": true,
+  "note": "Diagnostic only. PLAN.md 1.4: judge_score never drives training. A judge-only reward is trivially gamed. The binary substep grader owns the RL reward; this score is for human review only.",
+  "dimensions": {
+    "R1_instruction_following": {
+      "number": "R1",
+      "criterion": "On the letter every paragraph appears once in the ordinary document flow and once again inside a layer the scroll drives.",
+      "evaluation_rule": "Answer yes when each paragraph of the letter is present twice in the delivered markup, once in normal flow and once inside an inert scroll-driven layer. Answer no when only one copy of a paragraph exists, or when the scroll-driven copy is the only copy present.",
+      "dimension": "instruction_following",
+      "importance": "critically_important",
+      "satisfied": false,
+      "passed": false,
+      "is_positive": true,
+      "score": 0.0,
+      "confidence": 0.9,
+      "weight": 0.079365,
+      "rationale": "The delivered/rendered page evidence exposes one complete copy of the letter, not one ordinary-flow copy plus another copy in a scroll-driven layer. Repeated checks after scrolling did not reveal duplicate paragraph content or scroll-driven animation activity, so the positive requirement is not met.",
+      "evidence": [
+        "On route `/`, `browser_get_text` returned the complete letter from the opening paragraph (\u201cYou can tell a lot about a company\u2026\u201d) through \u201cSee you soon.\u201d exactly once; no second set of the letter paragraphs appeared in the rendered page text.",
+        "After the required scroll interaction (Home/PageDown and End), `browser_get_text` still exposed only the same single copy of every letter paragraph.",
+        "Direct CDP animation capture around both an End scroll and a PageDown scroll reported `animation_count: 0` in each case, providing no evidence of a scroll-driven duplicate text layer."
+      ],
+      "human_eval": "no",
+      "machine_status": "FAIL",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R2_instruction_following": {
+      "number": "R2",
+      "criterion": "On the letter a faint speckle overlay sits above the film and below the darkening panel.",
+      "evaluation_rule": "Answer yes when a faint animated speckle covers the film stage, sits above the film and its still frame, and sits below the darkening panel. Answer no when the speckle is absent, or when it sits above the darkening panel, or when it obscures the writing.",
+      "dimension": "instruction_following",
+      "importance": "critically_important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.079365,
+      "rationale": "The observations establish that this is the intended letter/film screen, but they do not directly establish whether a faint animated speckle exists or whether it is layered above the film and still frame yet below the darkening panel. Since absence or incorrect ordering cannot be inferred from inaccessible visual evidence or a zero-animation API capture alone, the criterion cannot be defensibly resolved.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "The correct letter route was reached at `/#letter`, and the page text explicitly states: \u201cThe film behind this letter is the table.\u201d",
+        "The letter writing remained readable in the browser text extraction.",
+        "Motion capture observed 0 detectable CSS/Web Animations during the sampled interval.",
+        "The available screenshot transport omitted the image, so the faint speckle itself and its visual stacking relative to the film/still frame and darkening panel could not be inspected.",
+        "Computed-style checks were limited to interactive links and did not expose the non-interactive film, speckle, or darkening-panel elements needed to prove their layer order."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R3_instruction_following": {
+      "number": "R3",
+      "criterion": "The shop offers its five products in one editorial order as its only arrangement.",
+      "evaluation_rule": "Answer yes when the catalogue presents the products in a fixed editorial order with neither a search field nor a filter control on the page. Answer no when a search field, a filter control or a sort control appears, or when the order follows price or name.",
+      "dimension": "instruction_following",
+      "importance": "important",
+      "satisfied": true,
+      "passed": true,
+      "is_positive": true,
+      "score": 1.0,
+      "confidence": 0.99,
+      "weight": 0.047619,
+      "rationale": "The catalogue has exactly five products, shown in a stable category-based editorial sequence, with no alternative arrangement controls. Its sequence is demonstrably not alphabetical or ordered by price, so the positive criterion is met.",
+      "evidence": [
+        "On the mapped Shop screen at /shop, the catalogue visibly presents exactly five product links in this order: Vela A1, Vela Cricket, Monitor Mount, Travel Case, Replacement Cable.",
+        "The five products are organized editorially under the visible headings \u201cCameras\u201d (first two) and \u201cAccessories and spares\u201d (last three).",
+        "The complete interactive-element inventory contains product links and site navigation only; no search field, filter control, or sort control appears. Full visible page text likewise contains no search/filter/sort interface.",
+        "A direct revisit to /shop reproduced the same product order.",
+        "The order is neither price-sorted nor name-sorted: displayed prices run $899, $299, $49, $79, then from $19, while names run Vela A1, Vela Cricket, Monitor Mount, Travel Case, Replacement Cable."
+      ],
+      "human_eval": "no",
+      "machine_status": "PASS",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R4_instruction_following": {
+      "number": "R4",
+      "criterion": "On a product page in the shop the specifications appear as a table whose figures align down a column.",
+      "evaluation_rule": "Answer yes when a product page renders its specifications as a labelled table with the numeric column aligned. Answer no when the specifications appear as running prose, or when the figures sit ragged against one another.",
+      "dimension": "instruction_following",
+      "importance": "important",
+      "satisfied": true,
+      "passed": true,
+      "is_positive": true,
+      "score": 1.0,
+      "confidence": 0.91,
+      "weight": 0.047619,
+      "rationale": "Two shop product pages render specifications as grouped, labelled two-column rows. Across each group, numeric specifications occupy the common second/value column, rather than appearing as running prose or ragged standalone figures. This satisfies the requirement.",
+      "evidence": [
+        "On `/shop/flagship` (Vela A1), the rendered specification area is grouped under \u201cBody\u201d and \u201cRecording\u201d and exposes consistent labelled rows: `Sensor\\tFull frame, 24 megapixels`, `Weight\\t612 g`, `Video\\t5.7K at 30 fps`, and `Bit depth\\t12 bit`. The tab-separated extraction is consistent with distinct label/value columns rather than running prose.",
+        "A full-page screenshot was captured for `/shop/flagship` at 1440\u00d7900, providing direct visual evidence of the rendered product page and its specifications layout.",
+        "The same structure was independently observed on `/shop/compact` (Vela Cricket): `Sensor\\tSuper 35, 18 megapixels`, `Weight\\t341 g`, `Video\\t4K at 60 fps`, and `Bit depth\\t10 bit`, with each figure placed in the second value column beside its row label.",
+        "Full-page screenshots of `/shop/compact` were captured at 1440px and 1920px-wide viewports, and the 1440px snapshot continued to expose the specifications as paired label/value rows."
+      ],
+      "human_eval": "no",
+      "machine_status": "PASS",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R5_functionality": {
+      "number": "R5",
+      "criterion": "On the cart the quantity control edits a line in place and the totals show a pending state until the server answers.",
+      "evaluation_rule": "Answer yes when changing a quantity on the cart updates the number at once, marks the totals as pending, and reverts the number with a stated reason when the server rejects the change. Answer no when the page reloads to change a quantity, or when a rejected change leaves the wrong number in place.",
+      "dimension": "functionality",
+      "importance": "critically_important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.079365,
+      "rationale": "The required rejected-change behavior could not be fully observed. Although the attempted over-stock quantity did not remain in place, the evidence did not establish the required immediate optimistic update, totals pending state, server response, and explicit rejection reason. Tool/input behavior was also ambiguous, so the observations do not defensibly settle the criterion as either satisfied or unsatisfied.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "Added the in-stock Vela Cricket (Graphite) to the cart; the cart displayed an inline quantity input with minus/plus controls and subtotal/total of $299.00.",
+        "Attempting to set quantity to 6 (above the displayed stock of 5) did not yield a defensible rejection flow: subsequent inspection reported the quantity value as 1, but no visible pending state or stated rejection reason was observed.",
+        "Clicking the plus control likewise left the inspected quantity at 1 and totals at $299.00 during the available observation window."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R6_functionality": {
+      "number": "R6",
+      "criterion": "On a product page in the shop a discontinued product shows a support note naming the date support ends.",
+      "evaluation_rule": "Answer yes when a discontinued product renders a note stating that the product is no longer sold together with the date support runs until. Answer no when the discontinued product renders as an ordinary available product, or when the note omits the date.",
+      "dimension": "functionality",
+      "importance": "critically_important",
+      "satisfied": true,
+      "passed": true,
+      "is_positive": true,
+      "score": 1.0,
+      "confidence": 0.99,
+      "weight": 0.079365,
+      "rationale": "The discontinued product is directly identified as no longer sold, and its product page names a specific support end date, September 1, 2029. This meets both parts of criterion R6.",
+      "evidence": [
+        "On the Shop page (/shop), the Monitor Mount product card is explicitly labeled \u201cDiscontinued.\u201d",
+        "Opening the Monitor Mount product page (/shop/mount) renders: \u201cDiscontinued. We no longer sell this.\u201d",
+        "The same product page also renders the support note: \u201cWe no longer sell this. We will support it until September 1, 2029.\u201d"
+      ],
+      "human_eval": "no",
+      "machine_status": "PASS",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R7_functionality": {
+      "number": "R7",
+      "criterion": "On the firmware installer a device capability that is absent produces an explanation in place of any control.",
+      "evaluation_rule": "Answer yes when the installer, in a browser lacking the device capability, renders a full explanation naming the browsers that work and offers the in-application path with no connect control shown. Answer no when a connect control is rendered that cannot function, or when the page renders empty.",
+      "dimension": "functionality",
+      "importance": "critically_important",
+      "satisfied": false,
+      "passed": false,
+      "is_positive": true,
+      "score": 0.0,
+      "confidence": 0.99,
+      "weight": 0.079365,
+      "rationale": "The criterion requires the explanation to appear in place of any connect control. Although the explanation itself is complete, a visible, disabled connect control is still rendered and cannot function. The evaluation rule explicitly says this case is a no.",
+      "evidence": [
+        "On /doctor, the browser-capability explanation is present: \u201cThis browser cannot talk to a device. Chrome and Edge on a computer can. Use Arranger instead: open it and choose Firmware from the camera page.\u201d This names supported browsers and gives the in-application Arranger path.",
+        "Despite the absent capability, the page renders a visible button labeled \u201cConnect to the camera\u201d under \u201c3. Connect\u201d; computed style reports display:inline-block and visibility:visible.",
+        "The connect button has the disabled attribute. Before accepting the warning the page says \u201cAccept the warning first\u201d; after checking \u201cI understand,\u201d it instead says \u201cThis browser cannot talk to a device,\u201d while the connect button remains disabled and visible."
+      ],
+      "human_eval": "no",
+      "machine_status": "FAIL",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R8_ux_flow": {
+      "number": "R8",
+      "criterion": "On the cart an estimate note sits above the totals until the delivery address is known.",
+      "evaluation_rule": "Answer yes when the cart labels its shipping and tax figures as estimates and carries a sentence saying the exact amount follows the address. Answer no when the cart presents shipping and tax as final before an address is entered.",
+      "dimension": "ux_flow",
+      "importance": "critically_important",
+      "satisfied": true,
+      "passed": true,
+      "is_positive": true,
+      "score": 1.0,
+      "confidence": 0.98,
+      "weight": 0.079365,
+      "rationale": "The cart explicitly marks both delivery and tax as estimated and explains that the exact amount will be shown once the destination is known. Completing the address step confirms the transition to unqualified delivery and tax amounts, so the positive requirement is met.",
+      "evidence": [
+        "With one Vela A1 in the cart before any delivery address was entered, the cart Summary directly displayed \u201cEstimated delivery $0.00\u201d and \u201cEstimated tax $0.00.\u201d",
+        "The same pre-address cart carried the explanatory sentence: \u201cEstimated. We will show the exact amount once we know where it is going.\u201d",
+        "The checkout address form was submitted once empty to exercise validation timing; it remained on \u201cWhere it goes.\u201d After reversible fixture data was entered (Test Customer, 123 Main Street, Portland, OR 97201), submission advanced to \u201cHow it gets there,\u201d confirming the address was accepted.",
+        "After the address was known, the checkout summary changed to unqualified \u201cDelivery $0.00\u201d and \u201cTax $89.90,\u201d demonstrating that exact figures follow address entry rather than being presented as final beforehand."
+      ],
+      "human_eval": "no",
+      "machine_status": "PASS",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R9_ux_flow": {
+      "number": "R9",
+      "criterion": "On the account camera grid an expired warranty appears as a neutral state.",
+      "evaluation_rule": "Answer yes when a camera whose warranty has ended is marked in the same neutral treatment as ordinary information. Answer no when an expired warranty is marked as a warning or an error.",
+      "dimension": "ux_flow",
+      "importance": "important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.047619,
+      "rationale": "The criterion specifically requires observing how an expired warranty is marked. Available account grids exposed no expired-warranty fixture, and absence of that evidence cannot establish either satisfaction or failure.",
+      "evidence": [
+        "no deterministic probe for form_flow; browser specialist required",
+        "On /account/cameras for customer@example.com, the only camera shown was VC2609PVDA7Q with an active 'Warranty to June 1, 2028'.",
+        "On /account/cameras for customer2@example.com, the cameras shown had either 'No warranty date' or an active 'Warranty to June 1, 2028'.",
+        "No camera with an ended warranty was observed in either available seeded customer's account camera grid, so its visual/state treatment could not be directly compared with ordinary information versus warning/error treatment."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R10_ui_visual": {
+      "number": "R10",
+      "criterion": "Every surface after the letter reads as dense and free of ornament.",
+      "evaluation_rule": "Answer yes when the shop, the cart, the account and the download page present tightly set information with no decorative imagery or oversized hero composition. Answer no when any of those surfaces carries a marketing hero, a decorative illustration or generous editorial whitespace.",
+      "dimension": "ui_visual",
+      "importance": "critically_important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.079365,
+      "rationale": "Direct observations support the criterion for the shop, cart, and account surfaces, but the evaluation rule explicitly requires the download page as well. Because that surface was not inspected, there is insufficient evidence to resolve whether every required post-letter surface is dense and free of ornament.",
+      "evidence": [
+        "no deterministic probe for form_flow; browser specialist required",
+        "Shop at /shop presented a compact product grid with product names, short descriptions, prices, and stock states; computed product-link styling showed 16px text, 24px line height, 16px padding, no background image, and no minimum height.",
+        "Cart at /cart presented the line item, quantity controls, pricing summary, shipment-protection checkbox, total, and checkout link in a tightly set layout; the product link measured 16px/24px with no padding or background image.",
+        "Account at /account presented compact sections for Cameras, Orders, and Software, including serial number, warranty, order number/date/value, and application version, with no decorative imagery represented in the accessible page content.",
+        "The required download page was not opened or directly inspected before evidence collection ended."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R11_ui_visual": {
+      "number": "R11",
+      "criterion": "The letter sits on a dark ground, and the shop, the cart and the account sit on a light ground.",
+      "evaluation_rule": "Answer yes when the letter and its footer render light type on a dark ground and the commerce and account surfaces render dark type on a light ground. Answer no when any of those surfaces uses the other ground.",
+      "dimension": "ui_visual",
+      "importance": "important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.047619,
+      "rationale": "The shop evidence supports dark type on a light ground, but the required composite also depends on the letter, its footer, the cart surface, and the account surface. Their containing backgrounds were not directly measured, and the account page observed was sign-in rather than the stated authenticated account. Therefore the available observations do not defensibly settle the complete criterion.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "On /shop, product surfaces had measured dark text rgb(26, 29, 35) on light backgrounds rgb(247, 245, 243); measured product-card bounds included x=228, y=116, width=546, height=563 and x=983, y=679, width=357, height=191.",
+        "On the cart surface, the Checkout control measured light text rgb(247, 245, 243) on dark rgb(26, 29, 35), while other cart text/input measurements were transparent-background descendants and did not establish the containing surface color.",
+        "The / route exposed the letter content, but the only measured elements were navigation links with blue text on transparent backgrounds; no direct computed background measurement for the letter container or its footer was obtained.",
+        "The account route reached /sign-in rather than an authenticated account surface, and no direct account-surface ground measurement was obtained."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R12_ui_visual": {
+      "number": "R12",
+      "criterion": "One accent colour appears at most once on any screen of the shop, the cart, the account or the letter.",
+      "evaluation_rule": "Answer yes when a single saturated accent hue appears at most once per screen and is used as type or as a mark rather than as a background behind text. Answer no when the accent appears more than once on one screen, or when text sits on the accent.",
+      "dimension": "ui_visual",
+      "importance": "somewhat_important",
+      "satisfied": false,
+      "passed": false,
+      "is_positive": true,
+      "score": 0.0,
+      "confidence": 0.99,
+      "weight": 0.015873,
+      "rationale": "The evaluation rule requires one saturated accent hue to appear at most once per screen. Direct computed-style and geometry measurements show the same saturated blue accent on three separate elements on / and two separate elements on /cart. Therefore the criterion is not met.",
+      "evidence": [
+        "On the letter/home screen (/), three distinct visible text links\u2014\u201cSkip to the letter,\u201d \u201cvela,\u201d and \u201cShop\u201d\u2014all measured color rgb(0, 0, 238) with transparent backgrounds. Their separate bounding boxes were x=8,y=8,106\u00d717; x=8,y=180,27\u00d717; and x=8,y=1153,33\u00d717.",
+        "On the cart screen (/cart), two distinct visible text links\u2014header \u201cCart\u201d and \u201cSee what we make\u201d\u2014both measured color rgb(0, 0, 238) with transparent backgrounds. Their separate bounding boxes were x=1382,y=8,38\u00d724 and x=420,y=143,154\u00d718.",
+        "The saturated blue is used as type rather than as a background behind text, but it occurs more than once on each of the evidenced screens, directly violating the at-most-once rule."
+      ],
+      "human_eval": "no",
+      "machine_status": "FAIL",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    },
+    "R13_motion": {
+      "number": "R13",
+      "criterion": "Across the shop, the cart and the account every transition moves at one speed and reads as a machine responding.",
+      "evaluation_rule": "Answer yes when hover, focus, press and disclosure changes across those surfaces share one short linear timing with no overshoot or bounce. Answer no when different controls move at visibly different speeds, or when any control eases with a spring.",
+      "dimension": "motion",
+      "importance": "important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.047619,
+      "rationale": "The observed animated shop/cart behavior supports a common short 120 ms linear timing and shows no spring motion, but direct interaction evidence is incomplete for hover and for the account surface. Therefore the universal claim that every transition across shop, cart, and account shares that timing cannot be defensibly resolved.",
+      "evidence": [
+        "motion inventory captured; interaction is required to settle behavior",
+        "On the shop product page, adding an item produced one captured `background-color` transition with duration 120 ms and linear easing; no overshoot or bounce was captured.",
+        "Changing the product variant produced no CDP animations.",
+        "On the cart page, the Checkout link computed styles showed `background-color`, `color`, and `border-color` transitions, each 0.12 s and linear.",
+        "Several cart controls (quantity decrement, Remove, shipment-protection checkbox) and shop links reported 0 s computed transition durations with default `ease`, meaning no animated transition was directly observed on those controls.",
+        "The authenticated account surface was reached, but evidence collection ended before hover/focus/press/disclosure motion there\u2014or required hover motion across all three surfaces\u2014could be captured and compared."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R14_accessibility": {
+      "number": "R14",
+      "criterion": "Across the shop and the account a state change is stated in words before any colour carries the meaning.",
+      "evaluation_rule": "Answer yes when a success, a failure and an in-progress state each carry a written label beside whatever colour marks them. Answer no when any of those states is signalled by colour or by movement alone.",
+      "dimension": "accessibility",
+      "importance": "important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.047619,
+      "rationale": "The observations directly verify several states have written labels, but they do not establish the required complete triad of success, failure, and in-progress states beside their colour markers across shop and account. In particular, no clearly identifiable success-state marker was captured, and the evidence does not prove whether any unobserved state is conveyed by colour or movement alone. Missing coverage cannot be converted into either a pass or a failure.",
+      "evidence": [
+        "accessibility inventory captured; criterion needs specialist scope",
+        "Shop snapshots exposed written availability labels such as \u201cOnly 10 left,\u201d \u201cOnly 5 left,\u201d \u201cSold out,\u201d and \u201cDiscontinued\u201d alongside products and variants.",
+        "The authenticated account overview and Cameras page exposed the written status \u201cUpdate available\u201d and \u201cWarranty to June 1, 2028.\u201d",
+        "The firmware installer exposed written failure/incompatibility and workflow text: \u201cThis browser cannot talk to a device,\u201d \u201cAccept the warning first,\u201d and \u201cStep 1. Checking this browser.\u201d",
+        "Adding a product changed the page to a Cart view, but the collected snapshot did not expose a distinct success-state indicator or enough styling/attribute evidence to establish whether any associated colour also carried that meaning."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R15_responsiveness": {
+      "number": "R15",
+      "criterion": "On a narrow viewport the left rail collapses to one control at the top of the content column.",
+      "evaluation_rule": "Answer yes when the persistent rail on the shop, the cart and the account becomes a single control above the content on a narrow viewport and returns to a rail on a wide one. Answer no when the rail stays a rail at every width, or when it disappears with no replacement.",
+      "dimension": "responsiveness",
+      "importance": "important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": true,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.047619,
+      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8791/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "evidence": [
+        "layout measurements captured",
+        "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8791/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+        "The letter does not become half-width alternating blocks when resized: at 390px the content remains a single full-width, left-aligned column (elements begin at x=8), so the requested responsive layout is absent, although no obvious sideways overflow was observed."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R16_functionality": {
+      "number": "R16",
+      "criterion": "On the cart a notice about a changed price disappears on its own.",
+      "evaluation_rule": "Answer yes when a notice about a price or availability change on the cart fades away or dismisses itself without the reader acting. Answer no when that notice stays in place until the reader resolves it. Yes records a defect.",
+      "dimension": "functionality",
+      "importance": "important",
+      "satisfied": null,
+      "passed": null,
+      "is_positive": false,
+      "score": null,
+      "confidence": 0.0,
+      "weight": 0.047619,
+      "rationale": "The criterion specifically requires observing whether a cart notice about an externally changed price or availability dismisses itself without reader action. No such notice was triggered during the available workflow, so its persistence or automatic disappearance could not be directly measured. The absence of a notice cannot defensibly establish satisfied=false.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "Added Vela Cricket (Graphite) to the cart and changed quantity from 1 to 2; the cart total updated from $299.00 to $598.00 without displaying a price-or-availability-change notice.",
+        "Completed the reversible checkout flow through address, shipping, and payment review; totals remained $598.00 before tax and $657.80 after tax, and no changed-price or changed-availability notice appeared."
+      ],
+      "human_eval": "no",
+      "machine_status": "INSUFFICIENT_EVIDENCE",
+      "resolved_by": "machine_unresolved",
+      "voters": 1
+    },
+    "R17_ui_visual": {
+      "number": "R17",
+      "criterion": "The letter carries a price, a form or a navigation element beyond its wordmark and its footer.",
+      "evaluation_rule": "Answer yes when the letter shows a price, a form field or a navigation element other than the wordmark and the footer row. Answer no when the letter carries only its title, its dateline, its paragraphs, its closing line and the footer. Yes records a defect.",
+      "dimension": "ui_visual",
+      "importance": "important",
+      "satisfied": true,
+      "passed": false,
+      "is_positive": false,
+      "score": 0.0,
+      "confidence": 0.99,
+      "weight": 0.047619,
+      "rationale": "R17 says to answer yes if the letter shows a navigation element other than its wordmark and footer row. The visible, functional \u201cSkip to the letter\u201d anchor is such an extra navigation element, so the negative anti-pattern is directly observed.",
+      "evidence": [
+        "On route `/`, the rendered letter page exposes an interactive link labeled \u201cSkip to the letter\u201d before the Vela wordmark, in addition to the footer navigation.",
+        "The \u201cSkip to the letter\u201d element is directly visible and measurable at x=8, y=8 with size 106\u00d717; computed styles report `display: inline`, `visibility: visible`, and `opacity: 1`.",
+        "Activating that link changed the URL from `/` to `/#letter`, directly confirming that it is a navigation element.",
+        "The page text otherwise contains the letter title (\u201cthe table\u201d), dateline (\u201cJune 1, 2026\u201d), paragraphs, closing (\u201cSee you soon.\u201d), and footer; no form interaction was available or needed because the observed extra navigation element independently satisfies the defect condition."
+      ],
+      "human_eval": "no",
+      "machine_status": "FAIL",
+      "resolved_by": "active_acquisition",
+      "voters": 1
+    }
+  },
+  "missing_features": [
+    "/account",
+    "/account/cameras",
+    "/account/cameras/<serial>",
+    "/account/orders",
+    "/account/orders/<number>",
+    "/cart",
+    "/checkout/how-it-gets-there",
+    "/checkout/payment",
+    "/checkout/where-it-goes",
+    "/doctor",
+    "/downloads",
+    "/downloads/<version>",
+    "/orders/<number>",
+    "/orders/VE-2026-0002",
+    "/shop/<handle>",
+    "/sign-in",
+    "/sign-up"
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "screenshots": [
+    "/logs/verifier/shots/00_root_1920x1200.png",
+    "/logs/verifier/shots/00_root_768x1024.png",
+    "/logs/verifier/shots/00_root_390x844.png",
+    "/logs/verifier/shots/01_shop_1920x1200.png",
+    "/logs/verifier/shots/01_shop_768x1024.png",
+    "/logs/verifier/shots/01_shop_390x844.png"
+  ],
+  "meta": {
+    "grader_model": "gpt-5.6-sol",
+    "url": "http://deku-fresh-s_ecomm_comm_hardware-companion__lvbeluq-app:4173",
+    "viewports": [
+      "1920x1200",
+      "768x1024",
+      "390x844"
+    ],
+    "instruction": "/tests/instruction.md",
+    "started_at": "2026-09-06T07:23:48+00:00",
+    "harness": "run_rubric.py",
+    "rubric_source": "/tests/rubric.json",
+    "rubric_criteria": 17,
+    "evidence_first": true,
+    "probe_login_status": "logged in as customer@example.com",
+    "routing_plan": {
+      "total_criteria": 17,
+      "by_resolution": {
+        "active_acquisition": 17
+      },
+      "by_specialist": {
+        "navigation": 3,
+        "visual": 3,
+        "forms": 8,
+        "motion": 1,
+        "accessibility": 1,
+        "responsive": 1
+      },
+      "needs_active": 17,
+      "probe_settled": 0
+    },
+    "active_acquisition": {
+      "steps_spent": 415,
+      "total_budget": 750,
+      "remaining": 335,
+      "circuit_broken": false,
+      "criteria_acquired": 17
+    },
+    "resolution_breakdown": {
+      "active_acquisition": 8,
+      "machine_unresolved": 9
+    },
+    "machine_resolution": {
+      "counts": {
+        "PASS": 4,
+        "FAIL": 4,
+        "INSUFFICIENT_EVIDENCE": 9,
+        "EVALUATOR_ERROR": 0
+      },
+      "criteria_total": 17,
+      "criteria_resolved": 8,
+      "criteria_unresolved": 9,
+      "coverage": 0.47058823529411764,
+      "weighted_coverage": 0.47619047619047616
+    },
+    "finished_at": "2026-09-06T07:50:15+00:00",
+    "routes_visited": [
+      "/",
+      "/account",
+      "/account/cameras",
+      "/account/cameras/VC2609PVDA7Q",
+      "/account/orders",
+      "/account/orders/VE-2026-0001",
+      "/cart",
+      "/checkout/how-it-gets-there",
+      "/checkout/payment",
+      "/checkout/where-it-goes",
+      "/doctor",
+      "/doctor.",
+      "/downloads",
+      "/orders/VE-2026-0002",
+      "/shop",
+      "/shop/compact",
+      "/shop/flagship",
+      "/shop/flagship?variant=VELA-A1-SAND",
+      "/shop/mount",
+      "/sign-in",
+      "/sign-out"
+    ],
+    "login_status": "logged in as customer@example.com",
+    "judge_panel": [
+      "evidence_first_specialists",
+      "machine_adjudicator"
+    ],
+    "judge_panel_source": "evidence_first_pipeline",
+    "usage": {
+      "calls": 309,
+      "model_name": "gpt-5.6-sol",
+      "input_tokens": 369171,
+      "output_tokens": 32010,
+      "cache_read_input_tokens": 567424,
+      "cache_creation_input_tokens": 0
+    }
+  },
+  "criteria_total": 17,
+  "criteria_passed": 4,
+  "criteria_failed": 4,
+  "criteria_unresolved": 9,
+  "machine_resolution": {
+    "counts": {
+      "PASS": 4,
+      "FAIL": 4,
+      "INSUFFICIENT_EVIDENCE": 9,
+      "EVALUATOR_ERROR": 0
+    },
+    "criteria_total": 17,
+    "criteria_resolved": 8,
+    "criteria_unresolved": 9,
+    "coverage": 0.47058823529411764,
+    "weighted_coverage": 0.47619047619047616
+  },
+  "machine_unresolved": [
+    {
+      "criterion": "R2",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The observations establish that this is the intended letter/film screen, but they do not directly establish whether a faint animated speckle exists or whether it is layered above the film and still frame yet below the darkening panel. Since absence or incorrect ordering cannot be inferred from inaccessible visual evidence or a zero-animation API capture alone, the criterion cannot be defensibly resolved.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "The correct letter route was reached at `/#letter`, and the page text explicitly states: \u201cThe film behind this letter is the table.\u201d",
+        "The letter writing remained readable in the browser text extraction.",
+        "Motion capture observed 0 detectable CSS/Web Animations during the sampled interval.",
+        "The available screenshot transport omitted the image, so the faint speckle itself and its visual stacking relative to the film/still frame and darkening panel could not be inspected.",
+        "Computed-style checks were limited to interactive links and did not expose the non-interactive film, speckle, or darkening-panel elements needed to prove their layer order."
+      ]
+    },
+    {
+      "criterion": "R5",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The required rejected-change behavior could not be fully observed. Although the attempted over-stock quantity did not remain in place, the evidence did not establish the required immediate optimistic update, totals pending state, server response, and explicit rejection reason. Tool/input behavior was also ambiguous, so the observations do not defensibly settle the criterion as either satisfied or unsatisfied.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "Added the in-stock Vela Cricket (Graphite) to the cart; the cart displayed an inline quantity input with minus/plus controls and subtotal/total of $299.00.",
+        "Attempting to set quantity to 6 (above the displayed stock of 5) did not yield a defensible rejection flow: subsequent inspection reported the quantity value as 1, but no visible pending state or stated rejection reason was observed.",
+        "Clicking the plus control likewise left the inspected quantity at 1 and totals at $299.00 during the available observation window."
+      ]
+    },
+    {
+      "criterion": "R9",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The criterion specifically requires observing how an expired warranty is marked. Available account grids exposed no expired-warranty fixture, and absence of that evidence cannot establish either satisfaction or failure.",
+      "evidence": [
+        "no deterministic probe for form_flow; browser specialist required",
+        "On /account/cameras for customer@example.com, the only camera shown was VC2609PVDA7Q with an active 'Warranty to June 1, 2028'.",
+        "On /account/cameras for customer2@example.com, the cameras shown had either 'No warranty date' or an active 'Warranty to June 1, 2028'.",
+        "No camera with an ended warranty was observed in either available seeded customer's account camera grid, so its visual/state treatment could not be directly compared with ordinary information versus warning/error treatment."
+      ]
+    },
+    {
+      "criterion": "R10",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "Direct observations support the criterion for the shop, cart, and account surfaces, but the evaluation rule explicitly requires the download page as well. Because that surface was not inspected, there is insufficient evidence to resolve whether every required post-letter surface is dense and free of ornament.",
+      "evidence": [
+        "no deterministic probe for form_flow; browser specialist required",
+        "Shop at /shop presented a compact product grid with product names, short descriptions, prices, and stock states; computed product-link styling showed 16px text, 24px line height, 16px padding, no background image, and no minimum height.",
+        "Cart at /cart presented the line item, quantity controls, pricing summary, shipment-protection checkbox, total, and checkout link in a tightly set layout; the product link measured 16px/24px with no padding or background image.",
+        "Account at /account presented compact sections for Cameras, Orders, and Software, including serial number, warranty, order number/date/value, and application version, with no decorative imagery represented in the accessible page content.",
+        "The required download page was not opened or directly inspected before evidence collection ended."
+      ]
+    },
+    {
+      "criterion": "R11",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The shop evidence supports dark type on a light ground, but the required composite also depends on the letter, its footer, the cart surface, and the account surface. Their containing backgrounds were not directly measured, and the account page observed was sign-in rather than the stated authenticated account. Therefore the available observations do not defensibly settle the complete criterion.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "On /shop, product surfaces had measured dark text rgb(26, 29, 35) on light backgrounds rgb(247, 245, 243); measured product-card bounds included x=228, y=116, width=546, height=563 and x=983, y=679, width=357, height=191.",
+        "On the cart surface, the Checkout control measured light text rgb(247, 245, 243) on dark rgb(26, 29, 35), while other cart text/input measurements were transparent-background descendants and did not establish the containing surface color.",
+        "The / route exposed the letter content, but the only measured elements were navigation links with blue text on transparent backgrounds; no direct computed background measurement for the letter container or its footer was obtained.",
+        "The account route reached /sign-in rather than an authenticated account surface, and no direct account-surface ground measurement was obtained."
+      ]
+    },
+    {
+      "criterion": "R13",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The observed animated shop/cart behavior supports a common short 120 ms linear timing and shows no spring motion, but direct interaction evidence is incomplete for hover and for the account surface. Therefore the universal claim that every transition across shop, cart, and account shares that timing cannot be defensibly resolved.",
+      "evidence": [
+        "motion inventory captured; interaction is required to settle behavior",
+        "On the shop product page, adding an item produced one captured `background-color` transition with duration 120 ms and linear easing; no overshoot or bounce was captured.",
+        "Changing the product variant produced no CDP animations.",
+        "On the cart page, the Checkout link computed styles showed `background-color`, `color`, and `border-color` transitions, each 0.12 s and linear.",
+        "Several cart controls (quantity decrement, Remove, shipment-protection checkbox) and shop links reported 0 s computed transition durations with default `ease`, meaning no animated transition was directly observed on those controls.",
+        "The authenticated account surface was reached, but evidence collection ended before hover/focus/press/disclosure motion there\u2014or required hover motion across all three surfaces\u2014could be captured and compared."
+      ]
+    },
+    {
+      "criterion": "R14",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The observations directly verify several states have written labels, but they do not establish the required complete triad of success, failure, and in-progress states beside their colour markers across shop and account. In particular, no clearly identifiable success-state marker was captured, and the evidence does not prove whether any unobserved state is conveyed by colour or movement alone. Missing coverage cannot be converted into either a pass or a failure.",
+      "evidence": [
+        "accessibility inventory captured; criterion needs specialist scope",
+        "Shop snapshots exposed written availability labels such as \u201cOnly 10 left,\u201d \u201cOnly 5 left,\u201d \u201cSold out,\u201d and \u201cDiscontinued\u201d alongside products and variants.",
+        "The authenticated account overview and Cameras page exposed the written status \u201cUpdate available\u201d and \u201cWarranty to June 1, 2028.\u201d",
+        "The firmware installer exposed written failure/incompatibility and workflow text: \u201cThis browser cannot talk to a device,\u201d \u201cAccept the warning first,\u201d and \u201cStep 1. Checking this browser.\u201d",
+        "Adding a product changed the page to a Cart view, but the collected snapshot did not expose a distinct success-state indicator or enough styling/attribute evidence to establish whether any associated colour also carried that meaning."
+      ]
+    },
+    {
+      "criterion": "R15",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8791/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "evidence": [
+        "layout measurements captured",
+        "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8791/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+        "The letter does not become half-width alternating blocks when resized: at 390px the content remains a single full-width, left-aligned column (elements begin at x=8), so the requested responsive layout is absent, although no obvious sideways overflow was observed."
+      ]
+    },
+    {
+      "criterion": "R16",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "rationale": "The criterion specifically requires observing whether a cart notice about an externally changed price or availability dismisses itself without reader action. No such notice was triggered during the available workflow, so its persistence or automatic disappearance could not be directly measured. The absence of a notice cannot defensibly establish satisfied=false.",
+      "evidence": [
+        "no deterministic probe for composite; browser specialist required",
+        "Added Vela Cricket (Graphite) to the cart and changed quantity from 1 to 2; the cart total updated from $299.00 to $598.00 without displaying a price-or-availability-change notice.",
+        "Completed the reversible checkout flow through address, shipping, and payment review; totals remained $598.00 before tax and $657.80 after tax, and no changed-price or changed-availability notice appeared."
+      ]
+    }
+  ],
+  "needs_human_eval": 0,
+  "evidence_first": true,
+  "review_queue": {
+    "count": 0,
+    "criteria": []
+  },
+  "needs_review": []
+}
