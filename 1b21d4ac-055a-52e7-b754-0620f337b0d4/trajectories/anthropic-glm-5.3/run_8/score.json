@@ -1,5 +1,5 @@
 {
-  "combined_score": 0.3817,
+  "combined_score": 0.3446,
   "weights": {
     "workflow": 0.5,
     "pytest": 0.25,
@@ -22,13 +22,13 @@
       "total": 43
     },
     "rubric": {
-      "score": 0.576923,
+      "score": 0.428571,
       "criteria": 19,
-      "passed": 5,
-      "failed": 3,
-      "unresolved": 11,
-      "coverage": 0.42105263157894735,
-      "weighted_coverage": 0.4126984126984127,
+      "passed": 9,
+      "failed": 10,
+      "unresolved": 0,
+      "coverage": 1.0,
+      "weighted_coverage": 1.0,
       "machine_outcomes": {
         "PASS": 5,
         "FAIL": 3,
@@ -36,8 +36,9 @@
         "EVALUATOR_ERROR": 0
       },
       "resolution_methods": {
-        "machine_unresolved": 11,
-        "active_acquisition": 8
+        "machine_unresolved": 0,
+        "active_acquisition": 8,
+        "human_eval": 11
       },
       "needs_human_eval": 0,
       "council": null
@@ -50,120 +51,153 @@
   "machine_unresolved": [
     {
       "criterion": "R1",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "The criterion can only be decided after attempting a refused publish in the studio and measuring whether the missing-written-alternative message is beside the relevant poster. Authentication prevented access, so there is not enough direct evidence to resolve the criterion.",
+      "status": "FAIL",
+      "rationale": "No producer can sign in to this build: the login endpoint crashes with a server error whenever the correct password is given (auth.py calls secrets.token_hex without importing secrets), so the studio editor and its publish refusal are unreachable to every user. The shipped refusal handler would in any case show the reason in a native browser alert dialog rather than beside the poster.",
       "evidence": [
         "layout measurements captured",
         "The supplied route `/` showed only the public Cirrus portfolio and no studio editor or publish workflow.",
         "Navigating to `/studio` redirected to `/studio/login`, indicating the required editor was not accessible in the existing browser state.",
         "Trusted data supplied producer email addresses but no parseable passwords. Attempts using inferred passwords were rejected with \u201cTHAT EMAIL AND PASSWORD DO NOT MATCH.\u201d",
         "Because the studio editor could not be reached, the required refuse-publish interaction could not be performed, and no poster-adjacent validation message or geometry could be observed."
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R2",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "The criterion specifically concerns the refusal encountered by a signed-up account and whether that account is returned to a working public surface with an intentional, house-voiced explanation that the studio is not theirs. No valid viewer credentials or confirmed signed-up viewer session were available, so that required post-authentication refusal state could not be reached. The observed invalid-credential error and missing signup route do not defensibly establish the signed-up-account behavior.",
+      "status": "FAIL",
+      "rationale": "No viewer session can exist in this build because both the signup and the login endpoints crash with a server error (\"something went wrong\" on the form, NameError in the server log), so what a signed-up reader meets at the studio is an error on the sign-in form. The guard that would handle a signed-in viewer redirects silently to the front page with no sentence in the house's voice, so the refusal reads as something going wrong rather than a deliberate decision.",
       "evidence": [
         "no deterministic probe for composite; browser specialist required",
         "The public root route is working and exposes the house's normal navigation and work portfolio.",
         "Navigating to /studio reached a complete branded sign-in page stating: \u201cPRODUCERS ONLY. VISITORS NEED NO ACCOUNT TO READ THE SITE.\u201d",
         "Direct navigation to /studio/signup produced the branded public shell but said \u201cThat page is not here.\u201d",
         "A viewer@example.com sign-in attempt with an unverified password remained on the login page and showed \u201cTHAT EMAIL AND PASSWORD DO NOT MATCH.\u201d"
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R3",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "The criterion must be verified on authenticated studio record rows. Those rows could not be reached with the available authentication data, so treating the absence of observable row state text as a failure would be unjustified.",
+      "status": "FAIL",
+      "rationale": "The studio palette cannot be reached because sign-in crashes with a server error for every account and /studio always lands on the login page. The template does carry the words \"live\" and \"unlisted\" beside each record, but no user of this build can see them.",
       "evidence": [
         "style criterion has no objective selector",
         "Navigating to `/studio` redirected to `/studio/login`, showing an unauthenticated Studio sign-in form rather than the studio palette.",
         "The trusted credentials supplied email addresses only and no password. A limited sign-in attempt using `producer@example.com` did not authenticate; the page displayed \u201cTHAT EMAIL AND PASSWORD DO NOT MATCH\u201d.",
         "Because the studio palette and its record rows were inaccessible, no direct screenshot, row text, bounding-box, or computed-style evidence could establish whether every record displays a worded state beside its title."
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R4",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "Criterion R4 can only be settled by completing a publish and directly observing the resulting page. Authentication blocked access to that workflow, so there is insufficient evidence to determine whether the confirmation reads as an ending, offers one onward move, is bare, or re-presents the publish control.",
+      "status": "FAIL",
+      "rationale": "No publish can be completed because no producer can sign in (the login endpoint crashes on a correct password), so the post-publish confirmation page is unreachable to every user of this build and cannot be read as an ending or anything else.",
       "evidence": [
         "no deterministic probe for form_flow; browser specialist required",
         "Navigating to /studio redirected to /studio/login and exposed a producer sign-in form with EMAIL, PASSWORD, and SIGN IN controls.",
         "The supplied authentication state said credentials could not be parsed; only producer email addresses were provided, with no password.",
         "No authenticated publishing form or post-publish confirmation page was reached before evidence collection ended."
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R6",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "There is strong direct evidence that the studio login and even not-found chrome belong to the same visual house as the public site, but the criterion specifically concerns the studio create route. Because authentication credentials were incomplete and the protected create UI could not be reached, there is not enough evidence to determine whether that route itself carries the site's frame, type, and restraint. Missing access is not treated as a failure of the positive criterion.",
+      "status": "FAIL",
+      "rationale": "The create route /studio/talents/new redirects every request to the login page, and sign-in crashes with a server error, so the create route cannot be seen by any user of this build; the frame it would carry cannot be verified in use.",
       "evidence": [
         "no deterministic probe for form_flow; browser specialist required",
         "The public route `/` visibly uses the Cirrus visitor frame: `cirrus`, `WORKS`, `CONTACT`, `TALENTS`, `ABOUT`, and `SITE BY AUBE`. Its navigation uses `Cirrus Text` at 12px, while the wordmark uses `Cirrus Display` at 20px.",
         "The reachable `/studio/login` page carries the same visitor-facing frame and exact matching computed typography: navigation is `Cirrus Text` at 12px and the wordmark is `Cirrus Display` at 20px. Its form controls also use `Cirrus Text`, square 0px corners, transparent inputs, and a restrained black submit button.",
         "Submitting the empty sign-in form produced an inline `THAT EMAIL AND PASSWORD DO NOT MATCH` message, confirming validation behavior on the login form.",
         "Direct access to `/studio/works/new` redirected to `/studio/login`; `/studio/create` was a branded not-found page. Supplied trusted credentials contain email addresses but no passwords, and the browser was not already authenticated, so the actual create route and its complete form/confirmation flow could not be observed."
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R7",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "status": "FAIL",
+      "rationale": "On the work index the still images load correctly (a grey gradient when fetched directly) but are never painted: the inline wrapper span carries clip-path inset(0%) with overflow hidden, the image is not hit-testable at its centre, and the tile area samples as pure ground colour at every point on desktop and on a phone. Disabling that one property makes the still appear. A resting tile is therefore empty ground beside its caption, indistinguishable from a picture still arriving, not a composed colourless photograph.",
       "evidence": [
         "style criterion has no objective selector",
         "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R9",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "status": "FAIL",
+      "rationale": "On the wide roster the name (125px, centred, top 112), the discipline label (centred at 357) and the centre mark (18 by 18 at 711, 438) sit exactly where the brief places them, one talent per screen with no scroll, but the portrait box at y 567 is empty because the still images are clipped invisible in this build. The figure the rubric describes is missing its portrait, so the four elements do not compose as one.",
       "evidence": [
         "layout measurements captured",
         "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": false
     },
     {
       "criterion": "R12",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "The normal about route is clearly a fully designed page, but criterion R12 specifically requires observing that same designed content and layout under a reduced-motion preference. Because that preference cannot be enabled with the provided browser interface, there is no defensible direct evidence for either satisfaction or failure.",
+      "status": "PASS",
+      "rationale": "With a reduced-motion preference the about route applies its reduced class and keeps the opening, body and lockup blocks at identical positions and heights with the same 825 characters of text, fonts and ground; the blur-to-sharp effect is resolved to sharp text and the footer simply rests at its arrival position. The reader loses the effect and nothing else.",
       "evidence": [
         "motion inventory captured; interaction is required to settle behavior",
         "Navigating from `/` via the ABOUT control reached `/about`, where the rendered page contained the designed navigation, repeated typographic hero text, the full multi-line mission statement, the Paris/services paragraph, and the concluding `CIRRUS / FOR / PICTURE / ITS / AND / MAKERS / PICTURE` block.",
         "A CDP motion capture started immediately before activating ABOUT and stopped after route arrival recorded six opacity animations with 200\u2013400 ms durations, establishing the normal-motion route transition.",
         "The available browser controls expose neither `prefers-reduced-motion` emulation nor an in-app motion-preference control, so the reduced-motion rendering could not be activated and directly compared against the normal page for content and layout parity."
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": true
     },
     {
       "criterion": "R13",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "status": "PASS",
+      "rationale": "Keyboard focus draws a designed 1px ring offset 3px: dark on the pale ground (WORKS link) and around a work tile, where it sits outside the picture on the pale ground, and light on the dark entry route where the ground token switches. It is visible on all three surfaces and differs from the hover treatment, which is an opacity fade.",
       "evidence": [
         "accessibility inventory captured; criterion needs specialist scope",
         "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": true
     },
     {
       "criterion": "R14",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "status": "PASS",
+      "rationale": "Below the breakpoint the roster becomes a vertical sequence of full-height slides, one talent per screen, each with the centred display-face name, the discipline label beneath it and the portrait slot beneath that, in the same order and setting the wide window shows; the name setting, the order and the sense of one talent at a time all survive, and nothing reads as a list, grid or stack the wide layout never suggested.",
       "evidence": [
         "layout measurements captured",
         "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": true
     },
     {
       "criterion": "R18",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "status": "PASS",
+      "rationale": "With every talent unlisted, the roster page shows the sentence \"No one is showing yet. The roster is between names.\" set in the site's display face; it names no error and contains no placeholder or developer text, so it reads as written by the house rather than as a failure. It sits just below the first screen, so a reader must scroll to reach it.",
       "evidence": [
         "no deterministic probe for composite; browser specialist required",
         "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
-      ]
+      ],
+      "resolved_by": "human_eval",
+      "satisfied": true,
+      "passed": true
     }
   ],
-  "rubric_coverage": 0.42105263157894735,
+  "rubric_coverage": 1.0,
   "evidence_bundle": "evidence_bundle.json",
   "note": "combined_score is a report, not a training signal; reward.json is unchanged and remains the workflow pass rate (PLAN.md 1.4)"
 }
