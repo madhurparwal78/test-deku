@@ -196,5 +196,93 @@
     "importance": "important",
     "score": 3,
     "evaluation_rule": "Answer yes when the first paint shows grey blocks in the shape of the cards and the cards replace them in place. Answer no when a spinner sits in the middle of an empty page, or when the layout jumps once the data lands."
+  },
+  {
+    "number": "R19",
+    "criterion": "No dependency appears in either package manifest that no checklist obligation required, and none of them is a mail vendor SDK, a queue client, a cache client, an object-store client or a second database driver.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "A dependency is a package named in a runtime dependency block of either package manifest -- the Angular frontend's or the Hono backend's -- not a transitive lock entry and not a development-only tool. Yes if every runtime dependency is Angular, Hono, the TypeScript runtime support those two need, the PostgreSQL driver, the SMTP mail client, or a direct requirement of one of those. No if either manifest names a mail vendor SDK such as SendGrid, Mailgun, Postmark or Resend, a queue client such as BullMQ, Kafka or RabbitMQ, a cache client such as Redis or Memcached, an object-store client such as an S3 SDK, a second database driver such as MySQL, SQLite or MongoDB, or any package no checklist obligation reaches."
+  },
+  {
+    "number": "R20",
+    "criterion": "No table, column or seed row exists beyond the five tables the obligation list enumerates: accounts, calendars, events, registrations and email_log.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "A table is a relation the schema or a migration creates, a column is a column on one of those relations, and a seed row is a row the seed routine writes. Yes if the schema creates exactly accounts, calendars, events, registrations and email_log, every column on them serves a field the brief's data model names, and the seed writes only the five pinned accounts, the two pinned calendars, the seeded events and their seeded registrations. No if the schema creates a sixth relation such as sessions, tokens, jobs, audit_log or notifications, adds a column no obligation reaches, or the seed writes rows beyond the fixtures the brief pins."
+  },
+  {
+    "number": "R21",
+    "criterion": "No background worker, scheduled job or queue module exists in the source tree for registration, approval, check-in or mail, all of which the obligation list keeps inside the handler that performs them.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "A background worker is a process or module that performs work outside the request that caused it -- a scheduled job, a cron registration, a timer that drives work, a queue producer or consumer, or a separate worker entrypoint. Yes if registration, approval, check-in and mail are each performed synchronously inside the handler that serves the request, and no such module exists anywhere in the source tree. No if the tree contains a worker or jobs entrypoint, a cron or scheduling library registration, a setInterval or setTimeout that drives registration, approval, check-in or mail, or a queue module through which any of those four is deferred."
+  },
+  {
+    "number": "R22",
+    "criterion": "No image file, icon font or fetched web font ships in the source tree, and no surface the obligation list names as absent was built anyway: no insights screen, no moderation queue, no inbox, no invitation flow, no third-party sign-in.",
+    "is_positive": true,
+    "type": "instruction following",
+    "dimension": "scope_discipline",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "An image file is a raster or vector asset shipped in the tree -- png, jpg, jpeg, gif, webp, svg or ico; an icon font or fetched web font is a font binary -- woff, woff2, ttf, otf or eot -- shipped in the tree, or pulled in from a font package or remote font stylesheet the application imports. The host's own approval queue on the guest management screen is required by the brief and is never a violation of this criterion. Yes if every symbol and every cover is drawn by code, the tree neither ships nor imports any such image or font asset, and none of the named absent surfaces was built. No if the tree ships an image or font file, imports a font package or a remote font stylesheet, or contains an insights or attendance charting screen, a site-wide administration or content-moderation queue separate from the host's approval queue, an inbox or messaging surface, an invitation flow, or a third-party sign-in control."
+  },
+  {
+    "number": "R23",
+    "criterion": "One naming convention runs across the source for the same idea, so a seat held is not a seat in one module and a place in another, and the stored enum spellings the obligation list pins are the spellings the code uses end to end.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "One naming convention means one word for one idea everywhere it appears in the source. Yes if a single term names the seat a confirmed registration holds across the schema, the API and the view layer, and the stored enum spellings the brief pins -- draft, published, registration_closed and cancelled for an event, and pending_approval, confirmed, waitlisted, declined, checked_in, cancelled_by_guest and cancelled_by_host for a registration -- are the spellings the code writes, sends and matches end to end. No if two modules name the same idea differently, so a seat is a seat in one and a place, spot or slot in another, or if any layer stores, emits or compares a variant spelling such as checkedIn, cancelled_by_user or registration-closed."
+  },
+  {
+    "number": "R24",
+    "criterion": "The seat-holding rule is implemented in one transactional place and called from registration, cancellation, approval and the capacity raise, rather than being restated per route.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "critically_important",
+    "score": 5,
+    "evaluation_rule": "The seat-holding rule is the logic deciding whether a registration takes a seat, a waiting-list place or a refusal, and keeping registrations in confirmed or checked_in from exceeding capacity. Yes if that decision is written once, inside a single database transaction, in one named function or module, and registration, cancellation, host approval and the capacity raise all reach it through that one entry point. No if two or more of those four paths restate the capacity comparison, the waiting-list positioning or the seat release inline in their own route handler, so the same rule exists in more than one place and the paths could disagree on the last seat."
+  },
+  {
+    "number": "R25",
+    "criterion": "The theme derivation is written once in a server-side module and imported by the view layer as tokens, rather than reimplemented inside individual components.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "Theme derivation is the computation turning an event's stored key colour into the ground, ink, heading and hairline values that event page paints. Yes if that computation lives in one server-side module and the view layer consumes its output as tokens -- CSS custom properties or an equivalent token object -- without recomputing it. No if a component derives a tint, a contrast decision or the too-pale readability fallback from the key colour itself, or if the same derivation appears both in a server module and in a client component, so the two could disagree on the same event's palette."
+  },
+  {
+    "number": "R26",
+    "criterion": "The pinned literals the obligation list names -- the seven mail subject lines, the CSV header line, the reserved paths, the twelve category names and the pinned copy strings -- are declared once and read from that declaration in every path that needs them, rather than duplicated as inline literals.",
+    "is_positive": true,
+    "type": "task completion",
+    "dimension": "internal_consistency",
+    "evaluation_target": "state_change",
+    "importance": "important",
+    "score": 3,
+    "evaluation_rule": "A pinned literal is a string the brief fixes exactly: the seven mail subject lines, the CSV header line email,display_name,status,waitlist_position,ticket_code, the eleven reserved paths, the twelve category names, and the pinned copy strings such as No Events Found, No Calendars Yet, No Guests Yet and Create Event. Yes if each such literal is declared once, in a constant or module, and every path needing it reads it from that declaration. No if a mail subject line, the CSV header, the reserved path list, the category list or a pinned copy string is written inline at a second use site, so two places would have to be edited to change one string."
   }
 ]
