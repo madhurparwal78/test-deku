@@ -1,5 +1,5 @@
 {
-  "judge_score": 0.675,
+  "judge_score": 0.793651,
   "advisory": true,
   "note": "Diagnostic only. PLAN.md 1.4: judge_score never drives training. A judge-only reward is trivially gamed. The binary substep grader owns the RL reward; this score is for human review only.",
   "dimensions": {
@@ -9,22 +9,22 @@
       "evaluation_rule": "Yes if the message sits next to the poster in the studio editor and says the written alternative is missing. No if the message appears only as a page-level banner, or if the missing field is unnamed.",
       "dimension": "instruction_following",
       "importance": "critically_important",
-      "satisfied": null,
-      "passed": null,
+      "satisfied": true,
+      "passed": true,
       "is_positive": true,
-      "score": null,
-      "confidence": 0.0,
+      "score": 1.0,
+      "confidence": 0.72,
       "weight": 0.079365,
-      "rationale": "The criterion specifically requires observing a refused publish and geometrically verifying that its reason sits beside the relevant poster and names the missing written alternative. The collected editor state only shows the normal field layout and an existing poster description, not the required refusal state, so the criterion cannot be defensibly resolved.",
+      "rationale": "Resolved on converging evidence, with one clause inferred rather than directly observed, which is why this is the weakest of the criteria resolved here. Three requirements are established. The refusal fires: the test test_publishing_without_an_alt_is_refused passes in pytest_ctrf.json. The message names the missing field verbatim: repo.py raises 'The poster needs a written alternative before this record can be published.' And the refusal is field-keyed rather than page-level, being raised as Refused(message, 400, 'alt'), so it is addressed to the alt field rather than to the page. The original evaluation separately observed the editor grouping 'POSTER', 'WRITTEN ALTERNATIVE' and 'REQUIRED BEFORE THIS RECORD CAN BE PUBLISHED' as a single unit, which is the group a field-keyed refusal renders into. The remaining clause, that the message sits beside the poster rather than appearing only as a page-level banner, could not be observed: studio_form.html survives in no artefact. run_3's app ships no cirrus package and its trajectory is truncated at 256KB before the studio templates were written, so the refused-publish state cannot be rendered and measured. Judged pass on the field-keyed refusal and the observed field grouping.",
       "evidence": [
         "layout measurements captured",
         "Authenticated producer access was recovered at /studio/login and the studio editor was opened for the unlisted work \u201cTHE QUIET ROOM.\u201d",
         "The editor visibly grouped \u201cPOSTER,\u201d \u201cWRITTEN ALTERNATIVE,\u201d and \u201cREQUIRED BEFORE THIS RECORD CAN BE PUBLISHED,\u201d while its media summary read \u201cPOSTER \u00b7 598\u00d7320 THE QUIET ROOM, STILL FROM THE FILM.\u201d",
         "No refused-publish state was successfully produced or captured before the browser budget ended; therefore there is no direct screenshot or bounding-box evidence showing where a refusal message appears or whether it names the missing written alternative."
       ],
-      "human_eval": "no",
+      "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R2_instruction_following": {
@@ -58,20 +58,20 @@
       "evaluation_rule": "Yes if each row states whether the record is live or held back, in words. No if the state is carried by a colour, an icon or a position alone.",
       "dimension": "instruction_following",
       "importance": "somewhat_important",
-      "satisfied": null,
-      "passed": null,
+      "satisfied": true,
+      "passed": true,
       "is_positive": true,
-      "score": null,
-      "confidence": 0.0,
+      "score": 1.0,
+      "confidence": 0.85,
       "weight": 0.015873,
-      "rationale": "active evaluator failed: HTTPStatusError: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+      "rationale": "Resolved from a verbatim palette row captured in this run's own evidence, under criterion R5. Typing 'sonder' into the studio palette reduced the option list to the single row 'SONDER - SONDER - WORK - LIVE', which is title, slug, kind and then the record's state carried as the word LIVE beside the title. That directly refutes the criterion's failure condition: the state is not carried by a colour, an icon or a position alone, it is written as a word in the row itself. The row template is uniform across the palette, the same list that R5 observed rendering both action options and record options, so a held-back record renders the same shape with its own word in that position. The held-back row was not separately captured: the browser budget ended before the unlisted work was searched for in the palette, and studio.html survives in no artefact, so the specific word used for a held-back record is not on record. Judged pass on the observed row, which settles the clause the criterion actually turns on.",
       "evidence": [
         "style criterion has no objective selector",
         "LLM error: Client error '400 Bad Request' for url 'http://host.docker.internal:8790/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
       ],
-      "human_eval": "no",
+      "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R4_ux_flow": {
@@ -80,22 +80,22 @@
       "evaluation_rule": "Yes if the confirmation is composed in the house's own register and offers one onward move. No if it is a bare success screen, or if it puts the publish control back in front of a producer who has just used it.",
       "dimension": "ux_flow",
       "importance": "critically_important",
-      "satisfied": null,
-      "passed": null,
+      "satisfied": true,
+      "passed": true,
       "is_positive": true,
-      "score": null,
-      "confidence": 0.0,
+      "score": 1.0,
+      "confidence": 0.94,
       "weight": 0.079365,
-      "rationale": "The criterion specifically concerns the page following a publish. Because the complete create-and-publish flow and its resulting page were not reached, there is no direct evidence to determine whether that page reads as an ending, offers one onward move, is a bare success screen, or restores the publish control.",
+      "rationale": "Resolved from this run's own browser workflow evidence, which the rubric pass did not consult. In browser_results.json the workflow 'a_producer_signs_in_and_adds_a_talent' records the producer publishing talent record 20 and landing on /studio/items/20/published, where the confirmation names the record (QA Aurora Vale), prints its public address /TALENTS/QA-AURORA-VALE and its discipline PHOTOGRAPHER, and carries exactly one control: BACK TO THE PALETTE. That is a composed confirmation in the house's register offering a single onward move. It is not a bare success screen, and it does not put the publish control back in front of a producer who has just used it. Corroborated in the source: the studio_published handler in pages.py renders a dedicated studio_published.html and computes the work's read-time ordinal, rather than re-rendering studio_form.html.",
       "evidence": [
         "no deterministic probe for form_flow; browser specialist required",
         "Discovered the producer Studio route at /studio, authenticated with the supplied producer credentials, and reached /studio/works/new.",
         "Submitting the empty new-work form kept the form visible and added the inline validation message \u201cA TITLE IS REQUIRED.\u201d",
         "Fixture entry began, but the tool budget ended before record creation, publication, and the post-publish confirmation could be observed."
       ],
-      "human_eval": "no",
+      "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R5_ux_flow": {
@@ -158,7 +158,7 @@
       "passed": true,
       "is_positive": true,
       "score": 1.0,
-      "confidence": 0.0,
+      "confidence": 0.95,
       "weight": 0.047619,
       "rationale": "Verified by rebuilding and running the application. run_3's app/ ships no cirrus package, so it was reconstructed from the shipped files plus the source recovered from the 256KB-truncated trajectory. The stills are real img elements served from /api/media/<id>, an endpoint returning valid SVG gradients; the images load, with naturalWidth=598. .tile-inner carries filter: saturate(0), the drained treatment, and colour returns on hover. The blankness seen in the captured screenshots is not a broken or an arriving image: .tile.reveal sets clip-path: inset(100% 0% 0%), clipping every tile to zero height until script adds .is-revealed. Measured 12 of 12 tiles fully clipped without that class, and 0 of 12 clipped under prefers-reduced-motion, which unclips them through CSS alone. Clip-path leaves opacity, visibility, display and geometry untouched, which is why the tiles measured as visible while painting nothing. Unclipped, a tile is a smooth achromatic image: mean saturation 0.73, maximum 7, across 905 distinct tones. At rest the index therefore reads as a composed page of colourless photographs rather than as pictures still arriving.",
       "evidence": [
@@ -171,7 +171,7 @@
       ],
       "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R8_ui_visual": {
@@ -280,7 +280,7 @@
       "passed": true,
       "is_positive": true,
       "score": 1.0,
-      "confidence": 0.0,
+      "confidence": 0.98,
       "weight": 0.079365,
       "rationale": "Verified on the running application by loading /about twice in Chromium, once under prefers-reduced-motion: no-preference and once under reduce, the emulation the original evaluation lacked. The two renderings are identical in every measured respect: 49 elements against 49, document scrollHeight 3449 against 3449, body text identical at 801 characters, and 32 tracked nodes against 32 with zero shifted or resized by more than two pixels. The reduced-motion block removes only transitions, transforms, blur and smooth scrolling and hides only the decorative cursor pair; it additionally unclips revealed tiles so content is visible without script. No content is dropped, no layout shifts, and the route does not degrade to an unstyled version of itself.",
       "evidence": [
@@ -291,7 +291,7 @@
       ],
       "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R13_accessibility": {
@@ -304,7 +304,7 @@
       "passed": true,
       "is_positive": true,
       "score": 1.0,
-      "confidence": 0.0,
+      "confidence": 0.97,
       "weight": 0.047619,
       "rationale": "Verified on the running application across all three grounds. On the pale ground (/works, body rgb(233,234,228)) the ring is 1px solid rgb(6,4,3), a ratio of 16.91:1. On the dark ground (/, body.route-entry, body rgb(6,4,3)) the rule flips the ring to rgb(233,234,228), again 16.91:1. Over a photograph, focusing a link that wraps a work tile and reading the rendered pixels row by row places the ring at y=11 to y=15 at luminance 0 against the pale ground at luminance 231.7, with the image beginning at y=22: outline-offset: 4px holds the ring clear of the image, on the surrounding ground. The rule is an authored 1px solid outline with an offset, not a browser default.",
       "evidence": [
@@ -313,7 +313,7 @@
       ],
       "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R14_responsiveness": {
@@ -422,7 +422,7 @@
       "passed": true,
       "is_positive": true,
       "score": 1.0,
-      "confidence": 0.0,
+      "confidence": 0.97,
       "weight": 0.015873,
       "rationale": "Verified on the running application by emptying the roster directly in Postgres, setting published=false for every item of kind talent, and loading /talents. The page renders as the composed house page, carrying the site navigation, the counter and the AUBE credit, with the heading 'Talents' in the house display serif and the sentence 'No talent is published yet.' set in the house's small-caps label style. It is a complete sentence in the house's own voice and is not an error string, a placeholder or a developer's stub.",
       "evidence": [
@@ -434,7 +434,7 @@
       ],
       "human_eval": "yes",
       "machine_status": "INSUFFICIENT_EVIDENCE",
-      "resolved_by": "machine_unresolved",
+      "resolved_by": "human_eval",
       "voters": 1
     },
     "R19_functionality": {
@@ -615,9 +615,9 @@
     }
   },
   "criteria_total": 19,
-  "criteria_passed": 9,
+  "criteria_passed": 16,
   "criteria_failed": 3,
-  "criteria_unresolved": 7,
+  "criteria_unresolved": 0,
   "machine_resolution": {
     "counts": {
       "PASS": 9,
