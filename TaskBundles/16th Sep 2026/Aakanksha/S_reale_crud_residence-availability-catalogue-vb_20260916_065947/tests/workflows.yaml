@@ -1,0 +1,172 @@
+- id: visitor_browses_released_apartments
+  purpose: A signed-out visitor browses the released apartments on the index
+  substeps:
+    - kind: browser
+      do: Open the apartment index and confirm the released apartments read without signing in
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: presentation
+      weight: 1
+      cov: C-CF-01 (earned: the health readiness probe is precisely this item)
+    - kind: pytest
+      test: test_output.py::test_units_list_released_only
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-02
+
+- id: visitor_filters_and_sorts_the_apartments
+  purpose: A visitor narrows the apartments by typology and bedrooms and sorts by area
+  substeps:
+    - kind: browser
+      do: Narrow the apartment index by a typology and a bedroom count and sort by interior area
+      cov: C-CF-03
+    - kind: pytest
+      test: test_output.py::test_units_filter_type_and_bedrooms
+      category: business_rule
+      weight: 3
+      cov: C-CF-03 (earned: the AND of the typology and bedroom filters is precisely this item)
+    - kind: pytest
+      test: test_output.py::test_sort_area_asc_interior_only
+      category: business_rule
+      weight: 3
+      cov: C-DM-02
+
+- id: visitor_opens_an_apartment
+  purpose: A visitor opens a released apartment to read its record
+  substeps:
+    - kind: browser
+      do: Open a released apartment from the index and confirm the apartment detail reads in full
+      cov: C-CF-04
+    - kind: pytest
+      test: test_output.py::test_unit_detail_reads_in_full
+      category: business_rule
+      weight: 3
+      cov: C-CF-04
+
+- id: visitor_reads_a_floor_plan
+  purpose: A released apartment floor plan is served from the stored object
+  substeps:
+    - kind: browser
+      do: Open a released apartment and confirm the floor plan image loads for a signed-out visitor
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_unit_floorplan_image_from_store
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-05
+
+- id: visitor_submits_a_callback_request
+  purpose: A visitor records a callback request and an invalid one is refused
+  substeps:
+    - kind: browser
+      do: Submit the callback form from an apartment detail page and confirm the request is recorded in place
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_callback_records_unit_and_contact
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_callback_missing_field_refused
+      category: validation
+      weight: 3
+      cov: C-TR-01
+
+- id: visitor_chooses_a_cookie_preference
+  purpose: A first-visit cookie choice survives a reload
+  substeps:
+    - kind: browser
+      do: Choose a cookie preference on a first visit and confirm the notice is not shown again after a reload
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_persists
+      category: business_rule
+      weight: 3
+      cov: C-CF-09
+
+- id: sales_reads_the_callback_requests
+  purpose: A sales user reads the callback requests and the index reconciles with the rows
+  substeps:
+    - kind: browser
+      do: Sign in as sales and open the console to read the callback requests
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_sales_reads_callbacks
+      category: business_rule
+      weight: 3
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_public_index_reconciles_rows
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
+
+- id: sales_releases_an_apartment
+  purpose: A sales user releases a coming-soon apartment to the public index
+  substeps:
+    - kind: browser
+      do: Sign in as sales and release a coming-soon apartment so a fresh visitor finds it on the index
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_sales_releases_unit_to_public
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-08
+
+- id: an_illegal_availability_step_is_refused
+  purpose: An availability change that is not a legal step is refused
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_illegal_availability_step_refused
+      category: business_rule
+      weight: 3
+      cov: C-TR-04
+
+- id: sales_endpoints_denied_to_anonymous
+  purpose: The sales endpoints hold on the server against a signed-out visitor
+  substeps:
+    - kind: browser
+      do: Confirm the sales console cannot be reached by a signed-out visitor
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_sales_endpoint_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-01
+
+- id: a_coming_soon_apartment_stays_private
+  purpose: A coming-soon apartment and its floor plan are not public
+  substeps:
+    - kind: browser
+      do: Open a coming-soon apartment address without signing in and confirm nothing is shown
+      cov: C-TR-02
+    - kind: pytest
+      test: test_output.py::test_coming_soon_detail_not_found
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-02 (earned: the public read of a coming-soon apartment is precisely this item)
+    - kind: pytest
+      test: test_output.py::test_coming_soon_floorplan_not_public
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-03
+
+- id: launch_surfaces_are_present
+  purpose: Every public route answers a distinct document title
+  substeps:
+    - kind: browser
+      do: Open the home and the apartment index and confirm the two public routes read as distinct pages
+      cov: C-TR-05
+    - kind: pytest
+      test: test_output.py::test_public_routes_have_distinct_titles
+      category: presentation
+      weight: 1
+      cov: C-TR-05

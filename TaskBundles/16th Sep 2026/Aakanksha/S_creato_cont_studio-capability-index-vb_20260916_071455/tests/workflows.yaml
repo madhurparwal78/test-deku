@@ -1,0 +1,203 @@
+- id: site_health_and_published_work
+  purpose: A visitor opens the site and reads the published work index
+  substeps:
+    - kind: browser
+      do: Open the home page then the work index and confirm published case studies are listed
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_visitor_reads_published_content
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_case_study_index_lists_published_only
+      category: data_integrity
+      weight: 5
+
+- id: case_studies_filtered_by_industry
+  purpose: The work index narrows to a chosen industry
+  substeps:
+    - kind: browser
+      do: On the work index pick an industry and confirm only matching case studies remain
+    - kind: pytest
+      test: test_output.py::test_case_study_index_filters_by_industry
+      category: business_rule
+      weight: 3
+
+- id: experiments_wall_pagination
+  purpose: The experiments wall pages with a forward cursor
+  substeps:
+    - kind: browser
+      do: Open the experiments wall and press load more to append the next page
+    - kind: pytest
+      test: test_output.py::test_experiments_wall_pagination_cursor
+      category: core_outcome
+      weight: 5
+
+- id: case_study_media_from_store
+  purpose: A published case study serves its media from the object store
+  substeps:
+    - kind: browser
+      do: Open a published case study and confirm its media renders on the page
+    - kind: pytest
+      test: test_output.py::test_published_case_study_media_served_from_store
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_case_study_media_persisted_as_object_not_db_blob
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: draft_case_study_forbidden_to_public
+  purpose: A draft case study and its media are refused to the public
+  substeps:
+    - kind: browser
+      do: As a visitor open a draft case study address and confirm a not-found page is shown
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_detail_not_found
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_media_not_publicly_readable
+      critical: true
+      category: security
+      weight: 5
+
+- id: publish_makes_draft_public
+  purpose: Publishing a draft makes the case study public
+  substeps:
+    - kind: browser
+      do: Sign in as an editor, publish a draft case study, then open it as a visitor
+    - kind: pytest
+      test: test_output.py::test_publish_makes_case_study_and_media_public
+      category: core_outcome
+      weight: 5
+
+- id: services_proof_row
+  purpose: A service detail shows the case studies that credited it
+  substeps:
+    - kind: browser
+      do: Open a documented service and confirm its proof row of case studies
+    - kind: pytest
+      test: test_output.py::test_service_detail_shows_proof_row
+      category: business_rule
+      weight: 3
+
+- id: articles_index_pinned
+  purpose: The article index shows published articles with one pinned
+  substeps:
+    - kind: browser
+      do: Open the article index and confirm one pinned article at the head
+    - kind: pytest
+      test: test_output.py::test_article_index_published_with_one_pinned
+      category: business_rule
+      weight: 3
+
+- id: case_study_unknown_industry_invalid_rejected
+  purpose: A case study with an unknown industry is refused
+  substeps:
+    - kind: browser
+      do: As an editor try to save a case study with an industry that is not on the list and read the reason
+    - kind: pytest
+      test: test_output.py::test_case_study_rejects_unknown_industry
+      category: validation
+      weight: 3
+
+- id: seed_integrity
+  purpose: The seeded catalogue is stable across reads
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent
+      category: data_integrity
+      weight: 5
+
+- id: enquiry_submission
+  purpose: A valid enquiry is persisted and acknowledged
+  substeps:
+    - kind: browser
+      do: Fill the enquiry form with a valid name, email and message and submit to the acknowledgement page
+    - kind: pytest
+      test: test_output.py::test_enquiry_submission_persists_one_record
+      category: core_outcome
+      weight: 5
+
+- id: concurrent_duplicate_enquiry
+  purpose: Two simultaneous submissions with one key create one enquiry
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_duplicate_enquiry_single_record
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: enquiry_short_message_invalid_rejected
+  purpose: An enquiry with a short message is refused
+  substeps:
+    - kind: browser
+      do: Submit the enquiry form with a message that is too short and read the inline reason
+    - kind: pytest
+      test: test_output.py::test_enquiry_rejects_short_message
+      category: validation
+      weight: 3
+
+- id: editor_access_control_denied
+  purpose: The studio inbox and managing endpoints refuse anonymous callers
+  substeps:
+    - kind: browser
+      do: Open the editor console with no session and confirm the sign in page is shown
+    - kind: pytest
+      test: test_output.py::test_editor_login
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiries_inbox_editor_only
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_editor_endpoint_refused
+      critical: true
+      category: security
+      weight: 5
+
+- id: signup_duplicate_short_rejected
+  purpose: Signup refuses a duplicate email and a short password, and no secret ships
+  substeps:
+    - kind: browser
+      do: On the editor signup form enter an already used email and a short password and read each reason
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_duplicate_email
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_short_password
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secret_in_bundle
+      category: security
+      weight: 5
+
+- id: static_pages_sitemap_notfound
+  purpose: Privacy, sitemap, a custom not-found page and page view logging
+  substeps:
+    - kind: browser
+      do: Open the privacy page and the sitemap from the footer, then visit an unknown route
+    - kind: pytest
+      test: test_output.py::test_privacy_page_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_published_routes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_route_returns_custom_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_view_recorded_for_public_route
+      category: data_integrity
+      weight: 5

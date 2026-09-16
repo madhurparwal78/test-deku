@@ -1,0 +1,220 @@
+- id: visitor_reads_the_published_site
+  purpose: A signed-out visitor reads the published rooms in order on the public site
+  substeps:
+    - kind: browser
+      do: Open the atrium rooms page and move through the published rooms in order without signing in
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: presentation
+      weight: 1
+      cov: C-CF-01 (earned: the health readiness probe is precisely this item)
+    - kind: pytest
+      test: test_output.py::test_published_site_lists_rooms_in_order
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-02
+
+- id: visitor_reads_a_room_scene
+  purpose: A published room scene image is served from the stored object
+  substeps:
+    - kind: browser
+      do: Open a published room and confirm the room scene image loads for a signed-out visitor
+      cov: C-CF-03
+    - kind: pytest
+      test: test_output.py::test_published_scene_served_from_store
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-03
+
+- id: visitor_plays_the_record
+  purpose: The header player lists the published releases in order
+  substeps:
+    - kind: browser
+      do: Press play in the header and confirm the published releases step through in order
+      cov: C-CF-04
+    - kind: pytest
+      test: test_output.py::test_header_player_lists_releases_in_order
+      category: business_rule
+      weight: 3
+      cov: C-CF-04
+
+- id: visitor_signs_the_guest_book
+  purpose: A signed-in visitor signs one standing note and a signed-out visitor cannot
+  substeps:
+    - kind: browser
+      do: Sign in as a visitor, sign the guest book beneath the last room, and confirm the note joins the book in place
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_visitor_signs_one_note
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_sign_missing_text_refused
+      category: validation
+      weight: 3
+      cov: C-TR-01
+
+- id: anonymous_guest_book_sign_is_denied
+  purpose: A signed-out guest-book sign is denied and writes nothing
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_anonymous_sign_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-05
+
+- id: duplicate_guest_book_note_is_rejected
+  purpose: A second standing note by one visitor on one site is rejected
+  substeps:
+    - kind: browser
+      do: Sign the guest book a second time on the same site and confirm the second attempt is refused in place
+      cov: C-TR-02
+    - kind: pytest
+      test: test_output.py::test_duplicate_note_refused
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-02
+
+- id: creator_uploads_a_scene_and_publishes
+  purpose: The creator uploads a room scene to the store and publishes the working copy
+  substeps:
+    - kind: browser
+      do: Sign in as the creator, upload a new room scene in the studio, and publish the site
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_creator_upload_writes_scene_object
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_publish_copies_working_copy_to_snapshot
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-07
+
+- id: edit_after_publish_waits_for_republish
+  purpose: A room edit after publishing stays off the public read until the next publish
+  substeps:
+    - kind: browser
+      do: Edit a published room in the studio and confirm a fresh visitor still reads the last published version
+      cov: C-DM-02
+    - kind: pytest
+      test: test_output.py::test_edit_after_publish_hidden_until_republish
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-02
+    - kind: pytest
+      test: test_output.py::test_public_read_reconciles_snapshot
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
+
+- id: creator_reorders_the_rooms
+  purpose: The creator sets the order of the rooms on the owned site
+  substeps:
+    - kind: browser
+      do: Reorder the rooms in the studio and confirm the new order after a republish
+      cov: C-CF-10
+    - kind: pytest
+      test: test_output.py::test_creator_reorders_rooms
+      category: business_rule
+      weight: 3
+      cov: C-CF-10
+
+- id: creator_moderates_the_guest_book
+  purpose: The creator hides a note off the public book and restores it
+  substeps:
+    - kind: browser
+      do: Sign in as the creator, hide a standing note so it leaves the public book, and restore it
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_creator_hides_note_off_public_book
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_creator_restores_hidden_note
+      category: business_rule
+      weight: 3
+      cov: C-CF-09
+
+- id: studio_forbidden_to_others
+  purpose: Studio authorization holds on the server against signed-out and visitor callers
+  substeps:
+    - kind: browser
+      do: Confirm the studio cannot be reached by a signed-out visitor or a signed-in visitor
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_studio_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-01 (earned: an anonymous studio request is precisely this denial)
+    - kind: pytest
+      test: test_output.py::test_studio_denied_to_visitor
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-02
+
+- id: cross_owner_write_is_forbidden
+  purpose: A creator writing against a site the caller does not own is forbidden
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_creator_cannot_write_others_site
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-03
+
+- id: a_draft_site_stays_private
+  purpose: A draft site and its room scene are not public
+  substeps:
+    - kind: browser
+      do: Open the draft nightshift site without signing in and confirm nothing is shown
+      cov: C-TR-03
+    - kind: pytest
+      test: test_output.py::test_draft_site_read_not_found
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-03
+    - kind: pytest
+      test: test_output.py::test_draft_scene_not_public
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-04
+
+- id: launch_surfaces_are_present
+  purpose: The privacy page, distinct route titles and the sitemap are served
+  substeps:
+    - kind: browser
+      do: Open the privacy page from the footer and confirm the rooms page and the privacy page read as distinct pages
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_privacy_page_reachable
+      category: presentation
+      weight: 1
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_public_routes_have_distinct_titles
+      category: presentation
+      weight: 1
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_public_routes
+      category: presentation
+      weight: 1
+      cov: C-TR-07

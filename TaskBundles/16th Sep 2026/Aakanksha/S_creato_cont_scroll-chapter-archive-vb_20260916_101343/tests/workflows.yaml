@@ -1,0 +1,211 @@
+- id: visitor_reads_the_published_story
+  purpose: A signed-out visitor reads the published chapters in story order
+  substeps:
+    - kind: browser
+      do: Open the story and scroll the published chapters in order without signing in
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: presentation
+      weight: 1
+      cov: C-CF-01 (earned: the health readiness probe is precisely this item)
+    - kind: pytest
+      test: test_output.py::test_chapters_list_published_only
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-02
+
+- id: visitor_reads_a_chapter_poster
+  purpose: A published chapter poster is served from the stored object
+  substeps:
+    - kind: browser
+      do: Open a published chapter and confirm the chapter poster image loads for a signed-out visitor
+      cov: C-CF-03
+    - kind: pytest
+      test: test_output.py::test_chapter_poster_image_from_store
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-03
+
+- id: curator_publishes_a_chapter
+  purpose: A curator publishes a draft chapter to the public story
+  substeps:
+    - kind: browser
+      do: Sign in as the curator and publish a draft chapter so a fresh visitor finds it in the story
+      cov: C-CF-04
+    - kind: pytest
+      test: test_output.py::test_curator_publishes_chapter
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-04
+
+- id: member_captures_a_frame
+  purpose: A member captures a frame into the archive and an untitled capture is refused
+  substeps:
+    - kind: browser
+      do: Sign in as a member, capture a frame from a chapter, give it a title and save it
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_member_captures_a_frame
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_capture_missing_title_refused
+      category: validation
+      weight: 3
+      cov: C-TR-01
+
+- id: archive_travels_across_devices
+  purpose: A member archive and reading position read back on a fresh session
+  substeps:
+    - kind: browser
+      do: Sign in as a member on a fresh session and confirm the same archive and reading place are waiting
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_archive_and_position_persist_across_session
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-06
+
+- id: member_reorders_and_publishes_a_route
+  purpose: A member reorders the captures in a route and publishes it to the index
+  substeps:
+    - kind: browser
+      do: Sign in as a member, reorder the captures in a route, and publish it so another visitor can open it
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_member_reorders_route_captures
+      category: business_rule
+      weight: 3
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_member_publishes_route_to_index
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-08
+
+- id: route_publish_below_two_is_refused
+  purpose: A route published with fewer than two captures is refused
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_route_publish_below_two_refused
+      category: business_rule
+      weight: 3
+      cov: C-TR-04
+
+- id: curator_features_a_route
+  purpose: A curator features a published route and the story stays reconciled with the rows
+  substeps:
+    - kind: browser
+      do: Sign in as the curator and feature a published route so it is promoted on the index
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_curator_features_a_route
+      category: business_rule
+      weight: 3
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_public_story_reconciles_rows
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
+
+- id: visitor_chooses_a_cookie_preference
+  purpose: A first-visit cookie choice survives a reload
+  substeps:
+    - kind: browser
+      do: Choose a cookie preference on a first visit and confirm the notice is not shown again after a reload
+      cov: C-CF-10
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_persists
+      category: business_rule
+      weight: 3
+      cov: C-CF-10
+
+- id: member_and_curator_endpoints_denied
+  purpose: The member and curator endpoints hold on the server against signed-out and cross-role callers
+  substeps:
+    - kind: browser
+      do: Confirm a member endpoint is refused to a signed-out visitor and the curator queue to a member
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_member_endpoint_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_curator_endpoint_denied_to_member
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-02
+
+- id: cross_owner_route_write_is_denied
+  purpose: A member writing a route they do not own is denied
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_member_cannot_write_others_route
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-03
+
+- id: draft_content_stays_private
+  purpose: A draft chapter, its poster and a draft route are not public
+  substeps:
+    - kind: browser
+      do: Open a draft chapter address and a draft route without signing in and confirm nothing is shown
+      cov: C-TR-02
+    - kind: pytest
+      test: test_output.py::test_draft_chapter_read_not_found
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-02
+    - kind: pytest
+      test: test_output.py::test_draft_chapter_poster_not_public
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-03
+    - kind: pytest
+      test: test_output.py::test_draft_route_not_public
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-05
+
+- id: launch_surfaces_are_present
+  purpose: Distinct titles, security headers, no frontend secrets and a social preview are served
+  substeps:
+    - kind: browser
+      do: Open the story and the routes index and confirm the two public routes read as distinct pages
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_public_routes_have_distinct_titles
+      category: presentation
+      weight: 1
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_responses_carry_security_headers
+      category: presentation
+      weight: 1
+      cov: C-TR-07
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secrets
+      category: security
+      weight: 5
+      cov: C-TR-08 (earned: no credential in a browser download is precisely this item)
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_social_preview
+      category: presentation
+      weight: 1
+      cov: C-TR-09

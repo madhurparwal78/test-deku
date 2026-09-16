@@ -1,0 +1,177 @@
+- id: health_and_storefront
+  purpose: A visitor opens the founder letter and the catalogue and a seeded account signs in
+  substeps:
+    - kind: browser
+      do: Open the founder letter over the workshop film, follow the primary action into the shop, then sign in as the seeded customer
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_login
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_catalogue_lists_products
+      category: business_rule
+      weight: 3
+
+- id: cart_add_and_price_snapshot
+  purpose: Adding a variant returns a cart line that stores the price at add time
+  substeps:
+    - kind: browser
+      do: Open a product, add the camera to the cart, then open the cart and read the line
+    - kind: pytest
+      test: test_output.py::test_add_to_cart_returns_line
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cart_line_stores_price_snapshot
+      category: data_integrity
+      weight: 5
+
+- id: checkout_invoice_and_email
+  purpose: Checkout re-prices, raises one invoice, and sends a confirmation email
+  substeps:
+    - kind: browser
+      do: Add the camera, open checkout, enter a delivery address, choose a shipping method, and place the order
+    - kind: pytest
+      test: test_output.py::test_checkout_reprices_total
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_checkout_raises_invoice_on_account
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_order_confirmation_email_delivered
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_order_status_paid
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_order_persisted_in_db
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_duplicate_checkout_single
+  purpose: Two checkouts with one key place exactly one order and raise one invoice
+  substeps:
+    - kind: browser
+      do: Place a checkout, then submit the same checkout again and read the outcome
+    - kind: pytest
+      test: test_output.py::test_concurrent_duplicate_key_single_order
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_checkout_replay_no_second_invoice
+      category: data_integrity
+      weight: 5
+
+- id: orders_pagination_cursor
+  purpose: The account orders are read one page at a time with a forward cursor
+  substeps:
+    - kind: browser
+      do: Open the account orders and load a further page with the page control
+    - kind: pytest
+      test: test_output.py::test_orders_pagination_cursor
+      category: business_rule
+      weight: 3
+
+- id: register_and_flash_device
+  purpose: A customer registers a camera by serial and flashes it to a newer firmware
+  substeps:
+    - kind: browser
+      do: On the devices page register a camera by its serial, then flash it to the newest firmware release
+    - kind: pytest
+      test: test_output.py::test_register_device_duplicate_serial_refused
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_flash_device_moves_firmware
+      category: core_outcome
+      weight: 5
+
+- id: flash_forbidden_on_other_device
+  purpose: A device belonging to another account cannot be flashed
+  substeps:
+    - kind: browser
+      do: Sign in as the second customer and confirm the first customer's device is not reachable
+    - kind: pytest
+      test: test_output.py::test_cannot_flash_other_account_device
+      critical: true
+      category: security
+      weight: 5
+
+- id: unauthenticated_and_cross_account_denied
+  purpose: An anonymous caller and a cross-account read are refused server side
+  substeps:
+    - kind: browser
+      do: Open an account route with no session and confirm the login page is shown
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_account_route_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cross_account_order_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secret_in_bundle
+      category: security
+      weight: 5
+
+- id: signup_duplicate_and_short_password
+  purpose: Signup refuses a duplicate email and a short password
+  substeps:
+    - kind: browser
+      do: On the signup form enter an already used email and a short password and read each inline reason
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_duplicate_email
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_short_password
+      category: validation
+      weight: 3
+
+- id: seed_is_idempotent
+  purpose: The seeded catalogue is stable across reads
+  substeps:
+    - kind: browser
+      do: Reopen the shop and confirm the catalogue holds the same products
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent
+      category: data_integrity
+      weight: 5
+
+- id: cookie_choice_persists
+  purpose: A first-time visitor is asked once about cookies and the choice survives a reload
+  substeps:
+    - kind: browser
+      do: On a first visit answer the cookie choice, then reload and confirm it is remembered
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_persists
+      category: business_rule
+      weight: 3
+
+- id: page_view_and_contact_spam
+  purpose: Page views are recorded and a bot contact submission is refused
+  substeps:
+    - kind: browser
+      do: Open a few pages, then submit the contact form and read the outcome
+    - kind: pytest
+      test: test_output.py::test_page_view_recorded
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_contact_spam_refused
+      category: validation
+      weight: 3

@@ -1,0 +1,213 @@
+- id: health_and_public_site
+  purpose: A visitor opens the public site and a seeded account signs in
+  substeps:
+    - kind: browser
+      do: Open the public site, read a post's free portion, then sign in as the seeded publisher
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_login
+      category: core_outcome
+      weight: 5
+
+- id: posts_pagination_cursor
+  purpose: The posts list is read one page at a time with a forward cursor
+  substeps:
+    - kind: browser
+      do: Open the posts list and load a further page with the page control
+    - kind: pytest
+      test: test_output.py::test_posts_pagination_cursor
+      category: business_rule
+      weight: 3
+
+- id: author_writes_and_publishes_post
+  purpose: An author writes a post and publishing stores its audio edition
+  substeps:
+    - kind: browser
+      do: In the composer write a short post, publish it, then open it on the public site
+    - kind: pytest
+      test: test_output.py::test_author_creates_draft_post
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_stores_one_audio_object
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audio_edition_persisted_as_object_not_db_blob
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: gate_projection_and_commit
+  purpose: Moving the gate recomputes the projection and committing writes the paywall
+  substeps:
+    - kind: browser
+      do: Open a post's audience field, move the gate to premium, read the projected reach and revenue, then commit
+    - kind: pytest
+      test: test_output.py::test_projection_reach_counts_cohort
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_projection_refuses_below_min_cohort
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_gate_commit_writes_paywall
+      category: business_rule
+      weight: 3
+
+- id: gate_rejects_invalid_tier
+  purpose: A gate naming a tier that does not exist is refused
+  substeps:
+    - kind: browser
+      do: Try to gate a post at a tier that does not exist and read the inline reason
+    - kind: pytest
+      test: test_output.py::test_gate_rejects_unknown_tier
+      category: validation
+      weight: 3
+
+- id: paywall_forbidden_to_free_reader
+  purpose: A gated audio edition is refused to a reader who has not paid
+  substeps:
+    - kind: browser
+      do: As a free reader open the gated post and confirm its edition offers no play control
+    - kind: pytest
+      test: test_output.py::test_gated_edition_denied_to_free_reader
+      critical: true
+      category: security
+      weight: 5
+
+- id: entitled_subscriber_plays_edition
+  purpose: An entitled subscriber can play the gated audio edition
+  substeps:
+    - kind: browser
+      do: As a premium subscriber open the gated post and play its audio edition
+    - kind: pytest
+      test: test_output.py::test_gated_edition_streams_to_entitled_subscriber
+      category: core_outcome
+      weight: 5
+
+- id: tiers_and_discount_price
+  purpose: A discount offer resolves the charged subscription amount
+  substeps:
+    - kind: browser
+      do: Open subscribe, apply the discount code, and read the resolved price
+    - kind: pytest
+      test: test_output.py::test_premium_price_is_eight_hundred
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_discount_resolves_amount
+      category: business_rule
+      weight: 3
+
+- id: concurrent_duplicate_subscribe_single
+  purpose: Two simultaneous subscribes with one key create exactly one subscription
+  substeps:
+    - kind: browser
+      do: Sign up a new reader and subscribe to premium with the discount code
+    - kind: pytest
+      test: test_output.py::test_concurrent_duplicate_key_creates_single_subscription
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_subscribe_replay_no_second_ledger_transaction
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_subscribe_books_balanced_ledger_pair
+      category: data_integrity
+      weight: 5
+
+- id: ledger_reconciles_balanced
+  purpose: The double-entry ledger reconciles debits against credits
+  substeps:
+    - kind: browser
+      do: Open the ledger and read the balanced transactions with their debit and credit columns
+    - kind: pytest
+      test: test_output.py::test_ledger_reconciles_debits_equal_credits
+      category: data_integrity
+      weight: 5
+
+- id: newsletter_release_no_duplicate_delivery
+  purpose: Re-releasing a post to a segment creates no duplicate delivery
+  substeps:
+    - kind: browser
+      do: Release a post to a segment, then re-release it and confirm no recipient is served twice
+    - kind: pytest
+      test: test_output.py::test_release_creates_deliveries_no_duplicates
+      category: data_integrity
+      weight: 5
+
+- id: reader_forbidden_and_unauthenticated_denied
+  purpose: A reader and an anonymous caller are refused every author surface
+  substeps:
+    - kind: browser
+      do: Sign in as a reader and confirm the composer and the audience are not reachable
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_author_forbidden
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_denied_author_endpoint
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_access_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secret_in_bundle
+      category: security
+      weight: 5
+
+- id: signup_duplicate_and_short_password
+  purpose: Signup refuses a duplicate email and a short password and the seed is stable
+  substeps:
+    - kind: browser
+      do: On the signup form enter an already used email and a short password and read each inline reason
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_duplicate_email
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_short_password
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent
+      category: data_integrity
+      weight: 5
+
+- id: static_pages_links_and_previews
+  purpose: The privacy page, internal links, sitemap, previews and alt text hold
+  substeps:
+    - kind: browser
+      do: Open the privacy page from the footer, then follow the site's internal links
+    - kind: pytest
+      test: test_output.py::test_privacy_page_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_internal_links_resolve
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_public_routes_and_robots
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_social_preview_tags_present
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_content_images_have_alt_text
+      category: presentation
+      weight: 1

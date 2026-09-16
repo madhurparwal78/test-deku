@@ -1,0 +1,207 @@
+- id: app_health_and_catalogue
+  purpose: A visitor signs in and browses the voice catalogue with filters
+  substeps:
+    - kind: browser
+      do: Sign in as the seeded author and open the voice catalogue, then filter it by a use case and by a language
+    - kind: pytest
+      test: test_output.py::test_health_ok
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_catalogue_filters_by_use_case
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_catalogue_filters_by_language
+      category: business_rule
+      weight: 3
+
+- id: catalogue_pagination_cursor
+  purpose: The catalogue is read one page at a time with a forward cursor
+  substeps:
+    - kind: browser
+      do: Open the catalogue and load a further page of voices with the page control
+    - kind: pytest
+      test: test_output.py::test_catalogue_pagination_cursor
+      category: core_outcome
+      weight: 5
+
+- id: author_generates_take_and_saves
+  purpose: An author generates a take that stores audio and lands in the library
+  substeps:
+    - kind: browser
+      do: In the studio write a short script, pick a voice, generate a take, then open the asset library and play it
+    - kind: pytest
+      test: test_output.py::test_generate_charges_one_hundred_credits
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_generate_stores_one_object_in_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_take_audio_persisted_as_object_not_db_blob
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_library_lists_owner_takes_newest_first
+      category: data_integrity
+      weight: 5
+
+- id: generate_empty_script_invalid_rejected
+  purpose: A generate request with an empty script is refused
+  substeps:
+    - kind: browser
+      do: In the studio try to generate with an empty script and read the inline reason
+    - kind: pytest
+      test: test_output.py::test_generate_rejects_empty_script
+      category: validation
+      weight: 3
+
+- id: concurrent_duplicate_key_single_take
+  purpose: Two simultaneous generations with one key create exactly one take
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_duplicate_key_creates_single_take
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: generate_over_balance_limit
+  purpose: A generation the balance cannot cover is refused
+  substeps:
+    - kind: browser
+      do: Sign in as the low balance author and try to generate a take, then read the refusal
+    - kind: pytest
+      test: test_output.py::test_generate_over_balance_rejected
+      category: business_rule
+      weight: 3
+
+- id: seed_and_balance_integrity
+  purpose: The seed is stable and the balance never goes negative
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_balance_never_driven_below_zero
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent
+      category: data_integrity
+      weight: 5
+
+- id: publish_take_to_gallery
+  purpose: A published take is playable by any reader in the gallery
+  substeps:
+    - kind: browser
+      do: Publish an owned take, then sign in as the reader and play it from the gallery
+    - kind: pytest
+      test: test_output.py::test_published_take_appears_in_gallery
+      category: core_outcome
+      weight: 5
+
+- id: unpublish_removes_from_gallery
+  purpose: Returning a take to private removes it from the gallery
+  substeps:
+    - kind: browser
+      do: Publish a take, then return it to private, and confirm the gallery no longer lists it
+    - kind: pytest
+      test: test_output.py::test_unpublish_removes_take_from_gallery
+      category: business_rule
+      weight: 3
+
+- id: private_take_forbidden_to_non_owner
+  purpose: A private take audio is refused to any account but its owner
+  substeps:
+    - kind: browser
+      do: As the reader, open a shared gallery take and confirm a private take offers no play control
+    - kind: pytest
+      test: test_output.py::test_private_take_object_not_readable_by_non_owner
+      critical: true
+      category: security
+      weight: 5
+
+- id: reader_forbidden_from_authoring
+  purpose: A reader cannot generate a take or manage keys
+  substeps:
+    - kind: browser
+      do: Sign in as the reader and confirm the studio and keys pages are not reachable
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_generate_forbidden
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_denied_author_endpoint
+      category: security
+      weight: 5
+
+- id: unauthenticated_access_denied
+  purpose: An anonymous caller is refused every protected surface
+  substeps:
+    - kind: browser
+      do: Open a protected route with no session and confirm the sign in page is shown
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_access_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: signup_duplicate_short_rejected
+  purpose: Signup refuses a duplicate email and a short password
+  substeps:
+    - kind: browser
+      do: On the signup form enter an already used email and a short password and read each inline reason
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_duplicate_email
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_rejects_short_password
+      category: validation
+      weight: 3
+
+- id: metered_keys_and_usage
+  purpose: An author creates a metered key shown once and usage is recorded
+  substeps:
+    - kind: browser
+      do: Create an API key, copy the shown secret, then reopen the keys page and confirm only the prefix is shown
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_login
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_api_key_shown_once_on_creation
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_key_list_hides_secret
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_key_generation_records_usage_event
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secret_in_bundle
+      category: security
+      weight: 5
+
+- id: static_pages_and_not_found
+  purpose: The privacy and terms pages render and an unknown route is a custom not found
+  substeps:
+    - kind: browser
+      do: Open the privacy page and the terms page from the footer, then visit an unknown route
+    - kind: pytest
+      test: test_output.py::test_privacy_page_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_route_returns_custom_not_found
+      category: presentation
+      weight: 1

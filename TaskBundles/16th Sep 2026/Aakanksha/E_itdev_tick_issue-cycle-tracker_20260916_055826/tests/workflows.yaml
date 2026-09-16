@@ -1,0 +1,312 @@
+- id: member_signs_in
+  purpose: A seeded member signs in and receives a bearer token
+  substeps:
+    - kind: browser
+      do: Open the app and sign in as member@example.com with the seeded password
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_signin_issues_token
+      category: security
+      weight: 5
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_signin_wrong_password_refused
+      category: security
+      weight: 5
+      cov: C-CF-03
+
+- id: member_files_issue
+  purpose: A member files an issue and the server allocates its team key
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com and file a new issue with a title
+      cov: C-CF-04 (earned: filing a new issue exercises the server key allocation)
+    - kind: pytest
+      test: test_output.py::test_file_issue_assigns_team_key
+      category: business_rule
+      weight: 3
+      cov: C-CF-04
+    - kind: pytest
+      test: test_output.py::test_new_issue_starts_in_backlog_unassigned
+      category: business_rule
+      weight: 3
+      cov: C-CF-05
+
+- id: blank_title_invalid_is_refused
+  purpose: An issue filed with an empty title is refused as invalid
+  substeps:
+    - kind: browser
+      do: Attempt to file an issue with an empty title and see it refused inline
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_blank_title_refused
+      category: validation
+      weight: 3
+      cov: C-CF-06
+
+- id: lead_triages_inbox
+  purpose: A lead reads the inbox of untriaged issues
+  substeps:
+    - kind: browser
+      do: Sign in as lead@example.com and open the inbox of untriaged issues
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_lead_reads_inbox
+      category: business_rule
+      weight: 3
+      cov: C-CF-07
+
+- id: lead_assigns_owner
+  purpose: A lead assigns an inbox issue to a member and the assignee persists
+  substeps:
+    - kind: browser
+      do: As lead assign an inbox issue to member@example.com and see it leave the inbox
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_assign_persists_new_assignee
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-08
+
+- id: assignment_notifies_owner
+  purpose: Assigning an issue delivers exactly one notification email to the owner
+  substeps:
+    - kind: browser
+      do: As lead assign an issue to member@example.com and confirm the owner is notified
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_assignment_delivers_one_notification_email
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_assignment_email_subject_prefix
+      category: notification
+      weight: 3
+      cov: C-CF-10
+
+- id: minor_edit_sends_no_email
+  purpose: A minor edit sends no email while a foreign move sends an update email
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_minor_change_sends_no_notification_email
+      category: notification
+      weight: 3
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_foreign_move_sends_update_email
+      category: notification
+      weight: 3
+      cov: C-CF-12
+
+- id: member_moves_owned_issue
+  purpose: A member moves an owned issue and the change survives a reload
+  substeps:
+    - kind: browser
+      do: As member move an owned issue to the next column and reload the board
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_member_move_owned_survives_reload
+      category: data_integrity
+      weight: 5
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_state_change_writes_activity_record
+      category: data_integrity
+      weight: 5
+      cov: C-DM-04
+
+- id: member_cannot_move_unowned_issue
+  purpose: A member is refused when moving an issue owned by another member
+  substeps:
+    - kind: browser
+      do: As member2 confirm there is no way to move an issue owned by member
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_member_move_unowned_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_denied_move_leaves_state_unchanged
+      category: data_integrity
+      weight: 5
+      cov: C-RL-02
+
+- id: member_forbidden_from_inbox
+  purpose: A member is refused when requesting the inbox
+  substeps:
+    - kind: browser
+      do: As member confirm the inbox route is not reachable
+      cov: C-RL-03
+    - kind: pytest
+      test: test_output.py::test_member_inbox_request_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-03
+
+- id: cross_team_read_denied
+  purpose: A request for another team's issue is answered as not found
+  substeps:
+    - kind: browser
+      do: Attempt to open another team's issue by its address and see it not found
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_cross_team_issue_not_found
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-04
+
+- id: admin_cannot_demote_self
+  purpose: An admin is refused when removing its own admin role
+  substeps:
+    - kind: browser
+      do: As admin open the members table and confirm the own role cell is fixed
+      cov: C-RL-05
+    - kind: pytest
+      test: test_output.py::test_admin_self_demote_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-05
+    - kind: pytest
+      test: test_output.py::test_lead_members_endpoint_denied
+      category: security
+      weight: 5
+      cov: C-RL-06
+
+- id: lead_closes_cycle
+  purpose: Closing a cycle returns unfinished issues to the inbox and reports the count
+  substeps:
+    - kind: browser
+      do: As lead close the active cycle and read the count of returned issues
+      cov: C-CF-14
+    - kind: pytest
+      test: test_output.py::test_close_cycle_returns_unfinished_to_inbox
+      category: business_rule
+      weight: 3
+      cov: C-CF-14
+    - kind: pytest
+      test: test_output.py::test_close_cycle_reports_moved_count
+      category: business_rule
+      weight: 3
+      cov: C-CF-15
+
+- id: closed_cycle_is_read_only
+  purpose: A closed cycle refuses any move of its issues
+  substeps:
+    - kind: browser
+      do: Open a closed cycle and confirm its cards cannot be dragged
+      cov: C-CF-16
+    - kind: pytest
+      test: test_output.py::test_closed_cycle_refuses_move
+      category: business_rule
+      weight: 3
+      cov: C-CF-16
+
+- id: concurrent_cycle_activation_conflict
+  purpose: Two concurrent activations of a second cycle resolve to one active cycle
+  substeps:
+    - kind: browser
+      do: Confirm the board shows exactly one active cycle for the team
+      cov: C-DM-05
+    - kind: pytest
+      test: test_output.py::test_concurrent_cycle_activation_single_winner
+      category: data_integrity
+      weight: 5
+      cov: C-TR-01 (earned: races two activations and asserts exactly one active cycle wins)
+    - kind: pytest
+      test: test_output.py::test_cycle_activation_conflict_rejected
+      category: data_integrity
+      weight: 5
+      cov: C-TR-02
+    - kind: pytest
+      test: test_output.py::test_single_active_cycle_invariant
+      category: data_integrity
+      weight: 5
+      cov: C-DM-05
+
+- id: duplicate_create_is_idempotent
+  purpose: A replayed create-issue request creates no duplicate issue
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_idempotent_create_issue_replay
+      category: data_integrity
+      weight: 5
+      cov: C-TR-03
+    - kind: pytest
+      test: test_output.py::test_issue_keys_unique_under_contention
+      category: data_integrity
+      weight: 5
+      cov: C-TR-04 (earned: files under contention and asserts every allocated key is distinct)
+
+- id: seeded_boundary_present
+  purpose: The seeded team, members and cycles are present for grading
+  substeps:
+    - kind: browser
+      do: Sign in and confirm the board shows the seeded active cycle
+      cov: C-DM-02
+    - kind: pytest
+      test: test_output.py::test_seed_team_orbit_has_members
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
+    - kind: pytest
+      test: test_output.py::test_seed_active_cycle_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-02
+    - kind: pytest
+      test: test_output.py::test_seed_closed_cycle_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-03
+
+- id: no_secrets_and_safe_headers
+  purpose: The product ships no credential and sets safe response headers
+  substeps:
+    - kind: browser
+      do: Load a page and confirm no font file or image file is fetched
+      cov: C-CN-01
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secrets
+      category: security
+      weight: 5
+      cov: C-TR-05 (earned: loads pages and asserts no credential appears in what the browser downloads)
+    - kind: pytest
+      test: test_output.py::test_strict_transport_security_header
+      category: security
+      weight: 5
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_nosniff_content_type_header
+      category: security
+      weight: 5
+      cov: C-TR-07
+
+- id: health_comments_and_page_log
+  purpose: The health route, comments and the admin page-view log work
+  substeps:
+    - kind: browser
+      do: Add a comment on an issue and see it appear with its author
+      cov: C-CF-17
+    - kind: pytest
+      test: test_output.py::test_health_ready
+      category: presentation
+      weight: 1
+      cov: C-CF-01
+    - kind: pytest
+      test: test_output.py::test_comment_records_author
+      category: business_rule
+      weight: 3
+      cov: C-CF-17
+    - kind: pytest
+      test: test_output.py::test_admin_reads_page_view_log
+      category: business_rule
+      weight: 3
+      cov: C-CF-18

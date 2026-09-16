@@ -1,0 +1,282 @@
+- id: reader_signs_up_and_in
+  purpose: A visitor signs up as a reader and signs in
+  substeps:
+    - kind: browser
+      do: Open the app, sign up as a reader, and sign in
+      cov: C-CF-03
+    - kind: browser
+      do: On a page, confirm the primary action wears the one accent colour and nothing else does
+      cov: C-UX-03
+    - kind: pytest
+      test: test_output.py::test_signup_creates_reader
+      category: business_rule
+      weight: 3
+      cov: C-CF-03
+    - kind: pytest
+      test: test_output.py::test_login_issues_token
+      category: security
+      weight: 5
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_login_wrong_password_refused
+      category: security
+      weight: 5
+      cov: C-CF-04
+
+- id: health_and_safe_headers
+  purpose: The health route, security headers and favicon are served
+  substeps:
+    - kind: browser
+      do: Load a page and see the site favicon in the browser tab
+      cov: C-TR-08
+    - kind: pytest
+      test: test_output.py::test_health_ready
+      category: presentation
+      weight: 1
+      cov: C-CF-01
+    - kind: pytest
+      test: test_output.py::test_strict_transport_security_header
+      category: security
+      weight: 5
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_nosniff_content_type_header
+      category: security
+      weight: 5
+      cov: C-TR-07
+    - kind: pytest
+      test: test_output.py::test_favicon_declared_and_served
+      category: presentation
+      weight: 1
+      cov: C-TR-08 (earned: fetches the favicon the document head declares)
+
+- id: author_publishes_chapter
+  purpose: The author creates a chapter whose poster is stored and publishes it
+  substeps:
+    - kind: browser
+      do: As author create a knitting chapter with a poster and publish it
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_create_chapter_stores_poster_object
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_publish_makes_poster_public
+      category: business_rule
+      weight: 3
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_poster_object_in_store_not_on_disk
+      category: data_integrity
+      weight: 5
+      cov: C-TR-04
+
+- id: draft_poster_forbidden
+  purpose: A draft chapter poster is refused to a stranger and a reader
+  substeps:
+    - kind: browser
+      do: Confirm a draft chapter poster stays refused off the public tour
+      cov: C-CF-07 (earned: walks the tour and confirms the draft chapter poster is not reachable)
+    - kind: pytest
+      test: test_output.py::test_draft_poster_refused_to_stranger
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_reader_draft_poster_refused
+      category: security
+      weight: 5
+      cov: C-RL-05
+
+- id: author_unpublishes_chapter
+  purpose: The author unpublishes a chapter, returning it to draft
+  substeps:
+    - kind: browser
+      do: As author unpublish a published chapter
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_unpublish_returns_chapter_to_draft
+      category: business_rule
+      weight: 3
+      cov: C-CF-08
+
+- id: author_publishes_prize
+  purpose: The author publishes a prize garment with a stored image
+  substeps:
+    - kind: browser
+      do: As author publish a prize garment with an image
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_publish_prize_stores_image_object
+      category: data_integrity
+      weight: 5
+      cov: C-CF-09
+
+- id: reader_takes_tour
+  purpose: A reader takes the tour and a hotspot raises the tally
+  substeps:
+    - kind: browser
+      do: As reader take the tour through the three tinted stations in order
+      cov: C-CF-10
+    - kind: browser
+      do: A signed-in reader landing shows the tour
+      cov: C-UF-02
+    - kind: pytest
+      test: test_output.py::test_tour_lists_published_chapters_in_order
+      category: business_rule
+      weight: 3
+      cov: C-CF-10
+    - kind: pytest
+      test: test_output.py::test_hotspot_raises_tally
+      category: business_rule
+      weight: 3
+      cov: C-CF-11
+
+- id: reader_enters_the_draw
+  purpose: A reader submits a prize-draw entry that is stored
+  substeps:
+    - kind: browser
+      do: As reader open the entry form, tick the terms consent, submit, and see the confirmation
+      cov: C-CF-12
+    - kind: browser
+      do: See the registration form rise from below on a deep soft shadow
+      cov: C-UX-07
+    - kind: pytest
+      test: test_output.py::test_reader_entry_is_stored
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-12
+
+- id: entry_without_consent_is_invalid
+  purpose: An entry without the terms consent is refused as invalid
+  substeps:
+    - kind: browser
+      do: Submit the entry form without ticking the terms consent and see it refused
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_entry_without_consent_refused
+      category: validation
+      weight: 3
+      cov: C-CF-13
+
+- id: duplicate_entry_conflict
+  purpose: A reader may hold at most one entry under concurrency and replay
+  substeps:
+    - kind: browser
+      do: Confirm a reader who submits twice ends with a single entry
+      cov: C-DM-06
+    - kind: pytest
+      test: test_output.py::test_concurrent_entry_single_winner
+      category: data_integrity
+      weight: 5
+      cov: C-TR-01 (earned: races two submissions and asserts exactly one stored entry)
+    - kind: pytest
+      test: test_output.py::test_duplicate_entry_conflict_rejected
+      category: data_integrity
+      weight: 5
+      cov: C-TR-02
+    - kind: pytest
+      test: test_output.py::test_idempotent_entry_replay
+      category: data_integrity
+      weight: 5
+      cov: C-TR-03
+    - kind: pytest
+      test: test_output.py::test_single_entry_per_reader_invariant
+      category: data_integrity
+      weight: 5
+      cov: C-DM-06
+
+- id: reader_cannot_publish
+  purpose: A reader is refused when publishing a chapter
+  substeps:
+    - kind: browser
+      do: As reader confirm there is no way to publish a chapter
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_reader_publish_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-01
+
+- id: reader_forbidden_from_entries
+  purpose: A reader may not read the entry list or another reader's entry
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reader_entry_list_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-02
+    - kind: pytest
+      test: test_output.py::test_reader_other_entry_denied
+      category: security
+      weight: 5
+      cov: C-RL-03
+
+- id: signed_out_request_denied
+  purpose: A signed-out request to a reader route is refused
+  substeps:
+    - kind: browser
+      do: Signed out, request a reader route and be refused a session
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_signed_out_reader_route_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-04
+
+- id: seeded_boundary_present
+  purpose: The seeded accounts, chapters and prizes are present for grading
+  substeps:
+    - kind: browser
+      do: Sign in and see the seeded published chapters on the tour
+      cov: C-DM-03
+    - kind: pytest
+      test: test_output.py::test_seed_author_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
+    - kind: pytest
+      test: test_output.py::test_seed_readers_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-02
+    - kind: pytest
+      test: test_output.py::test_seed_published_chapters_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-03
+    - kind: pytest
+      test: test_output.py::test_seed_draft_chapter_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-04
+    - kind: pytest
+      test: test_output.py::test_seed_prizes_present
+      category: data_integrity
+      weight: 5
+      cov: C-DM-05
+
+- id: no_secrets_cookies_and_privacy
+  purpose: No credential ships, the cookie choice persists, and the privacy page is reachable
+  substeps:
+    - kind: browser
+      do: As a first-time visitor answer the cookie choice, reload, and see the choice persist
+      cov: C-CN-01
+    - kind: browser
+      do: Open the privacy page from the footer of a page
+      cov: C-CN-02
+    - kind: browser
+      do: Confirm the experience serves no image, font or media file, drawing its visuals procedurally
+      cov: C-CN-04
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secrets
+      category: security
+      weight: 5
+      cov: C-TR-05 (earned: downloads pages and asserts no credential or key appears)
