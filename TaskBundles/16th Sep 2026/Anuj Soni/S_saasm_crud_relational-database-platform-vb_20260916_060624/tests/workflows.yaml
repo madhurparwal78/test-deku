@@ -1,0 +1,462 @@
+- id: member_signs_in_and_opens_the_base_editor
+  purpose: A seeded member signs in, reaches the workspaces they hold a role in, and opens a base
+  substeps:
+    - kind: browser
+      do: Sign in at /login as editor@example.com and land on the /workspaces route listing the workspaces the account holds a role in
+      cov: C-UF-03
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_two_hundred
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_login_returns_a_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_every_seeded_account_signs_in_with_the_pinned_password
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credentials_file_is_written_at_the_app_root
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reserved_directories_exist_and_are_empty
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open the base editor route for Campaign Planning and land on the first view of the first table, with the record list beside the selected record detail in a split pane
+      cov: C-UF-04
+    - kind: browser
+      do: Request the base editor route unauthenticated, land on the login route, sign in, and return to the route originally requested
+      cov: C-UF-07, C-UF-08
+    - kind: browser
+      do: Sign out and confirm the old bearer token stops working, then read the root route redirect for a signed-in account and for an unknown visitor
+      cov: C-UF-09, C-UF-01, C-UF-02
+    - kind: browser
+      do: Sign in as owner2@example.com and read the workspaces list, which returns only the workspaces this caller holds a grant in: Harbourline Studio is listed and Northfield Commercial is absent
+      cov: C-CF-16
+    - kind: pytest
+      test: test_output.py::test_workspace_role_is_reported_for_each_seeded_account
+      category: security
+      weight: 5
+
+- id: editor_edits_a_cell_and_the_row_is_persisted
+  purpose: An editor changes a cell in a grid view and the stored row matches what the grid displayed after a reload
+  substeps:
+    - kind: browser
+      do: Change the Budget cell on Autumn Lantern in the Campaigns grid, press Enter, reload the page, and read the same amount in the grid and in the record detail beside it
+      cov: C-UF-11
+    - kind: pytest
+      test: test_output.py::test_cell_written_through_the_api_is_persisted_and_survives_a_re_read
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_stored_row_matches_the_record_endpoint_for_every_seeded_campaign
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_deliverable_rows_are_stored_in_the_database
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_computed_values_are_returned_on_every_record_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_across_a_re_read
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Open the command palette, type a table name, jump to it, create a record in the slide-over panel over the current surface, and read the new row at the bottom of the grid
+      cov: C-UF-18, C-FE-09
+    - kind: browser
+      do: Read the Campaigns grid header row staying put as the body scrolls down, and the primary column staying put as the body scrolls sideways
+      cov: C-FE-03, C-FE-04
+
+- id: rollup_climbs_two_tables_after_a_task_changes
+  purpose: A change to one task recomputes the deliverable hours and the campaign total above it
+  substeps:
+    - kind: browser
+      do: Change the Minutes of a task and watch the Hours of its deliverable and the Total Hours of its campaign change with it
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_rollup_climbs_two_tables_when_a_task_minutes_value_changes
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_symmetric_link_writes_the_mirrored_reference
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_link_deletion_leaves_no_half_of_the_pair_behind
+      category: data_integrity
+      weight: 5
+
+- id: field_type_catalogue_is_complete
+  purpose: Every field type the brief pins is offered with its configuration and its computed flag
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_field_type_catalogue_lists_all_nineteen_types
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_base_carries_its_three_tables
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_table_carries_at_least_one_grid_view
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_primary_field_is_first_and_is_never_a_computed_type
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_object_identifiers_carry_their_type_prefix
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_select_choices_carry_a_colour_name_from_the_palette
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_formula_field_is_marked_invalid
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Read a column header in the Campaigns grid and confirm the header carries the attribute naming that column's field type slug
+      cov: C-FE-13
+    - kind: browser
+      do: Read a grid row and confirm the row carries the attribute naming that record's identifier
+      cov: C-FE-14
+
+- id: rollup_aggregations_count_three_ways
+  purpose: COUNT, COUNTA and COUNTALL are three different answers over the same linked records
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_rollup_offers_all_sixteen_aggregations
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_count_counta_and_countall_return_three_different_numbers
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_lookup_configuration_blanks_the_field
+      category: business_rule
+      weight: 3
+
+- id: formula_recomputes_only_the_reached_set
+  purpose: The formula language behaves as pinned and the dependency graph stops where it should
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_formula_offers_all_twelve_functions
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_find_is_case_sensitive_and_search_is_not
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_round_rounds_half_away_from_zero
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_decimal_addition_on_money_is_exact
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cyclic_computed_configuration_is_refused_at_save
+      category: validation
+      weight: 3
+
+- id: view_filters_sorts_and_groups_a_live_query
+  purpose: A view is a live query whose filter, sort and group configuration changes what is shown
+  substeps:
+    - kind: browser
+      do: Add two conditions joined by AND to the Campaigns grid view and read the count of 2 beside the filter control in the toolbar
+      cov: C-UF-17, C-FE-02
+    - kind: browser
+      do: Switch the record surface between grid, gallery and kanban and confirm the surface carries the attribute naming the view type
+      cov: C-FE-11
+    - kind: pytest
+      test: test_output.py::test_kanban_view_stacks_by_exactly_one_single_select_field
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_group_on_a_computed_field_refuses_a_direct_create
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Filter the Campaigns grid to nothing and read the filtered-to-nothing state naming the filter responsible, then read the written empty state of a list holding no records
+      cov: C-UF-20, C-UF-19
+    - kind: browser
+      do: Read the summary row pinned at the bottom of the grid carrying a per-column aggregate
+      cov: C-FE-05
+    - kind: browser
+      do: Group the Campaigns grid by Stage and read a group header carrying its value, its record count and its collapse state
+      cov: C-FE-06
+    - kind: browser
+      do: Move the grid selection with the arrow keys, advance with tab, begin editing with Enter and cancel with Escape, following the keyboard navigation a spreadsheet teaches
+      cov: C-UX-23
+    - kind: browser
+      do: Read the Campaigns grid at the short row height where rows sit tight so a full table fits one screen
+      cov: C-UX-11
+
+- id: view_modes_lock_configuration
+  purpose: Personal and locked views refuse configuration from the accounts the brief says they refuse
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_personal_view_refuses_configuration_from_another_account
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_locked_view_refuses_configuration_until_unlocked
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_field_name_in_one_table_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Read the view sidebar and confirm a locked view carries a lock marker and a personal view carries a person marker, and confirm the table bar scrolls on overflow rather than wrapping
+      cov: C-FE-01
+
+- id: operation_log_is_append_only_and_gapless
+  purpose: Every write appends one operation, nothing rewrites one, and the sequence never repeats
+  substeps:
+    - kind: browser
+      do: Open the base history route and read the operation log newest first, with the sequence, the moment and the account on each row
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_operation_sequence_is_gapless_within_the_base
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_operation_log_row_is_never_updated_or_deleted
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_two_simultaneous_writes_take_two_different_sequences
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_auto_numbers_stay_unique_under_concurrent_creation
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replay_verification_agrees_with_the_stored_rows
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_empty_operations_page_after_the_newest_sequence
+      category: validation
+      weight: 3
+
+- id: historical_read_rebuilds_the_table_as_of_a_sequence
+  purpose: Reading the table as of a sequence returns the values of that moment with computed fields recomputed
+  substeps:
+    - kind: browser
+      do: Pick an operation in the base history, open the table as of that sequence, and read the full-width band naming the historical mode with every editing affordance gone from the grid
+      cov: C-UF-15, C-FE-08
+    - kind: pytest
+      test: test_output.py::test_historical_read_returns_the_values_stored_at_that_sequence
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_historical_read_recomputes_computed_fields_from_rebuilt_values
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_historical_read_refuses_every_change
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Open a record route and read the history of that record newest first, naming who changed which field from what to what
+      cov: C-UF-16, C-FE-07
+    - kind: pytest
+      test: test_output.py::test_record_history_reads_back_a_change_that_was_stored
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Read the base editor root attribute naming the mode: it takes live on a live table and history under a historical read
+      cov: C-FE-12
+
+- id: blocking_guard_refuses_and_leaves_nothing_behind
+  purpose: A blocking guard refuses the write in its author's own words and leaves no trace at all
+  substeps:
+    - kind: browser
+      do: Tick Done on a deliverable whose Estimate is empty and read the guard message in an inline banner that stays until it is dismissed, then reload and find Done still unticked
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_blocking_guard_refuses_the_write_with_its_authored_message
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_blocking_guard_leaves_no_stored_row_and_appends_no_operation
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_guard_refuses_a_direct_request_exactly_as_it_refuses_the_grid
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Read the guard refusal banner attribute naming the guard mode, which takes blocking on a refused write and advisory on an allowed one
+      cov: C-FE-15
+
+- id: advisory_guard_records_a_violation
+  purpose: An advisory guard allows the write and keeps its violation listed until the data stops violating
+  substeps:
+    - kind: browser
+      do: Open the guards panel route and read the advisory guard with its outstanding violation listed under it, and read the confirmation a destructive action asks for before removing a guard
+      cov: C-UF-05, C-FE-10
+    - kind: pytest
+      test: test_output.py::test_advisory_guard_allows_the_write_and_records_a_violation
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_guards_carry_their_authored_messages
+      category: business_rule
+      weight: 3
+
+- id: commenter_denied_writing_a_cell
+  purpose: A commenter reads everything and is denied every write, at the server rather than in the interface
+  substeps:
+    - kind: browser
+      do: Sign in as commenter@example.com, open the Campaigns grid, and find no editable cell anywhere in it
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_commenter_is_denied_changing_a_cell_value
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_is_denied_creating_a_record
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editor_is_denied_creating_a_field
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_creator_is_denied_creating_a_guard
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_computed_field_refuses_a_written_value
+      category: validation
+      weight: 3
+
+- id: cross_workspace_request_cannot_reach_a_base
+  purpose: A member of another workspace is answered as though the base does not exist
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_cross_workspace_request_cannot_read_a_base
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cross_workspace_request_cannot_read_a_record_by_identifier
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_workspace_list_holds_only_workspaces_the_caller_reaches
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_is_denied_at_the_api
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_expired_or_forged_token_reads_as_not_signed_in
+      category: security
+      weight: 5
+
+- id: limits_are_refused_naming_the_limit
+  purpose: Every structural limit is enforced with a refusal that names the limit and its value
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_view_refuses_a_fiftieth_filter_condition
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_view_refuses_a_fourth_grouping_level
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_view_refuses_an_eleventh_sort_level
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_view_refuses_a_fourth_level_of_filter_nesting
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_structural_limits_are_declared_on_the_base
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_long_field_name_and_long_cell_value_are_both_accepted
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duration_stores_whole_seconds
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_precision_changes_display_and_never_storage
+      category: business_rule
+      weight: 3
+
+- id: launch_surfaces_are_present_on_every_route
+  purpose: The privacy page, the favicon, the social preview and the not-found page are all real
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_readable_without_signing_in
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared_in_the_document_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_a_social_preview_that_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_distinct_preview_titles
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_with_a_way_back
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_anything_the_browser_downloads
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_absent_surfaces_answer_as_not_found
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_first_paint_delivers_complete_html_for_a_route
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open the privacy page from the footer of the sign-in page and read what the product stores about a member
+      cov: C-CF-94
+    - kind: browser
+      do: Follow every internal link on every route of the product and confirm each one resolves, then request an unknown address and read the product's own not-found page carrying a way back to the workspaces route
+      cov: C-CF-97, C-CF-99
+    - kind: browser
+      do: Read each page leading with exactly one primary action that is visually distinct from every secondary one on that page
+      cov: C-UX-19
+    - kind: browser
+      do: Read the privacy page naming how long each stored value is kept about a member
+      cov: C-CF-96
