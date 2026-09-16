@@ -1,0 +1,404 @@
+- id: visitor_reads_a_published_entry
+  purpose: A visitor with no account opens a published entry and reads it end to end
+  substeps:
+    - kind: browser
+      do: Open the home route and follow Docs into the documentation portal
+    - kind: pytest
+      test: test_output.py::test_published_entry_is_readable_by_anyone
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Follow Changelog from the header and read the newest entry end to end
+    - kind: browser
+      do: Open the glossary and follow a related-term chip to another entry
+    - kind: pytest
+      test: test_output.py::test_app_is_reachable_and_serves_the_api_on_one_origin
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_every_named_route_answers
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_render_without_client_code
+      critical: true
+      category: core_outcome
+      weight: 5
+- id: visitor_compares_plans_and_signs_up
+  purpose: A visitor compares the four plans, signs up, and lands on the dashboard
+  substeps:
+    - kind: browser
+      do: Open the pricing route and read the four plan cards, then flip the Pro card to Annual
+    - kind: pytest
+      test: test_output.py::test_plans_endpoint_returns_the_four_plans
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pricing_ladders_match_the_plan_document
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pricing_cards_carry_the_plan_attribute
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_open_signup_creates_a_reader
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: Scroll the pricing comparison matrix and read a graduated price ladder
+    - kind: browser
+      do: Press Sign up and create an account with a new address
+    - kind: pytest
+      test: test_output.py::test_blog_index_carries_its_categories_and_dates
+      category: presentation
+      weight: 1
+- id: reader_provisions_a_first_instance
+  purpose: A signed-in reader creates an application and watches its instance reach a live state
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com and create the application Taskflow
+    - kind: pytest
+      test: test_output.py::test_instance_reaches_live_through_provisioning
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publishable_key_is_unique_across_instances
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Read the publishable key on the live instance row
+    - kind: pytest
+      test: test_output.py::test_user_readme_lists_every_seeded_account
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reserved_directories_exist_and_are_empty
+      category: presentation
+      weight: 1
+- id: author_publishes_an_entry_with_an_image
+  purpose: An author drafts an entry, attaches an image, publishes, and the rendition appears with it
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com and open the studio library table
+    - kind: pytest
+      test: test_output.py::test_entry_asset_object_key_follows_the_pinned_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_uploaded_bytes_are_stored_in_the_bucket_and_nowhere_else
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publish_writes_the_rendition_in_the_same_operation
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rendition_index_enumerates_every_published_entry
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_upload_is_idempotent
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Attach the same image twice to one entry and count the attachments listed
+    - kind: browser
+      do: Press New entry, fill the slide-over, attach an image and save the draft
+    - kind: browser
+      do: Press Publish and read the confirmation banner in the studio row
+    - kind: pytest
+      test: test_output.py::test_entry_redirects_and_role_landings
+      critical: true
+      category: security
+      weight: 5
+- id: draft_is_denied_to_everyone_but_its_author
+  purpose: An unpublished entry stays unreadable on its route to every caller except its own author
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_draft_entry_is_denied_to_an_anonymous_visitor
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_entry_is_denied_to_a_reader
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_entry_is_denied_to_a_second_author
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_rendition_is_denied_to_a_second_author
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_image_is_denied_to_a_second_author
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Sign in as author2@example.com and open the other author's draft address
+    - kind: browser
+      do: Open the draft address while signed out and read the refusal
+- id: reader_cannot_write_to_the_library
+  purpose: A reader calling an author-only endpoint is refused and the library is unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_create_a_library_entry
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_author_cannot_provision_an_application
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_another_accounts_applications
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Open the dashboard as one reader and look for another account's application
+    - kind: browser
+      do: Sign in as reader@example.com and look for an authoring control in the chrome
+- id: concurrent_publish_leaves_one_winner
+  purpose: Two simultaneous publishes claiming one slug settle on exactly one published entry
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_yields_exactly_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rejected_publish_leaves_no_partial_state
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Open the studio and confirm one published entry holds the contested slug
+- id: invalid_entry_payload_is_refused
+  purpose: An entry payload missing a required field is refused as a client error
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_invalid_entry_payload_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_is_refused_and_creates_nothing
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Submit the slide-over with the title left blank and read the inline refusal
+- id: bot_submission_is_rejected_by_the_application_form
+  purpose: A decoy-filled or rapidly repeated startup application is refused and stores nothing
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_startup_application_with_a_filled_decoy_is_refused
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_startup_application_is_refused
+      category: security
+      weight: 5
+    - kind: browser
+      do: Open the startup programme route signed in and submit the application form
+- id: reader_switches_the_documentation_sdk
+  purpose: A reader changes the SDK selector and every code sample rewrites in place
+  substeps:
+    - kind: browser
+      do: Open the documentation portal and change the SDK selector at the sidebar top to React
+    - kind: pytest
+      test: test_output.py::test_docs_sdk_attribute_reflects_the_selection
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_glossary_rail_marks_the_inert_letters
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_glossary_graph_is_derived_and_never_self_linking
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: browser
+      do: Read a code sample, change the SDK, and read the same sample again
+    - kind: browser
+      do: Expand a sidebar branch and follow one of its pages
+    - kind: pytest
+      test: test_output.py::test_documentation_note_appears_when_a_sample_is_missing
+      category: business_rule
+      weight: 3
+- id: visitor_reviews_the_leaderboard_and_the_compliance_table
+  purpose: A visitor filters the leaderboard and reads the compliance table including its negative rows
+  substeps:
+    - kind: browser
+      do: Open the leaderboard route and switch the mode toggle to Skills
+    - kind: pytest
+      test: test_output.py::test_leaderboard_absent_cell_is_not_a_zero
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_leaderboard_filter_selects_a_corpus_subset
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_leaderboard_cells_carry_the_band_attribute
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_compliance_rows_keep_the_two_negative_statuses
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Open the security route and read the compliance table including its last two rows
+    - kind: pytest
+      test: test_output.py::test_leaderboard_cells_carry_their_provenance
+      category: data_integrity
+      weight: 5
+- id: visitor_shares_a_theme_by_link
+  purpose: A visitor edits a theme and a colleague opening the copied address sees the same values
+  substeps:
+    - kind: browser
+      do: Open the theme editor, dismiss the first-run card and change Primary
+    - kind: pytest
+      test: test_output.py::test_theme_presets_are_seeded_with_seventeen_values
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Press Copy URL and open the copied address in a fresh window
+    - kind: pytest
+      test: test_output.py::test_theme_encoding_round_trips_through_the_address
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_theme_compiles_to_a_fixed_value_set
+      critical: true
+      category: security
+      weight: 5
+- id: empty_states_and_the_not_found_page_read_correctly
+  purpose: A visitor meets the designed empty state and the site's own not-found page
+  substeps:
+    - kind: browser
+      do: Open the careers route with no open positions seeded
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_not_found_page_carries_the_pinned_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_careers_empty_state_keeps_the_invitation
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open an address that does not exist and read the not-found page
+- id: launch_surface_is_present_on_every_route
+  purpose: A visitor finds the privacy page, the cookie choice, the favicon and per-route metadata
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_linked_from_every_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared_in_the_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_has_a_distinct_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_consent_choice_persists_across_a_reload
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Open the cookie manager from the footer, decline, reload and reopen it
+    - kind: browser
+      do: Follow the privacy link from the footer of three different routes
+- id: chrome_and_bands_render_on_every_marketing_route
+  purpose: A visitor scrolls the home route through its alternating bands with the chrome intact
+  substeps:
+    - kind: browser
+      do: Scroll the home route from the hero to the footer
+    - kind: pytest
+      test: test_output.py::test_home_bands_carry_the_band_attribute
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_skip_link_is_the_first_focusable_element
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_changelog_copy_link_confirms_in_place
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open a header menu and watch the other items step back
+    - kind: browser
+      do: Move to another route and confirm the header stays in place
+    - kind: pytest
+      test: test_output.py::test_no_binary_asset_is_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_pages_meet_the_accessibility_floors
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_route_scrolls_sideways_at_a_narrow_viewport
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_changelog_orders_entries_newest_first
+      category: presentation
+      weight: 1
+- id: seed_data_survives_a_restart_unduplicated
+  purpose: The seeded library, plans and leaderboard survive a restart with no duplicated row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_across_a_restart
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unpublish_withdraws_route_rendition_and_image
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: browser
+      do: Open the changelog feed link and the blog feed link from their routes
+    - kind: pytest
+      test: test_output.py::test_feeds_carry_full_content_with_stable_identifiers
+      category: business_rule
+      weight: 3

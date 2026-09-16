@@ -1,0 +1,440 @@
+- id: teammate_signs_in_and_reads_the_shared_inbox
+  purpose: A seeded teammate signs in, lands on the inbox, and reads the shared conversation list
+  substeps:
+    - kind: browser
+      do: Sign in at /signin as teammate@example.com with the seeded password and land on the inbox at /w/northwind/inbox showing the default view Your inbox
+      cov: C-UF-02
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_when_the_app_is_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_api_answers_at_the_public_address_under_the_api_prefix
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_returns_an_access_token_for_every_seeded_account
+      category: security
+      weight: 5
+    - kind: browser
+      do: Switch the inbox view control to Unassigned and observe the row Refund for duplicate charge showing a generated avatar, the contact name, a plain-text preview, a relative age, a labelled channel glyph and the service level state, with unread carried by a marker rather than by a change of type strength alone
+      cov: C-CF-09, C-CF-07, C-CF-10
+    - kind: pytest
+      test: test_output.py::test_inbox_list_returns_the_seeded_conversations
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_filtering_sorting_and_search_narrow_the_stored_conversation_list
+      category: business_rule
+      weight: 3
+
+- id: admin_invites_a_teammate_and_routes_a_conversation_to_their_team
+  purpose: The administrator invites a teammate to a role and a team, then routes a waiting conversation into that team inbox
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the teammates settings screen, press Invite teammate and submit a fresh address with the teammate role and the Billing Support team, then observe the inline banner confirming the invitation without leaving the screen
+      cov: C-UF-05, C-CF-48
+    - kind: pytest
+      test: test_output.py::test_an_invitation_stores_one_pending_membership_row
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: Observe the new row in the teammates list carrying the status invited
+      cov: C-UF-06
+    - kind: browser
+      do: Open the conversation Invoice shows the wrong tax rate, press Route to team, choose Billing Support and observe the assignment line appended to the thread naming who routed the conversation and the receiving team
+      cov: C-UF-07, C-CF-54
+    - kind: pytest
+      test: test_output.py::test_routing_stores_the_team_and_appends_an_assignment_record
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: invitation_mail_is_delivered_to_the_invited_address_only
+  purpose: An invitation produces one real message addressed to the invited teammate and to nobody else
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com and invite a fresh address to the teammate role in the Billing Support team from the invite modal
+      cov: C-CF-48 (earned: the invite modal is where the address, the role and the team are chosen)
+    - kind: pytest
+      test: test_output.py::test_the_invitation_mail_reaches_the_invited_address_only
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_ordinary_reply_sends_no_mail_to_anybody
+      category: notification
+      weight: 3
+
+- id: duplicate_invitation_leaves_a_single_live_invitation
+  purpose: Inviting the same address twice leaves one live invitation and invalidates the earlier token
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, invite the same address twice from the teammates screen and observe one active invitation row rather than two, with the earlier invitation invalidated
+      cov: C-CF-49
+    - kind: pytest
+      test: test_output.py::test_a_repeated_invitation_leaves_one_live_invitation_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_accepting_an_invitation_twice_activates_one_membership_row
+      category: data_integrity
+      weight: 5
+
+- id: invitation_to_an_existing_member_is_invalid_and_is_rejected
+  purpose: An invitation addressed to somebody who already holds an active membership creates nothing
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com and try to invite teammate@example.com again, observing an inline message saying the address already holds an active membership, with nothing created
+      cov: C-CF-50
+    - kind: pytest
+      test: test_output.py::test_an_invitation_to_an_existing_member_is_refused
+      category: validation
+      weight: 3
+
+- id: teammate_cannot_reach_a_conversation_outside_their_teams
+  purpose: A teammate asking directly for another team's conversation is told the record does not exist
+  substeps:
+    - kind: browser
+      do: Sign in as teammate@example.com, open the All view and try to open Cannot reset my password, observing the product's own not-found page rather than a refusal page
+      cov: C-UF-10, C-OV-03
+    - kind: pytest
+      test: test_output.py::test_a_teammate_cannot_read_another_teams_conversation
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reach_is_recomputed_on_every_request_rather_than_stored_in_the_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_role_can_delete_a_conversation_or_a_stored_part
+      category: security
+      weight: 5
+
+- id: teammate_cannot_open_settings_or_invite_anybody
+  purpose: A teammate is refused every administrative endpoint at the server
+  substeps:
+    - kind: browser
+      do: Sign in as teammate@example.com and open the teammates settings address directly, observing a restricted screen that names the role able to grant access
+      cov: C-RL-12, C-RL-06
+    - kind: pytest
+      test: test_output.py::test_a_teammate_cannot_invite_a_teammate
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_teammate_cannot_publish_an_article
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_browser_bundle_carries_no_credential_or_administrative_token
+      category: security
+      weight: 5
+
+- id: elevated_role_assignment_is_denied_at_the_server
+  purpose: Nobody may raise a membership to a role at or above their own, and the last administrator survives
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com and open the teammates settings address directly, observing that the role control lists the workspace roles admin, manager and teammate while offering no role at or above the manager's own
+      cov: C-CF-52, C-RL-07, C-RL-01
+    - kind: pytest
+      test: test_output.py::test_a_role_cannot_be_raised_to_or_above_the_actors_own_role
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_last_admin_membership_cannot_be_demoted
+      category: security
+      weight: 5
+
+- id: unauthenticated_request_is_denied_on_every_workspace_endpoint
+  purpose: A caller with no session reaches nothing inside the workspace
+  substeps:
+    - kind: browser
+      do: Without signing in, open the inbox address at /w/northwind/inbox and observe the sign-in screen with the requested address remembered, then open the public help route and the invite acceptance route, both of which require no session
+      cov: C-UF-01, C-UF-04
+    - kind: pytest
+      test: test_output.py::test_an_unauthenticated_request_is_denied_on_every_workspace_endpoint
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_logout_revokes_the_bearer_token
+      category: security
+      weight: 5
+
+- id: sign_in_refuses_a_wrong_password_without_revealing_the_account
+  purpose: A wrong password and an unknown address are refused the same way
+  substeps:
+    - kind: browser
+      do: At /signin submit admin@example.com with a wrong password and observe an inline message that names no account detail
+      cov: C-CF-02, C-CF-03
+    - kind: pytest
+      test: test_output.py::test_login_with_a_wrong_password_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_an_unknown_address_is_refused_the_same_way
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_route_other_than_an_invitation_creates_an_account
+      category: security
+      weight: 5
+
+- id: teammate_replies_and_closes_a_conversation_from_the_queue
+  purpose: A teammate claims a waiting conversation, replies on its channel and closes it as a human resolution
+  substeps:
+    - kind: browser
+      do: Sign in as teammate@example.com, switch to Unassigned, then open Refund for duplicate charge, observing that opening a conversation changes the address while keeping the list and its scroll position, and press Assign to me so the assignee becomes Marco Ferraro
+      cov: C-UF-08, C-CF-14
+    - kind: browser
+      do: Type a reply in the Reply composer mode and choose the send that also closes the conversation, then observe the part appear as sending and then as sent
+      cov: C-CF-22, C-CF-20, C-UF-09
+    - kind: pytest
+      test: test_output.py::test_a_reply_part_is_stored_with_a_delivery_state
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_send_and_close_leaves_the_conversation_closed_with_a_human_resolver
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_conversation_state_machine_moves_open_snoozed_and_closed
+      category: business_rule
+      weight: 3
+
+- id: an_internal_note_cannot_reach_the_customer
+  purpose: A note stays internal and is never stored as a customer-facing reply
+  substeps:
+    - kind: browser
+      do: Open Refund for duplicate charge, switch the composer to Note mode, observe the different ground that marks a note internal so a note can never reach the customer, type content and switch back to Reply mode to observe the confirmation asked for first
+      cov: C-CF-21, C-CF-20
+    - kind: pytest
+      test: test_output.py::test_an_internal_note_is_stored_as_a_note_rather_than_a_reply
+      critical: true
+      category: security
+      weight: 5
+
+- id: duplicate_send_with_one_client_key_appends_one_part
+  purpose: A repeated send attempt under the same client key stores exactly one part
+  substeps:
+    - kind: browser
+      do: Open Refund for duplicate charge and press the send control twice in quick succession, observing a single reply in the thread
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_repeating_one_client_key_appends_a_single_stored_part
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_conversation_thread_rows_are_ordered_by_their_stored_sequence
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_claims_of_one_conversation_leave_one_assignee
+  purpose: Two teammates claiming the same unassigned conversation produce exactly one assignee
+  substeps:
+    - kind: browser
+      do: Open the Unassigned view, observe the count beside the view name computed after reach is applied so that the view grants no access, then press Assign to me on Refund for duplicate charge and observe the row leave the unassigned list once the action has settled
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_two_concurrent_claims_store_one_assignee_and_one_assignment_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unassigned_view_excludes_a_conversation_that_has_an_assignee
+      category: business_rule
+      weight: 3
+
+- id: auto_agent_answers_a_customer_from_a_published_article
+  purpose: The automated agent grounds a reply in a published article and shows its reasoning in the thread
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com, open Refund for duplicate charge and press Ask Auto Agent, then observe a collapsed reasoning disclosure, a tool call row and a reply carrying the agent name
+      cov: C-UF-11, C-CF-27, C-CF-33
+    - kind: pytest
+      test: test_output.py::test_agent_run_answers_from_a_published_article
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_agent_reasoning_step_carries_the_pinned_disclosure_title
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_a_draft_article_is_never_stored_as_a_published_row
+      category: business_rule
+      weight: 3
+
+- id: auto_agent_hands_over_when_nothing_grounds_an_answer
+  purpose: An ungrounded conversation produces a summary, a handover and one message to the receiving team lead
+  substeps:
+    - kind: browser
+      do: Open Invoice shows the wrong tax rate and press Ask Auto Agent, then observe the Summary card and the handover divider naming the reason and the receiving team, so that an amount above the approval ceiling reaches the customer as a handover rather than as a refusal
+      cov: C-UF-12, C-CF-35, C-CF-39
+    - kind: pytest
+      test: test_output.py::test_agent_run_on_an_ungrounded_conversation_stores_a_summary_and_a_handover
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_handover_mail_reaches_the_receiving_team_lead_only
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_knowledge_gap_row_exists_after_a_handover
+      category: business_rule
+      weight: 3
+
+- id: duplicate_agent_trigger_creates_no_second_run
+  purpose: Triggering the agent twice on one customer message produces one run and one outcome
+  substeps:
+    - kind: browser
+      do: Open Cannot reset my password and press Ask Auto Agent twice, observing one reasoning disclosure rather than two
+      cov: C-CF-38
+    - kind: pytest
+      test: test_output.py::test_agent_run_is_idempotent_per_trigger_and_stores_one_run_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_agent_write_tool_ceiling_is_stored_as_five_thousand_minor_units
+      category: business_rule
+      weight: 3
+
+- id: restricted_knowledge_cannot_be_read_from_the_public_help_surface
+  purpose: An internal article stays off the public help surface and stays out of a customer answer
+  substeps:
+    - kind: browser
+      do: Without signing in, open /help and observe the collection index listing the public collections without the internal runbook collection
+      cov: C-CF-66
+    - kind: pytest
+      test: test_output.py::test_an_internal_collection_article_stays_off_the_public_help_surface
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_public_help_collections_listing_returns_a_top_level_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_favicon_is_served_and_declared_in_the_document_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_title_a_description_and_a_preview_image
+      category: presentation
+      weight: 1
+
+- id: publishing_an_article_stores_a_new_version_each_time
+  purpose: Publishing writes a new version rather than mutating one, and only an administrator may do it
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the knowledge hub, open the article Resetting your password and publish it again, observing a new version listed with a change note
+      cov: C-CF-40
+    - kind: pytest
+      test: test_output.py::test_publishing_an_article_twice_stores_two_versions
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_manager_cannot_route_a_conversation_outside_the_teams_they_lead
+      category: security
+      weight: 5
+
+- id: service_level_targets_are_recorded_and_breached_at_most_once
+  purpose: A conversation records the matched policy, keeps its first response moment and records one breach per target
+  substeps:
+    - kind: browser
+      do: Open the service level settings screen as manager@example.com and observe the Standard support policy with its first response target and its resolution target in minutes
+      cov: C-DM-13, C-CF-44
+    - kind: pytest
+      test: test_output.py::test_the_seeded_service_level_policy_is_recorded_on_a_conversation
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_first_response_moment_is_recorded_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_service_level_breach_is_recorded_once_for_one_conversation
+      category: data_integrity
+      weight: 5
+
+- id: manager_reads_a_report_scoped_to_the_teams_they_lead
+  purpose: The resolution report answers for the reader's own reach and states how fresh it is
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com, open the reports screen and observe the resolution rate split into agent resolved and human resolved, the response times given as the median plus the ninety-fifth percentile rather than as a mean, and the time zone with the age of the data stated
+      cov: C-UF-13, C-CF-62, C-CF-64, C-CF-65
+    - kind: pytest
+      test: test_output.py::test_the_resolution_report_totals_differ_between_a_manager_and_an_admin
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_resolution_report_states_its_timezone_and_the_age_of_the_data
+      category: presentation
+      weight: 1
+
+- id: the_workspace_seed_is_stored_once_and_stays_tenant_scoped
+  purpose: The seeded workspace, teams and conversations exist as stored rows carrying their workspace identifier
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com and observe the workspace name Northwind Trading with the teams Billing Support and Technical Support listed on the teams settings screen
+      cov: C-DM-10
+    - kind: pytest
+      test: test_output.py::test_the_seeded_workspace_and_teams_exist_as_stored_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_every_tenant_scoped_row_carries_a_workspace_identifier
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_store_and_the_mail_server_are_the_named_providers
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_seeded_conversation_rows_survive_a_second_read
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Route a conversation to a team as admin@example.com and observe the assignment recorded as an audit entry naming the acting principal, the principal kind and the action, with no path that edits it
+      cov: C-CF-69
+    - kind: pytest
+      test: test_output.py::test_every_write_leaves_an_audit_record_that_cannot_be_removed
+      critical: true
+      category: data_integrity
+      weight: 5
+
+
+- id: an_invalid_part_kind_is_refused_and_the_thread_is_unchanged
+  purpose: Bad input is refused as a client error and nothing is written
+  substeps:
+    - kind: browser
+      do: Open Refund for duplicate charge and submit an empty reply, observing the invalid call rejected as a client error rather than as a server error and never as a silent success, with an inline message naming the field while the thread stays unchanged
+      cov: C-DC-13
+    - kind: pytest
+      test: test_output.py::test_an_invalid_part_kind_is_refused_and_stores_nothing
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_answers_not_found_with_the_products_own_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_billing_or_outbound_endpoint_exists_in_the_workspace
+      category: business_rule
+      weight: 3

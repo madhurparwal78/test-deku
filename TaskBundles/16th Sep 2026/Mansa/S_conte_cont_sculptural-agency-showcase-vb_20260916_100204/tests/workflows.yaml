@@ -1,0 +1,579 @@
+- id: founder_reads_the_studio_site
+  purpose: A founder opens the site, scrolls the home page and reads what the studio does
+  substeps:
+    - kind: browser
+      do: "Open the home page, watch the loader count up and leave, then scroll past the badger sculpture into the process words"
+    - kind: pytest
+      test: test_output.py::test_app_serves_pages_and_api_on_one_origin
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_answers
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_render_without_client_code
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: "Open the drawer from its trigger and choose Services. to reach the services page"
+    - kind: pytest
+      test: test_output.py::test_home_carries_the_seeded_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_services_page_carries_its_copy
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: "Scroll the services page and watch the hive sway while the three bees bob around it"
+- id: founder_browses_the_case_study_index
+  purpose: A founder scrolls the alternating index and opens a project page through to its next project
+  substeps:
+    - kind: browser
+      do: "Choose Works. from the header and scroll the index as the ground inverts from white to dark"
+    - kind: pytest
+      test: test_output.py::test_case_study_index_lists_published_rows_in_index_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_rows_alternate_image_side
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_case_study_rows_and_pages_share_one_services_list
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Open the Lumen Pay row and read its fact sheet and services"
+    - kind: pytest
+      test: test_output.py::test_case_study_page_carries_its_fact_sheet
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_next_project_follows_index_order_and_wraps
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_live_scenes_mount_only_on_home_and_works
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Scroll the Lumen Pay project to Next project and follow it to Haven Health"
+- id: founder_sends_an_enquiry
+  purpose: A founder fills the enquiry form and the stored enquiry is confirmed in place
+  substeps:
+    - kind: browser
+      do: "Press the Contact button in the header, then choose UX/UI design and $30k - $60k and fill name, email and message"
+      cov: C-CF-189
+    - kind: pytest
+      test: test_output.py::test_contact_page_carries_the_form_and_both_result_panels
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_contact_form_offers_the_fixed_options
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_anonymous_enquiry_is_stored_with_state_new
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: "Press send and watch the success panel replace the form in place without navigating away"
+      cov: C-CF-140
+    - kind: pytest
+      test: test_output.py::test_bot_check_loads_on_the_contact_route_only
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Reload the contact page and see the form ready again with every field empty"
+- id: client_follows_an_enquiry_an_editor_answers
+  purpose: A founder signs up and sends an enquiry, and an editor moves it forward where the client can see it
+  substeps:
+    - kind: browser
+      do: "Open the sign-up page, read the terms sentence and create an account"
+    - kind: pytest
+      test: test_output.py::test_open_signup_creates_a_client
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signed_in_enquiry_is_attached_to_the_client
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_sees_only_their_own_enquiries
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Sign in as client@example.com, land on /account/enquiries, and read the enquiries newest first, each row carrying its data-enquiry-state"
+      cov: C-CF-158, C-CF-159, C-UF-28, C-DM-32
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_linked_from_footers_and_the_signup_form
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: "Sign in as an editor, open /studio/enquiries and move the enquiry from client@example.com to in_conversation"
+    - kind: pytest
+      test: test_output.py::test_editor_reads_every_enquiry
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_enquiry_state_moves_forward_only
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Read the inline banner, then see the new state as a word on the client's enquiries page"
+- id: editor_publishes_then_withdraws_a_case_study
+  purpose: An editor drafts a case study with an image, publishes it into the index and the sitemap, then withdraws it
+  substeps:
+    - kind: browser
+      do: "Sign in as editor@example.com and see the studio open on a card grid of the entries that editor owns, each card showing its data-entry-state"
+      cov: C-OV-02, C-UF-35, C-UF-36
+    - kind: pytest
+      test: test_output.py::test_new_entries_are_stored_as_draft_rows
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: "Press New entry to open the wizard at /studio/new/details, then continue to the media step and the review step, each page marked with its data-wizard-step"
+      cov: C-UF-34
+    - kind: pytest
+      test: test_output.py::test_uploaded_image_is_stored_in_the_bucket_at_the_pinned_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_media_object_key_follows_the_pinned_scheme
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_case_study_is_readable_by_anyone
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: "Open the saved entry, press Publish, read the inline banner, and find the case study at the end of the Works index"
+    - kind: pytest
+      test: test_output.py::test_publish_adds_the_case_study_to_the_index_and_the_sitemap
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_published_media_is_served_and_appears_with_its_alt_text
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_owning_editor_reads_the_draft_record_and_its_image
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Open the published entry again, press Unpublish, confirm the named entry, and read the inline banner"
+    - kind: pytest
+      test: test_output.py::test_unpublish_withdraws_page_record_and_media
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_category_counts_follow_publication
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bucket_refuses_anonymous_reads
+      category: security
+      weight: 5
+- id: draft_is_denied_to_other_visitors
+  purpose: A visitor and a client are refused the seeded draft on every surface
+  substeps:
+    - kind: browser
+      do: "Sign out, request the draft address /works/nightjar and see the site's own not-found page"
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_is_denied_to_an_anonymous_visitor
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_is_denied_to_a_client
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_refusal_matches_an_unknown_slug
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_never_appears_in_listings_counts_or_the_sitemap
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Browse the Works index and the Studio life category route and find no draft row among them"
+- id: other_roles_are_denied_studio_writes
+  purpose: A second editor and a client cannot read, publish or edit entries they do not own
+  substeps:
+    - kind: browser
+      do: "Sign in as editor2@example.com and see a studio grid listing only the draft article that editor owns"
+    - kind: pytest
+      test: test_output.py::test_draft_article_is_denied_to_a_second_editor
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_media_is_denied_to_everyone_but_its_owner
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_second_editor_cannot_publish_or_edit_another_editors_entry
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Signed in as the client, open /studio and see the client's own enquiries shown instead"
+      cov: C-UF-29
+    - kind: pytest
+      test: test_output.py::test_client_cannot_create_upload_or_publish
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_cannot_change_an_enquiry_state
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_never_creates_an_editor
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Read the client enquiries page and find no state control on any row"
+- id: unauthenticated_visitor_is_sent_to_sign_in
+  purpose: A visitor with no session is sent to sign in from every protected surface
+  substeps:
+    - kind: browser
+      do: "Open /studio signed out, sign in as the editor, and land back on the remembered studio address"
+      cov: C-UF-26, C-UF-27
+    - kind: pytest
+      test: test_output.py::test_protected_pages_redirect_signed_out_visitors
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_protected_endpoints_refuse_a_missing_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiry_list_is_denied_to_an_unauthenticated_visitor
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_open_endpoints_answer_without_a_token
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: "Sign out from the studio sidebar and return to the home page"
+      cov: C-UF-30
+- id: concurrent_publish_of_one_slug_has_one_winner
+  purpose: Two publishes contending for one slug leave exactly one published case study
+  substeps:
+    - kind: browser
+      do: "Create two case study drafts in the studio that claim one slug"
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_of_one_slug_yields_exactly_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_losing_publish_leaves_no_partial_state
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publishing_onto_a_taken_article_slug_is_refused
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: "Publish the second draft and read the conflict banner while its card keeps the draft state"
+    - kind: browser
+      do: "Open the Works index and see exactly one row for the contested slug"
+- id: invalid_entry_or_upload_is_refused
+  purpose: Entry input or an upload that breaks the slug, service, category or image rules is refused with nothing written
+  substeps:
+    - kind: browser
+      do: "In the wizard details step enter a slug starting with a digit and read the error beside the slug field"
+    - kind: pytest
+      test: test_output.py::test_invalid_slug_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_service_on_a_case_study_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_article_requires_exactly_one_known_category
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_services_are_a_relation
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: "In the media step attach a text file and read the refusal beside the file field"
+    - kind: pytest
+      test: test_output.py::test_non_image_upload_is_refused_and_stores_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_oversized_upload_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_upload_without_alternative_text_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_media_upload_is_idempotent
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_column_stores_image_bytes
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: "Attach the same image twice and see a single image listed on the entry"
+- id: invalid_enquiry_is_refused
+  purpose: An enquiry with a bad option, a missing field or a malformed address is refused
+  substeps:
+    - kind: browser
+      do: "Submit the contact form with an empty message and see the failure panel while every typed value stays in its field"
+      cov: C-CF-146
+    - kind: pytest
+      test: test_output.py::test_enquiry_with_an_unknown_service_or_budget_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_enquiry_missing_a_required_field_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_enquiry_with_an_invalid_email_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: "Read the error naming the empty field beside the message field"
+- id: expired_duplicate_or_repeated_enquiry_is_refused
+  purpose: An enquiry without a fresh unused token, with a filled decoy, or in a burst from one address is refused
+  substeps:
+    - kind: browser
+      do: "Reload the contact page and see a fresh token in the hidden bot-check field"
+    - kind: pytest
+      test: test_output.py::test_bot_check_token_is_single_use
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiry_without_a_valid_bot_check_token_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_expired_bot_check_token_is_refused
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Submit the contact form with the hidden Website decoy filled and read the failure panel reason"
+    - kind: pytest
+      test: test_output.py::test_enquiry_with_a_filled_decoy_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_enquiries_from_one_address_are_refused
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Send three enquiries from one email address in quick succession and read the refusal on the third"
+- id: reader_walks_the_article_archive
+  purpose: A reader pages through the archive, filters by category and reads an article
+  substeps:
+    - kind: browser
+      do: "Open /blog, press the Engineering tab, then return to All"
+    - kind: pytest
+      test: test_output.py::test_article_archive_paginates_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_article_rows_show_category_date_and_reading_time
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_category_tabs_carry_counts_and_the_current_state
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_category_route_lists_only_its_articles
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Press More on the blog archive and watch the next rows append beneath the rows already shown without a document reload"
+      cov: C-CF-100
+    - kind: pytest
+      test: test_output.py::test_article_page_carries_its_parts
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reading_progress_appears_on_article_pages_only
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_related_articles_come_from_the_same_category
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: "Open an article and watch the reading progress bar fill as the body scrolls past"
+    - kind: pytest
+      test: test_output.py::test_article_record_carries_the_pinned_fields
+      category: presentation
+      weight: 1
+- id: visitor_meets_the_pages_the_chrome_and_the_grounds
+  purpose: A visitor reads the about page, uses the shared chrome and sees every route on its pinned grounds
+  substeps:
+    - kind: browser
+      do: "Press the Second Office switch button on the about page and see that office image become active"
+      cov: C-CF-202
+    - kind: pytest
+      test: test_output.py::test_about_page_carries_team_and_offices
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_office_switcher_is_built_from_buttons
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_office_details_are_read_from_the_office_table
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_header_drawer_and_footer_carry_their_link_sets
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_drawer_trigger_is_a_button_reporting_its_state
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_footer_appears_on_every_route_except_contact
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_split_headings_expose_their_full_text
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: "Scroll to the footer and follow the oversized Let's build it link to the contact page"
+    - kind: pytest
+      test: test_output.py::test_bands_alternate_ground_on_every_route
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_routes_open_on_their_pinned_ground
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_culture_section_carries_seven_objects_in_order
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_services_motif_runs_one_orbit_in_reverse_phase
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_binary_media_file_is_referenced
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pages_reference_no_third_party_origin
+      category: security
+      weight: 5
+    - kind: browser
+      do: "Scroll the home page past the culture objects and the client strip"
+- id: site_launch_surface_is_published
+  purpose: The launch surface is in place and an unknown address lands on the site's own page
+  substeps:
+    - kind: browser
+      do: "Open the sitemap and the robots file and read the sitemap address"
+    - kind: pytest
+      test: test_output.py::test_every_public_route_has_a_distinct_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_public_routes_and_robots_points_at_it
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_social_preview_that_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_privacy_policy_names_the_removal_address
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_with_the_pinned_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_error_page_keeps_the_chrome_without_a_footer
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: "Open an unknown address and follow Back to home from the not-found page"
+- id: deployment_contract_and_seed_hold
+  purpose: The app is deployed as contracted and the seed is in place exactly once
+  substeps:
+    - kind: browser
+      do: "Sign in to the site as each seeded account with the corpus password"
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_passwords_are_stored_as_hashes
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_is_refused_and_creates_no_row
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_user_readme_lists_every_seeded_account
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reserved_directories_exist_and_are_empty
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_production_build_serves_no_debug_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_services_endpoint_lists_the_eight_services
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_schema_carries_the_pinned_tables
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_across_restarts
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_case_study_record_carries_the_pinned_fields
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: "Open the services page and count the eight service tags across the rows"

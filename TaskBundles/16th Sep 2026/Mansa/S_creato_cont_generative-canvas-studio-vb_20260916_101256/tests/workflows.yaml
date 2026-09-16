@@ -1,0 +1,720 @@
+- id: visitor_plays_the_replay_then_generates_a_first_asset
+  purpose: "A visitor plays the advertising graph, edits a node, signs up into that graph and generates a first output"
+  substeps:
+    - kind: browser
+      do: "Open the home page, press E-commerce then Advertising among the switching verticals and observe the outgoing graph cross-fade with the wire pulses running on, observe the transport offering Play, Pause, Step forward, Step back plus a scrub track, then press Step forward until the readout reads Rank 5 of 5"
+      cov: C-CF-156, C-CF-157, C-FE-25
+    - kind: browser
+      do: "Open the Pack Shot node, observe its prompt, model, credit cost and generation time with Apply prompt and Rerun graph, change the prompt and press Apply prompt, then observe Pack Shot and every downstream node desaturate as stale before any rerun"
+      cov: C-CF-158, C-CF-159, C-CF-160, C-UX-18
+    - kind: browser
+      do: "Press Rerun graph and observe only the stale nodes regenerate in rank order with the nodes outside the edit staying as they were, each regenerating node showing the node's elapsed time, then Showing a nearby result on the curated Pack Shot node"
+      cov: C-CF-161, C-CF-164, C-UF-21
+    - kind: browser
+      do: "Press Start creating, sign up as a creator, and observe the canvas the visitor was playing with open as My first canvas with its eight nodes"
+      cov: C-CF-173
+    - kind: browser
+      do: "Open Product Mockup, press Run node, and observe the output settle into the node with the header balance dropping from 500"
+      cov: C-UF-09
+    - kind: browser
+      do: "Return to the home page in a fresh tab, edit a replay prompt, reload, and observe the reloaded replay keep the edited prompts plus stale marks"
+      cov: C-CF-169
+    - kind: pytest
+      test: test_output.py::test_replay_session_claim_creates_the_first_canvas_once
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_creator_signup_opens_a_free_studio_with_trial_credits
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_output_bytes_are_stored_in_the_bucket_at_the_scheme_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replay_step_forward_reaches_the_last_rank
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_default_prompt_regeneration_is_served_from_the_cache
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_edited_prompt_regeneration_falls_back_to_a_curated_variant
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_replay_graphs_are_listed_with_the_advertising_shape
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_replay_graphs_are_acyclic_with_distinct_models
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_public_headlines_carry_the_pinned_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_lower_generation_token_is_refused_as_stale
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replay_rate_limit_degrades_instead_of_failing
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_regeneration_with_a_model_of_another_kind_is_refused
+      category: validation
+      weight: 3
+- id: new_creator_subscribes_to_a_plan
+  purpose: "A new creator chooses Growth, pays nothing twice, and lands on the full-page confirmation"
+  substeps:
+    - kind: browser
+      do: "Sign up as a new creator, open the billing page and observe the Current plan reading Free with a Credit balance of 500"
+      cov: C-FE-42
+    - kind: browser
+      do: "Choose Growth, monthly, press Confirm and subscribe, and observe the full-page confirmation reading You are on Growth. with the line 50,000 credits were added to the new studio"
+      cov: C-CF-36, C-CF-37
+    - kind: browser
+      do: "Return to billing, buy three credit packs, and observe the confirmation route reading 3 credit packs added for $30."
+      cov: C-CF-38
+    - kind: pytest
+      test: test_output.py::test_subscription_records_the_amount_and_grants_the_allowance
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replayed_subscription_key_writes_no_second_billing_event
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_annual_subscription_records_twelve_times_the_monthly_equivalent
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_professional_300k_subscription_grants_three_hundred_thousand
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_subscription_to_enterprise_or_free_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_credit_pack_purchase_adds_credits_and_records_the_charge
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_credit_packs_on_free_are_refused_with_plan_required
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_billing_events_are_newest_first_for_the_owner
+      category: business_rule
+      weight: 3
+- id: canvas_builder_reruns_stale_nodes_in_rank_order
+  purpose: "A creator creates a canvas from the inline row, runs a node, wires a second one and reruns the stale nodes"
+  substeps:
+    - kind: browser
+      do: "Sign in as creator@example.com, land on the canvases table with its Name, Nodes, Last run and Credits spent columns, type a name into the inline Name a new canvas row and press Create canvas"
+      cov: C-CF-77, C-UF-07, C-FE-40
+    - kind: browser
+      do: "Open the new canvas on its dark dot grid, press Add node, fill the node panel and press Run node, and observe the output settle into the node card with Run node and Deliver in the panel"
+      cov: C-FE-44, C-FE-45
+    - kind: browser
+      do: "Add and wire a second node, edit the first node's prompt, observe both nodes desaturate as stale, then press Rerun stale nodes and observe both regenerate"
+      cov: C-FE-43
+    - kind: pytest
+      test: test_output.py::test_run_charges_the_current_rate_and_stores_the_output
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rerun_regenerates_stale_nodes_in_rank_order
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_prompt_edit_marks_the_node_and_downstream_stale
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_canvas_creation_rejects_duplicates_and_bad_names
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_canvas_detail_derives_node_ranks_from_edges
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_auto_model_resolves_to_the_fastest_available_model
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_position_only_edit_marks_nothing_stale
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_run_is_refused_while_an_upstream_node_is_stale
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_generated_image_is_a_png_at_the_node_aspect
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_generated_video_audio_and_text_have_their_formats
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_canvases_page_shows_the_table_and_inline_row
+      category: presentation
+      weight: 1
+- id: concurrent_edits_and_runs_admit_at_most_one_winner
+  purpose: "Racing edits and racing runs each admit one winner, and retries never charge twice"
+  substeps:
+    - kind: browser
+      do: "Sign in as creator3@example.com, open Autumn Lookbook, edit the Croquis node prompt and save, then observe Croquis and every downstream node desaturate as stale"
+      cov: C-UX-18
+    - kind: pytest
+      test: test_output.py::test_concurrent_node_edits_admit_exactly_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_runs_for_the_last_credits_admit_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_node_edit_from_an_old_revision_is_refused_as_conflict
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replayed_run_key_charges_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rerun_without_enough_credits_is_refused_before_any_node_runs
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_generated_outputs_are_deterministic_for_identical_inputs
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_identical_output_reuses_one_object_and_one_row
+      category: data_integrity
+      weight: 5
+- id: insufficient_credit_limit_refuses_the_run
+  purpose: "A run the balance cannot cover is refused inline and charges nothing"
+  substeps:
+    - kind: browser
+      do: "Sign up as a new creator, add a Reel 2.5 node to a canvas, press Run node, and observe the refused action name the reason inline beside the control with the balance staying at 500"
+      cov: C-UF-22
+    - kind: browser
+      do: "Add a Lumen Preview node, press Run node, and observe the failed canvas node say so inside the node"
+      cov: C-CF-68
+    - kind: pytest
+      test: test_output.py::test_run_without_enough_credits_is_refused_and_writes_nothing
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_degraded_model_run_fails_and_charges_nothing
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_edge_that_closes_a_loop_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_wire_changes_mark_the_receiving_node_stale
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_node_aspect_ratio_outside_the_model_list_is_refused
+      category: validation
+      weight: 3
+- id: other_studio_cannot_read_or_edit_an_output
+  purpose: "Saltmarsh Cut and anonymous callers are refused every Northlight output and canvas"
+  substeps:
+    - kind: browser
+      do: "Sign in as creator2@example.com, open the canvases table, and observe Trailer Cut listed with no Citrus Launch among the studio canvases"
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_other_studio_creator_is_denied_the_output
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_caller_is_denied_the_output
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_other_studio_creator_cannot_open_or_edit_the_canvas
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_other_studio_creator_cannot_deliver_or_revoke
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_membership_in_the_request_body_is_ignored
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_api_never_issues_a_link_into_the_bucket
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_output_is_streamed_back_unchanged_with_its_content_type
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_member_reads_the_studio_output
+      category: security
+      weight: 5
+- id: client_reads_work_until_delivery_is_revoked_denied
+  purpose: "A studio delivers an output, the client reads it, and a revoke ends the client's access"
+  substeps:
+    - kind: browser
+      do: "Sign in as creator@example.com, open the deliveries page, use the Deliver an output row to deliver the Pack Shot output of Citrus Launch to client@example.com, and observe the full-page confirmation reading Delivered to client@example.com."
+      cov: C-CF-88, C-FE-48
+    - kind: browser
+      do: "Sign out, sign in as client@example.com, open the deliveries page under Work delivered to you, and open each delivered output including the Billboard for sign-off delivery"
+      cov: C-UF-04, C-UF-15
+    - kind: browser
+      do: "Sign back in as creator@example.com, press Revoke on the new delivered row of the deliveries table, and observe the row state change to revoked"
+      cov: C-FE-50
+    - kind: pytest
+      test: test_output.py::test_revoked_delivery_denies_the_client
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_is_denied_an_undelivered_output
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_reads_a_delivered_output
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_lists_only_their_own_live_deliveries
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_delivery_is_readable_by_the_client
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_delivery_is_created_and_listed_for_the_studio
+      category: business_rule
+      weight: 3
+- id: client_cannot_use_creator_tools_denied
+  purpose: "A client signs up, is kept to deliveries, and every creator-only call is denied"
+  substeps:
+    - kind: browser
+      do: "Open the sign-up page, choose I receive work, fill the form and press Create account"
+      cov: C-CF-13, C-CF-14
+    - kind: browser
+      do: "Open the canvases address as that client and observe being sent to the deliveries page"
+      cov: C-UF-05
+    - kind: pytest
+      test: test_output.py::test_client_is_denied_creator_endpoints
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_member_cannot_subscribe_buy_packs_or_invite
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_signup_creates_a_client_without_a_studio
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_sign_in_lands_each_role_on_its_surface
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_me_reports_role_and_studio_membership
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_with_an_unknown_account_type_is_refused
+      category: validation
+      weight: 3
+- id: owner_invites_a_teammate_limit_on_single_seat
+  purpose: "The Northlight owner invites a teammate who signs up into the studio; a one-seat plan cannot invite"
+  substeps:
+    - kind: browser
+      do: "Sign in as creator@example.com, open the team page, type a new address into Invite a teammate and press Send invitation, and observe the address listed under pending invitations"
+      cov: C-CF-21, C-FE-46
+    - kind: browser
+      do: "Press Sign out in the header and observe the home page, then sign up with the invited address and observe landing in Northlight Studio with Citrus Launch in the canvases table"
+      cov: C-UF-08, C-UF-14
+    - kind: browser
+      do: "Sign in as creator3@example.com, open the billing page, and observe a read-only view with a line naming the owner"
+      cov: C-UF-06
+    - kind: browser
+      do: "Sign up as a new creator, open the team page, and observe the one-seat plan line naming Professional in place of the invite field"
+      cov: C-FE-47
+    - kind: browser
+      do: "Sign out, open the billing address, sign in at the sign-in page, and observe being returned to the remembered billing address"
+      cov: C-UF-03
+    - kind: pytest
+      test: test_output.py::test_invited_address_joins_the_studio_on_signup_without_trial_credits
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invitation_on_a_single_seat_plan_is_refused_with_limit_reached
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invitation_for_an_existing_account_is_refused_as_conflict
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_workspace_reports_plan_balance_and_members
+      category: business_rule
+      weight: 3
+- id: creator_compares_engines_on_the_bench
+  purpose: "A creator runs four models on one brief and sees each frame land on its own"
+  substeps:
+    - kind: browser
+      do: "Sign in as creator@example.com, open the bench, type a brief, select Halcyon 2.1, Vesper 3, Grain 4 Turbo and Lumen Preview, then select a fifth model and observe the earliest chip flash with data-chip-state rejected, the fifth chip staying unselected"
+      cov: C-CF-176, C-CF-177
+    - kind: browser
+      do: "Press Run the comparison and observe four frames in selection order, each awaiting a result as a skeleton at the model's aspect with data-frame-state skeleton, the Grain 4 Turbo frame settling as the first successful frame, and the failed Lumen Preview frame holding its place with Retry this model"
+      cov: C-CF-191, C-UF-10, C-UF-20, C-FE-33
+    - kind: browser
+      do: "Once two frames settle, pick the Vesper 3 frame and observe the pick recorded on the row"
+      cov: C-UF-11
+    - kind: browser
+      do: "Run a second comparison with Lumen Preview and Driftwood Beta among the models and observe the voided line Two models failed, so this comparison was cancelled and nothing was charged."
+      cov: C-CF-190
+    - kind: pytest
+      test: test_output.py::test_bench_frames_land_independently_and_charge_per_success
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bench_failed_frame_charges_nothing_and_run_completes
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bench_two_failures_void_the_run_and_charge_nothing
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bench_requires_a_creator_session
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bench_run_rejects_a_fifth_or_duplicate_model
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_bench_pick_requires_two_successes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_bench_retry_of_a_succeeded_frame_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_replayed_bench_key_starts_nothing_new
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bench_writes_nothing_to_the_bucket
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bench_win_rates_hide_pairs_below_the_run_floor
+      category: business_rule
+      weight: 3
+- id: visitor_forecasts_credits_and_the_glow_moves
+  purpose: "A visitor compares plans, flips billing, steps the allowance and forecasts a month of work"
+  substeps:
+    - kind: browser
+      do: "Open the pricing page, flip the billing toggle from Monthly to Annual, and observe each paid card show its annual price beside the struck monthly price with the Save up to 15% chip"
+      cov: C-CF-126
+    - kind: browser
+      do: "Move the Professional stepper from 110K to 300K and observe the price, the credits and both yields update together"
+      cov: C-CF-128
+    - kind: browser
+      do: "Observe the forecaster show an empty track with no total, then add a row of 400 standard images plus a row of 30 standard videos, and observe the total 58,800, the overflow over Growth stated as $90, with one plan card carrying data-glow on"
+      cov: C-CF-132, C-CF-143, C-UF-13
+    - kind: pytest
+      test: test_output.py::test_forecast_totals_and_recommendation_match_the_worked_examples
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_plans_carry_prices_allowances_and_computed_yields
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rates_expose_the_current_and_the_retired_version
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_forecast_quantities_round_to_two_significant_figures
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_forecast_with_invalid_rows_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_forecast_under_the_retired_version_is_stale_until_recomputed
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_pricing_page_carries_the_plan_hooks_and_one_glow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_billing_toggle_flips_the_billing_period
+      category: presentation
+      weight: 1
+- id: visitor_browses_the_roster_and_model_pages
+  purpose: "A visitor reads the roster and moves between model pages"
+  substeps:
+    - kind: browser
+      do: "Open the models page and observe every model grouped under Image, Video, Audio and Text headings with model name and vendor, below the routing lead beside Let Ivo choose"
+      cov: C-CF-100, C-CF-101
+    - kind: browser
+      do: "Open Halcyon 2.1 from the roster and observe the gradient bar across the page under the model name"
+      cov: C-FE-29
+    - kind: browser
+      do: "Follow a sibling image model link and observe that model's own page, one segment deep at its slug, with Try on the canvas and Compare on the bench"
+      cov: C-CF-103, C-CF-106, C-CF-108
+    - kind: browser
+      do: "Open the Drift 1.6 video model page and observe the timed sample stay still until playback is asked for"
+      cov: C-CF-109
+    - kind: browser
+      do: "Sign in as creator@example.com, open the models page, press Let Ivo choose, and observe a new canvas node opening with the model set to auto"
+      cov: C-CF-102
+    - kind: pytest
+      test: test_output.py::test_models_manifest_lists_the_twenty_two_models_in_order
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_manifest_fields_and_credit_costs_follow_the_current_rates
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_model_page_answers_at_its_root_slug
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_model_page_links_three_siblings_of_its_kind
+      category: presentation
+      weight: 1
+- id: visitor_reads_the_blog_by_address
+  purpose: "A visitor filters and sorts the blog, and the address carries the view"
+  substeps:
+    - kind: browser
+      do: "Open the blog page, press Comparisons then Oldest, and observe the address carry the comparisons category with the oldest sort showing four cards oldest first, each blog card showing the date, then the reading time, then the title"
+      cov: C-CF-228, C-UF-17
+    - kind: browser
+      do: "Reload that blog address and observe the cold load restore the same filtered view"
+      cov: C-CF-229
+    - kind: browser
+      do: "Open a blog post card and read that blog post on its own page at its slug address"
+      cov: C-CF-227
+    - kind: browser
+      do: "Count twelve cards on the newest-first blog page, press Older posts at the foot, and observe the next page of cards"
+      cov: C-CF-228, C-FE-36
+    - kind: pytest
+      test: test_output.py::test_posts_filter_and_sort_by_address_parameters
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_posts_paginate_at_twelve_with_an_opaque_cursor
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_blog_address_restores_the_filtered_view
+      category: presentation
+      weight: 1
+- id: visitor_books_a_call_invalid_lead_is_refused
+  purpose: "A visitor explores the enterprise route and books a call; an invalid lead is refused"
+  substeps:
+    - kind: browser
+      do: "Open the enterprise page, switch between the Platform, Controls and Support tabs, and observe the five cards ending in Book a call with the Northlight Studio, Saltmarsh Cut and Field and Frame chips on Controls"
+      cov: C-CF-207, C-CF-208, C-FE-35
+    - kind: browser
+      do: "Submit the booking form with a malformed work email and observe an inline error beside the Work email field"
+      cov: C-CF-213
+    - kind: browser
+      do: "Submit the footer capture Get model launches in your inbox with a valid address and observe it accepted"
+      cov: C-CF-214
+    - kind: pytest
+      test: test_output.py::test_lead_submission_stores_one_lead
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_lead_is_refused_and_stores_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_enterprise_route_offers_calls_not_trials
+      category: presentation
+      weight: 1
+- id: visitor_explores_the_company_routes
+  purpose: "A visitor reads the desktop, manifesto and about routes, and dismisses the announcement"
+  substeps:
+    - kind: browser
+      do: "Open the desktop app page and observe one primary download for the detected platform with the other releases quieter beneath, beside Watch a folder, Capture anything on screen and Queue runs offline"
+      cov: C-CF-219, C-CF-220
+    - kind: browser
+      do: "Open the manifesto page and read the essay down to its closing hand-drawn signature"
+      cov: C-CF-222
+    - kind: browser
+      do: "Open the about page and observe the four vignettes, the eight people, the five roles and the eight investors"
+      cov: C-CF-230
+    - kind: browser
+      do: "Open the home page, press Dismiss announcement on Vesper 3 is now on Quarro., reload, and observe the announcement stays dismissed"
+      cov: C-CF-205
+    - kind: browser
+      do: "Observe the sound toggle with a small waveform beside the menu control in the header"
+      cov: C-FE-05
+    - kind: pytest
+      test: test_output.py::test_desktop_releases_are_listed_at_the_pinned_version
+      critical: true
+      category: presentation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_desktop_route_offers_the_detected_platform_first
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_about_route_carries_people_roles_and_investors
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_announcement_dismissal_survives_a_reload
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reduced_motion_selects_the_static_drawing_tier
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sound_is_off_on_a_first_visit
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_does_not_scroll_sideways
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_pages_meet_the_accessibility_floors
+      category: presentation
+      weight: 1
+- id: empty_states_and_unknown_pages_render_correctly
+  purpose: "Unknown addresses, empty lists and the launch surface read correctly, and the app serves its contract"
+  substeps:
+    - kind: browser
+      do: "Open an unknown address and observe the not-found page reading This page is not on the canvas. with Back to home, the header capsule still at the top, above the footer whose Product group lists Web app through Agent connector"
+      cov: C-CF-243, C-CF-244, C-FE-09
+    - kind: browser
+      do: "Open the sign-in page, observe the Email and Password fields with the Sign in action, follow Create account, sign up as a new creator, and observe the empty canvases table reading No canvases yet. Name one above to start."
+      cov: C-CF-12, C-UF-18, C-FE-06
+    - kind: browser
+      do: "Sign up as a new client and observe the deliveries page reading Nothing has been delivered to you yet."
+      cov: C-UF-19
+    - kind: browser
+      do: "Open the privacy page from the footer and read what Quarro records about a visitor and the address for removal requests"
+      cov: C-CF-235
+    - kind: pytest
+      test: test_output.py::test_app_serves_the_api_on_its_own_origin
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_and_balances_match_the_ledger
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_with_the_product_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_linked_from_every_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared_in_the_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_resolving_preview_image
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_have_distinct_titles_and_descriptions
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_internal_links_on_public_routes_resolve
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_signed_in_routes_redirect_anonymous_visitors
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_error_envelope_carries_a_code_and_a_correlation_id
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_login_refusal_does_not_reveal_which_addresses_exist
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_with_an_invalid_field_is_refused_and_names_it
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_is_refused_and_creates_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_studio_balances_match_the_brief
+      category: data_integrity
+      weight: 5

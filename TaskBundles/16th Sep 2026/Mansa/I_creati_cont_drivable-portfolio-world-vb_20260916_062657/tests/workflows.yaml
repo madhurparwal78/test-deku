@@ -1,0 +1,265 @@
+- id: visitor_drives_to_a_published_project
+  purpose: A visitor lands in the world, presses once to start, drives to a published project object and reads its panel
+  substeps:
+    - kind: browser
+      do: Open the app at its public address and confirm the opening frame shows the rendered ground with the loading ring, no percentage and no progress wording anywhere
+      cov: C-OV-01, C-FE-04
+    - kind: browser
+      do: Press once to start, then confirm the two right-edge triggers are now present, the vehicle responds to a drive input, and the root element names exactly one consumer as owning the keyboard at that moment
+      cov: C-FE-06, C-CF-29
+    - kind: browser
+      do: Drive to the object standing for Lantern Run, press interact, read the project title, poster, attributes and distinctions in the panel that opens in place, and confirm no navigation bar appears anywhere on the public surface
+      cov: C-OV-02, C-OV-03
+    - kind: browser
+      do: Confirm the opening screen sets its call to action in the hand-drawn display face on one dark scheme with no light theme, that the panel titles and body copy hold one stepped type scale, that the document itself never scrolls, and that nothing appears without its fade
+      cov: C-FE-01, C-FE-02, C-FE-03, C-UX-02
+    - kind: browser
+      do: Open the menu from the upper right-edge trigger, confirm six contents share one frame whose shell stays put while the words change a beat before the picture, read the six options rows, then shorten the window and confirm the controls rows tighten
+      cov: C-FE-07, C-FE-09
+    - kind: browser
+      do: Confirm each surface carries an inset hairline rather than a border, that pointing at an edge trigger or a menu tab brightens that hairline, then reach the same controls with the keyboard alone and confirm a visible focus treatment lands on each, stays inside the open overlay and returns to the opener on close
+      cov: C-UX-04, C-UX-08
+    - kind: pytest
+      test: test_output.py::test_world_manifest_lists_only_published_projects
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_project_detail_is_public
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_project_order_follows_adjacency_not_dates
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_projects_row_state_matches_manifest
+      category: data_integrity
+      weight: 5
+
+- id: owner_signs_in_and_writes_a_project
+  purpose: The owner signs in to the private studio, opens the create panel and saves a new project as a draft
+  substeps:
+    - kind: browser
+      do: Open the studio sign-in route, sign in as owner@example.com with deku-demo-pw-2026, and land on the project list
+      cov: C-RL-05, C-UF-01
+    - kind: browser
+      do: Open the create panel, confirm it slides in over the project list with the list still visible behind it, then write a new project titled Harbour Light, upload its poster, set free coordinates and save it as a draft
+      cov: C-UF-05
+    - kind: pytest
+      test: test_output.py::test_owner_login_returns_access_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_wrong_password_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_persists_row_and_stored_object
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: owner_publishes_a_project_into_the_world
+  purpose: The owner publishes a draft onto free coordinates and the project becomes an object in the world with its poster in the object store
+  substeps:
+    - kind: browser
+      do: Publish Harbour Light and confirm the browser lands on a full confirmation page naming the project and its coordinates, with a way into the world and a way back to the list
+      cov: C-UF-03
+    - kind: pytest
+      test: test_output.py::test_poster_upload_lands_in_bucket_at_scheme_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_poster_file_streams_to_anonymous_reader
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_poster_upload_stores_one_object
+      category: data_integrity
+      weight: 5
+
+- id: publish_at_occupied_coordinates_conflict
+  purpose: Publishing a second project onto coordinates a published project already holds is refused at the write path with a stated reason
+  substeps:
+    - kind: browser
+      do: As the owner, write a further project, set its coordinates to the ones Paper Tide already holds, attempt to publish it, and confirm the panel states the reason against the coordinate fields and names the project already standing there
+      cov: C-UF-04, C-CF-13
+    - kind: pytest
+      test: test_output.py::test_publish_onto_occupied_coordinates_is_rejected
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unpublish_frees_coordinates_for_another_draft
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_publish_at_one_point_has_one_winner
+  purpose: Two publish requests arriving together for two drafts at one set of coordinates produce exactly one published project
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_at_one_point_yields_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publish_without_poster_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_self_adjacent_project_is_refused
+      category: validation
+      weight: 3
+
+- id: anonymous_cannot_reach_a_draft
+  purpose: A draft is unreachable by every route a visitor has, including its own address and its poster bytes
+  substeps:
+    - kind: browser
+      do: As a signed-out visitor, open the text route and confirm the draft appears nowhere in the listing
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_draft_direct_address_is_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_poster_upload_is_denied_without_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_is_absent_from_the_text_route
+      category: security
+      weight: 5
+
+- id: anonymous_write_attempts_are_denied
+  purpose: Every owner-only endpoint refuses a caller with no owner session and leaves the protected state unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_create_project_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_publish_project_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_read_page_view_record_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_malformed_token_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_route_does_not_exist
+      category: security
+      weight: 5
+
+- id: visitor_leaves_a_whisper_over_the_limit
+  purpose: A visitor leaves a short message that stands in the world, and the wall enforces its stated rules at the write path
+  substeps:
+    - kind: browser
+      do: Open the whisper composer, confirm the six rules are printed before typing, type a message, pick a country, and confirm the submit control lights up only once the message can be sent
+      cov: C-FE-13
+    - kind: browser
+      do: Open the map, confirm a location name springs up when pointed at and stands permanently on a touch device, then open the achievements content and confirm a reward still to be earned is shown behind a lock rather than hidden
+      cov: C-FE-10, C-FE-11
+    - kind: browser
+      do: Reach an achievement that counts occurrences and one that collects a named group, reload the page, confirm both progress figures survive, and confirm progress is held under three local browser keys synchronised nowhere, with none of them written for a visitor who has done nothing
+      cov: C-CF-38, C-CF-39, C-TR-09
+    - kind: browser
+      do: With the shared endpoints unreachable, confirm every overlay still opens while the world is still resolving, that a send does nothing rather than queueing, and that no comment, like or follow control exists anywhere on a public surface
+      cov: C-CF-37, C-TR-08, C-CN-02
+    - kind: browser
+      do: Leave a whisper on one open page and confirm the wall on a second open page shows it without that page being reloaded, then confirm a production build is served behind a static or preview server and never a dev server
+      cov: C-TR-04, C-DC-08
+    - kind: pytest
+      test: test_output.py::test_whisper_wall_never_exceeds_thirty_rows
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_whisper_over_limit_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_whisper_decoy_field_submission_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_repeated_whisper_submissions_are_refused
+      category: validation
+      weight: 3
+
+- id: visitor_runs_a_timed_lap_with_invalid_splits
+  purpose: A lap runs and shows its time, and a submitted lap whose splits do not sum to its duration is refused
+  substeps:
+    - kind: browser
+      do: Start the circuit, confirm the three lap controls appear, cross the line, confirm the finished time is shown large and heavy whether or not it placed, and confirm an empty daily board shows one stated line rather than an empty table
+      cov: C-FE-12
+    - kind: pytest
+      test: test_output.py::test_lap_with_inconsistent_splits_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_leaderboard_returns_empty_array
+      category: presentation
+      weight: 1
+
+- id: public_surfaces_are_whole_and_reachable
+  purpose: The text route carries the portfolio without driving, every internal link resolves, an unknown address renders the product not-found page and the cookie choice persists
+  substeps:
+    - kind: browser
+      do: Confirm a visitor opens the world without signing in, then open the text route and confirm the introduction, the published project list with outbound links, the career history and the contact routes are readable without driving, and that the route states it is a text alternative rather than an equivalent experience
+      cov: C-CF-27, C-RL-01
+    - kind: browser
+      do: Answer the first-visit cookie question, reload the page, and confirm the answer is remembered and the question is not asked again
+      cov: C-CF-32
+    - kind: pytest
+      test: test_output.py::test_text_route_lists_published_projects_only
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_internal_links_on_public_routes_resolve
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_views_are_recorded_for_public_routes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_survives_a_reload
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_root_document_is_server_rendered_with_state_classes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_behaviour_hooks_are_prefixed_separately_from_styling
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_credentials_note_and_reserved_directories_exist
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_pages_serve_no_binary_asset_files
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_public_surfaces_need_no_sign_in
+      category: business_rule
+      weight: 3

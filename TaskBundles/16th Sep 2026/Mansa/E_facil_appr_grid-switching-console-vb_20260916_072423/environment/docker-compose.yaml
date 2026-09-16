@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16.4-bookworm
+    environment:
+      POSTGRES_USER: deku_admin
+      POSTGRES_PASSWORD: deku-local-dev
+      POSTGRES_DB: deku
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deku_admin -d deku -q"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: deku_admin
+      KEYCLOAK_ADMIN_PASSWORD: deku-local-dev
+      KC_BOOTSTRAP_ADMIN_USERNAME: deku_admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: deku-local-dev
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./keycloak-realm.json:/opt/keycloak/data/import/deku-realm.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nConnection: close\\r\\n\\r\\n' >&3 && timeout 5 cat <&3 | grep -q UP"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+  main:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4173:4173"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

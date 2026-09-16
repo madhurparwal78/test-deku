@@ -1,0 +1,438 @@
+- id: operator_signs_in_and_opens_the_console
+  purpose: A control room operator signs in with the credential the identity provider holds and lands on the operations canvas
+  substeps:
+    - kind: browser
+      do: Open the app at its public address and confirm the sign-in entry takes an email address, that the app offers no signup, no password reset and no invitation, and that a terms page is linked from the footer
+      cov: C-CF-01, C-CF-12, C-CF-142
+    - kind: browser
+      do: Sign in as operator@example.com with deku-demo-pw-2026 and confirm the console opens on the network view with the alarm board reachable
+      cov: C-UF-01, C-RL-01
+    - kind: browser
+      do: Confirm the surface reads as an operational console: dense rows, restrained colour, one clear primary action, no hero composition and no decoration standing in for content
+      cov: C-UX-02, C-UX-03, C-UX-25
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_operator_login_returns_access_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credentials_note_and_reserved_directories_exist
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_reachable_and_linked
+      category: presentation
+      weight: 1
+
+- id: unauthenticated_caller_is_denied_every_surface
+  purpose: A caller with no token, a malformed token or no account reaches nothing behind the sign-in boundary
+  substeps:
+    - kind: browser
+      do: Request the console address while signed out and confirm the app returns to the sign-in entry rather than rendering a blank page
+      cov: C-UF-10
+    - kind: pytest
+      test: test_output.py::test_malformed_token_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_wrong_password_is_rejected
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_route_does_not_exist
+      category: security
+      weight: 5
+
+- id: operator_reads_the_published_network_model
+  purpose: The console serves the published model version and the seeded elements that belong to it
+  substeps:
+    - kind: browser
+      do: Confirm the network view renders the seeded feeders from live electrical state held in a buffer that arriving measurements rewrite, that the eight electrical colours carry electrical meaning there and nowhere else in the product, and that the de-energized section reads in its own mandatory pattern at every zoom
+      cov: C-UX-06, C-UX-07, C-FE-04
+    - kind: browser
+      do: Open the asset inspector on the recloser 4B-RCL-118, confirm the pointer acquires the nearest element rather than needing a direct hit on it, and confirm one continuous operations canvas holds the whole network with every other panel docking over the canvas
+      cov: C-OV-05, C-FE-06
+    - kind: pytest
+      test: test_output.py::test_seeded_model_version_is_the_only_published_one
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_network_elements_match_the_published_train
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_survive_a_re_read
+      category: data_integrity
+      weight: 5
+
+- id: operator_acknowledges_the_protection_alarm
+  purpose: The alarm board ranks by the server-computed value and an acknowledgement is recorded exactly once
+  substeps:
+    - kind: browser
+      do: Open the alarm board and confirm the protection alarm on 4B-RCL-118 sits at the top of the list with its urgency carried by a glyph and by text rather than by colour alone
+      cov: C-CF-33, C-UX-22
+    - kind: browser
+      do: Acknowledge the alarm and confirm the row morphs in place into its acknowledged state, that elements changing state together change in one frame rather than staggered, and that an animation interrupted mid-flight is reaching its interrupting state from the current interpolated value
+      cov: C-FE-08, C-UX-15
+    - kind: pytest
+      test: test_output.py::test_alarm_list_orders_by_computed_priority
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_alarm_priority_matches_the_pinned_value
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_alarm_acknowledge_is_recorded_once
+      category: data_integrity
+      weight: 5
+
+- id: invalid_suppression_is_refused
+  purpose: A suppression outside the stated reason or duration range is refused and nothing is written
+  substeps:
+    - kind: browser
+      do: Open the suppress control on an alarm, submit a five-character reason and confirm the form names the field that is wrong, keeps what was typed and writes nothing
+      cov: C-CF-41, C-CF-144
+    - kind: pytest
+      test: test_output.py::test_suppression_reason_below_the_floor_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_suppression_duration_above_the_cap_is_refused
+      category: validation
+      weight: 3
+
+- id: coordinator_commands_the_incident
+  purpose: A coordinator assumes command of the seeded incident and the timeline stays server-ordered
+  substeps:
+    - kind: browser
+      do: Sign in as coordinator@example.com with deku-demo-pw-2026, open INC-4471 and assume command, confirming the commander badge moves to the assuming identity
+      cov: C-CF-45, C-CF-47
+    - kind: browser
+      do: Post a timeline note and confirm the incident timeline is append-only, ordered by a server-assigned sequence that is gapless, with the insertion never moving content containing focus
+      cov: C-CF-48, C-FE-17
+    - kind: pytest
+      test: test_output.py::test_incident_command_assume_with_stale_version_is_refused
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_incident_timeline_sequence_is_gapless
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_impact_snapshot_keeps_the_range_while_estimating
+      category: business_rule
+      weight: 3
+
+- id: operator_studies_a_switching_order
+  purpose: A study returns the predicted electrical consequence of each step and flags the overloaded transfer
+  substeps:
+    - kind: browser
+      do: Open SWO-2026-014, add a step by picking NG-SEC-142 on the canvas and confirm the step enters the list inline with its ordinal revealed rather than appearing silently
+      cov: C-CF-62, C-CF-63
+    - kind: browser
+      do: Run the study and confirm the result names the model version and the base-state instant beside the result itself, with each step carrying its predicted loading as text and not only as a drawing
+      cov: C-TR-13, C-FE-15
+    - kind: pytest
+      test: test_output.py::test_order_study_returns_per_step_predicted_results
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_study_flags_the_overloaded_transfer_as_a_thermal_violation
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_study_clears_when_the_sectionalizer_opens_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_study_is_deterministic_across_runs
+      category: data_integrity
+      weight: 5
+
+- id: coordinator_approves_the_submitted_order
+  purpose: An approval binds the exact step sequence and an edit afterwards voids it
+  substeps:
+    - kind: browser
+      do: Submit the studied order and confirm its state chip reads as awaiting approval with the primary action in the footer changing to match
+      cov: C-CF-71
+    - kind: browser
+      do: Sign in as coordinator@example.com, review each step with its predicted result attached, approve, and confirm the approval moment is marked by a stamp that appears only after the server confirms
+      cov: C-CF-72, C-FE-12
+    - kind: pytest
+      test: test_output.py::test_submit_moves_the_order_to_pending_approval
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_coordinator_approval_binds_the_step_sequence_digest
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editing_an_approved_order_voids_the_approval
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_approved_order_digest_equals_the_current_digest
+      category: data_integrity
+      weight: 5
+
+- id: operator_cannot_approve_an_order
+  purpose: An operator calling approve is denied at the API and the order is left exactly as it was
+  substeps:
+    - kind: browser
+      do: Sign in as operator@example.com, open a submitted order and confirm no approve control is offered anywhere on the surface
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_operator_cannot_approve_an_order
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_operator_cannot_publish_a_model_version
+      category: security
+      weight: 5
+
+- id: self_approval_at_risk_class_two_is_denied
+  purpose: Nobody approves the order they created once its risk class reaches two, whatever role they hold
+  substeps:
+    - kind: browser
+      do: Sign in as coordinator@example.com, create and submit an order that transfers a large section, then confirm the approve control states that a different identity must sign it
+      cov: C-RL-17
+    - kind: pytest
+      test: test_output.py::test_self_approval_at_risk_class_two_or_above_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_coordinator_cannot_publish_a_model_version
+      category: security
+      weight: 5
+
+- id: operator_outside_the_area_is_denied
+  purpose: An operator assigned to another operating area can read an order and can change nothing on it
+  substeps:
+    - kind: browser
+      do: Sign in as operator2@example.com with deku-demo-pw-2026, open SWO-2026-014 and confirm every write control is either absent or states the area scope that forbids it
+      cov: C-RL-16, C-CF-43
+    - kind: pytest
+      test: test_output.py::test_operator_outside_the_area_is_denied_every_write
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_auditor_cannot_touch_an_order
+      category: security
+      weight: 5
+
+- id: operator_executes_the_first_step
+  purpose: Execution needs a two-stage confirmation and a step is executed exactly once
+  substeps:
+    - kind: browser
+      do: Arm the execute control on the first step, confirm the restatement names the device, the action and the predicted result, and confirm the confirm control is not reachable by a single click
+      cov: C-CF-89, C-FE-25
+    - kind: browser
+      do: Confirm the step then shows its execution phases growing live, with the elapsed time in each readable as text
+      cov: C-FE-13
+    - kind: pytest
+      test: test_output.py::test_execute_without_a_confirmation_token_is_refused
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_execute_with_a_spent_confirmation_token_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_step_out_of_order_execution_is_refused
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_step_idempotency_key_exists_at_creation
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_execute_emits_one_instruction
+  purpose: Two simultaneous executions of one step leave exactly one execution attempt and one emitted instruction
+  substeps:
+    - kind: browser
+      do: Open the executing order and confirm the step list states which step is current and which are still pending, without any control offering to run two at once
+      cov: C-CF-92
+    - kind: pytest
+      test: test_output.py::test_concurrent_execute_emits_exactly_one_instruction
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_approve_records_exactly_one_approval
+      category: data_integrity
+      weight: 5
+
+- id: dispatcher_issues_a_permit_after_a_failed_validation
+  purpose: A permit validates against live measurements, names the device that fails it, and blocks re-energization at authoring time
+  substeps:
+    - kind: browser
+      do: Open the dispatch board, attempt to issue a permit over the isolated section and confirm the refusal names NG-SEC-142, its indeterminate position quality and the instant the reading was taken
+      cov: C-CF-112, C-CF-113
+    - kind: browser
+      do: Record a manual position override with a reason and a field reference, re-run the validation and confirm the isolated section takes the permit treatment on the network view
+      cov: C-CF-121, C-CF-122
+    - kind: pytest
+      test: test_output.py::test_permit_validation_names_the_indeterminate_device
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_permit_issue_without_validation_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_permit_blocks_a_re_energizing_step_at_authoring_time
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_permit_release_without_all_clear_is_refused
+      category: validation
+      weight: 3
+
+- id: concurrent_crew_assignment_leaves_one_holder
+  purpose: A crew is claimed once, and the losing dispatch action is told who holds the lease
+  substeps:
+    - kind: browser
+      do: Open the dispatch board, assign crew C-07 to the isolated section and confirm the row morphs into its awaiting-acknowledgement state with the permit reference shown beside it
+      cov: C-CF-124
+    - kind: pytest
+      test: test_output.py::test_concurrent_crew_assignment_yields_one_holder
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_suppression_blocked_by_a_live_permit
+      category: business_rule
+      weight: 3
+
+- id: auditor_recomputes_the_record_chain
+  purpose: The record is append-only, readable only to the roles that hold it, and its chain recomputes to the expected root
+  substeps:
+    - kind: browser
+      do: Sign in as auditor@example.com with deku-demo-pw-2026, open the record explorer, filter to INC-4471 and confirm no edit control and no delete control is rendered in any state
+      cov: C-CF-131, C-RL-12
+    - kind: browser
+      do: Run a chain recomputation over the window and confirm the result is announced assertively and states the entry count as well as the outcome
+      cov: C-CF-132, C-FE-23
+    - kind: pytest
+      test: test_output.py::test_record_chain_recomputation_matches_the_expected_root
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_endpoint_deletes_a_record_entry
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_operator_cannot_read_the_record
+      category: security
+      weight: 5
+
+- id: measurement_with_invalid_quality_is_refused
+  purpose: Ingest refuses a sample with no quality flag or a mismatched unit, and only a machine identity may write one
+  substeps:
+    - kind: browser
+      do: Open the measurement explorer, confirm a point whose newest reading is older than its expected period is marked stale with the reading age shown, and confirm a signed-in human session attempting a measurement write is denied whatever the role
+      cov: C-CF-27, C-CF-31
+    - kind: pytest
+      test: test_output.py::test_measurement_without_quality_is_rejected
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_measurement_with_a_mismatched_unit_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_human_session_cannot_write_a_measurement
+      category: security
+      weight: 5
+
+- id: publishing_is_refused_while_an_order_executes
+  purpose: A model version cannot publish while any order is running, and the refusal names the blocking order
+  substeps:
+    - kind: browser
+      do: Sign in as controller@example.com with deku-demo-pw-2026, open the model manager and confirm the publish control states the second-approver rule before it is reachable
+      cov: C-CF-20, C-RL-11
+    - kind: pytest
+      test: test_output.py::test_publishing_is_refused_while_an_order_executes
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent
+      category: data_integrity
+      weight: 5
+
+- id: handover_with_an_undispositioned_item_cannot_submit
+  purpose: A shift handover pre-assembles what is unfinished and refuses to submit while any item lacks a disposition
+  substeps:
+    - kind: browser
+      do: Open a handover, confirm the pre-assembly covers open incidents, unclosed orders, live permits and suppressed alarms, then attempt to submit and confirm the refusal lists every undispositioned item and moves focus to the first
+      cov: C-CF-136, C-CF-139
+    - kind: pytest
+      test: test_output.py::test_handover_submit_with_an_undispositioned_item_is_refused
+      critical: true
+      category: business_rule
+      weight: 5
+
+- id: spam_submission_to_the_public_form_is_refused
+  purpose: The public sign-in form refuses an automated submission and a burst from one client
+  substeps:
+    - kind: browser
+      do: Confirm the sign-in form shows no field a person is asked to leave empty, and that a failed attempt states what to do next without naming which half of the credential was wrong
+      cov: C-CF-02, C-FE-30
+    - kind: pytest
+      test: test_output.py::test_decoy_field_submission_is_refused
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_sign_in_attempts_are_refused
+      category: security
+      weight: 5
+
+- id: empty_and_unknown_surfaces_answer_for_themselves
+  purpose: An empty list, an unknown address and an over-long recomputation window each answer in the product's own words
+  substeps:
+    - kind: browser
+      do: Filter the alarm board to a state matching nothing and confirm the empty result says what would fill it, visually distinct from the loading state
+      cov: C-UF-14
+    - kind: browser
+      do: Open an address the product does not serve and confirm its own not-found surface renders with a way back to the console
+      cov: C-CF-148
+    - kind: browser
+      do: Record the cookie choice once, reload, and confirm the question is not asked a second time
+      cov: C-CF-143
+    - kind: pytest
+      test: test_output.py::test_empty_alarm_list_returns_an_empty_array
+      critical: true
+      category: presentation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_survives_a_reload
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_recomputation_window_beyond_the_cap_is_refused
+      category: validation
+      weight: 3

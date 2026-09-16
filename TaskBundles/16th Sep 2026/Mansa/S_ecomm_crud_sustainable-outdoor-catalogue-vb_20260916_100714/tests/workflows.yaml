@@ -1,0 +1,717 @@
+- id: specifier_configures_and_requests_a_quotation
+  purpose: "A specifier filters the catalogue, configures two products, saves them and sends the wishlist as a quotation request that is stored line by line and confirmed by email"
+  substeps:
+    - kind: browser
+      do: "Open /en/products without signing in, since a visitor never signs in to use any public feature, choose Golf in by Collections and Signage in by Products, and confirm the counter reads Showing 2 of 20 Results"
+      cov: C-OV-07
+    - kind: browser
+      do: "Open Tee Sign Heritage and press the bookmark; confirm the modal headed Personalise your product opens over the page without any account, the address never changes, and the modal offers size, structure, colour, display, laminate colour in that order with no option axis constraining another, so the configuration never appears in the address and is never linkable"
+      cov: C-RL-01, C-CF-139, C-CF-140, C-CF-142, C-CF-143, C-CF-155, C-CN-09
+    - kind: browser
+      do: "Choose M, Galvanised steel, Anthracite grey RAL7016, HPL + and Dark green, press the modal primary control to add the configuration, confirm the modal closes with focus returned to the opening control, the adding confirmation shows the product name with an undo control and a draining bar without taking focus, the header wishlist count updates, and that Escape or the back gesture closes the options modal without adding when it is reopened"
+      cov: C-CF-150, C-CF-151, C-CF-152, C-CF-162, C-CF-163, C-CF-165, C-UF-06
+    - kind: browser
+      do: "Open Plaza Bench Long, open its options modal, confirm the display axis and laminate axis are absent because an axis with no values is absent, choose size 2000, and add; confirm adding with no other option chosen is accepted"
+      cov: C-CF-144, C-CF-149
+    - kind: browser
+      do: "Open /en/wishlist and confirm two rows, each wishlist row showing the render, the title, the collection, the chosen option names and a remove control, with the populated wishlist offering Request a quotation"
+      cov: C-CF-171, C-CF-173
+    - kind: browser
+      do: "Press Request a quotation and confirm the quotation modal opens over the current route without changing the path, shows the tabs Contact, Wishlist and Files, shows the wishlist inline above the fields First Name, Last Name, Email, Role, Industry, Country, City and NIF, and asks Some products have BIM/3D files available, are you interested? without the files checkbox triggering any download"
+      cov: C-CF-181, C-CF-182, C-CF-183, C-CF-184, C-CF-215, C-UF-05
+    - kind: browser
+      do: "Fill the quotation fields, tick the privacy box and send the configured wishlist as a quotation request; confirm the quotation confirmation shows a VQ- reference, receives focus, says a full copy is on its way by email, that the wishlist clears only after the confirmation renders, and that reopening /en/wishlist shows the emptied wishlist with a line naming the reference"
+      cov: C-OV-04, C-CF-217, C-CF-220, C-CF-221, C-CF-222, C-UF-11
+    - kind: pytest
+      test: test_output.py::test_quotation_request_returns_quotable_reference
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_quotation_items_persist_the_configured_options
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_quotation_payload_is_rendered_on_the_server
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_quotation_confirmation_email_lists_every_item
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_quotation_lead_reaches_delivered
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_quotation_staff_notification_omits_fiscal_number
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_quotation_confirmation_is_sent_exactly_once
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_quotation_line_positions_are_contiguous
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_consent_hash_matches_the_displayed_sentence
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unresolved_product_line_is_kept_and_flagged
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_line_missing_in_locale_resolves_from_portuguese
+      category: business_rule
+      weight: 3
+
+- id: catalogue_filters_narrow_by_collection_and_type
+  purpose: "The catalogue facets combine as intersections and unions, live in the address and drive an honest per-locale counter"
+  substeps:
+    - kind: browser
+      do: "On /en/products confirm the heading Our products are made to last. Take your time exploring., the facet labelled by Collections, the product type facet labelled by Products with Signage, Construction, Furniture and Equipment, that a facet change filters products already on the page without a request or any loading state, that the counter change is announced politely to assistive technology, and that the sub-collection group appears only when exactly one collection, Urban, is active"
+      cov: C-CF-56, C-CF-57, C-CF-58, C-CF-76, C-CF-77, C-CF-78, C-FE-37
+    - kind: browser
+      do: "Select Urban and Golf, then reopen the filtered catalogue address and confirm it reproduces every selected facet; then open /en/products?collection=mars and confirm the unknown facet value is removed from the address"
+      cov: C-CF-69, C-CF-71
+    - kind: browser
+      do: "Choose Details with Construction and confirm the combination matching nothing shows the counter at zero, removable chips, a clear control and three suggested products as its designed empty state, and that a facet value with no matching products stays visible as unavailable with its count, so every list offers a designed empty state"
+      cov: C-CF-79, C-CF-80, C-UF-18
+    - kind: browser
+      do: "Inspect the catalogue cards: each catalogue card shows the title, collection pill, render, colour strip and size strip, a card strip shows two items then +N so Tee Sign Heritage reads +6, no catalogue card or product page shows a price, the product has no cart, checkout, payment, order or invoice anywhere, and scrolling the long grid stays responsive, with every loading state resolving into a result or a message"
+      cov: C-OV-05, C-CF-83, C-CF-84, C-UF-19, C-CN-02, C-CN-11
+    - kind: browser
+      do: "Resize to a narrow screen and confirm a floating FILTER control opens the facet panel and shows how many facets are active"
+      cov: C-CF-81, C-CF-82
+    - kind: browser
+      do: "Open /en/products/urban and confirm the collection catalogue card never counts toward the counter, that choosing another collection on the collection route navigates to that collection route, and that clearing the collection navigates to /en/products keeping other facets"
+      cov: C-CF-73, C-CF-96, C-CF-97
+    - kind: pytest
+      test: test_output.py::test_catalogue_counts_per_locale
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_catalogue_collection_counts_in_english
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_facet_groups_combine_as_intersection
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_facet_values_within_a_group_combine_as_union
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_sub_collection_filter_narrows_urban
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_facet_value_is_ignored
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_server_rendered_counter_reflects_address
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_catalogue_document_renders_product_titles_without_script
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_size_labels_are_returned_as_authored
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_product_without_options_reports_none
+      category: business_rule
+      weight: 3
+
+- id: product_page_shows_the_specification
+  purpose: "A product route shows the object beside a complete specification with reference codes, related products and case studies"
+  substeps:
+    - kind: browser
+      do: "Open /en/products/golf/tee-sign-heritage and confirm it shows the object beside its specification: the specification side opens with the PRODUCTS back control returning to the collection, a short question label sits beside the product description, a Specs cue leads down to the specification block, and the compound control holds a bookmark with REQUEST INFORMATION as two separately named controls"
+      cov: C-CF-104, C-CF-107, C-CF-108, C-CF-109, C-CF-110
+    - kind: browser
+      do: "In the specification block confirm the Structure Colors row lists each colour value with its reference code, and that the Personalised colour value renders as text without a swatch"
+      cov: C-CF-123
+    - kind: browser
+      do: "Open the references control and confirm the references mode is headed References, that each reference code carries its own copy control, that a REF- token in rich text renders as a reference-code element, and that copying a reference code gives visible feedback that reverts"
+      cov: C-CF-124, C-CF-125, C-CF-153, C-CF-154
+    - kind: browser
+      do: "Open /en/products/nature/boardwalk-module and confirm the product with case studies shows a strip of those articles naming Ridge Viewpoint Boardwalk"
+      cov: C-CF-135
+    - kind: browser
+      do: "Open Slim Room Sign and confirm it shows no REQUEST INFORMATION control; open Line Door Plate and confirm its bookmark adds the product directly without a modal"
+      cov: C-CF-130, C-CF-141
+    - kind: pytest
+      test: test_output.py::test_tee_sign_detail_carries_every_option
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_colour_values_keep_their_reference_codes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_plaza_bench_detail_matches_seed
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_single_value_colour_axis_on_reuse_bin
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_specification_rows_for_tee_sign
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_product_without_documents_reports_none
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_related_products_exclude_current_and_stay_in_collection
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_lists_featured_products
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_product_page_carries_breadcrumb_metadata
+      category: presentation
+      weight: 1
+
+- id: wishlist_keeps_configurations_across_reloads
+  purpose: "The browser-held wishlist keeps configurations as separate entries, undoes precisely and survives reloads, locale changes and offline use"
+  substeps:
+    - kind: browser
+      do: "Save Frame Bollard twice in two colours and confirm one product saved in two colours shows as two rows, each wishlist entry holding the chosen option names, and that the card bookmark reads filled with a count of two once the product is saved twice"
+      cov: C-CF-158, C-CF-159, C-CF-160
+    - kind: browser
+      do: "Save Cove Picnic Table, press undo on its confirmation and confirm undo removes exactly the entry just added; press the filled card bookmark of Frame Bollard and confirm the card bookmark removes one entry for that product"
+      cov: C-CF-161, C-CF-164
+    - kind: browser
+      do: "Reload /en/wishlist and confirm the wishlist lives in the visitor's own browser and survives a reload; switch to Portugues and confirm the wishlist survives the locale change, rows resolve by product identifier in the current locale, a row for a product missing in the locale is marked not available in the language"
+      cov: C-CF-156, C-CF-175, C-CF-176, C-CF-177, C-CF-178
+    - kind: browser
+      do: "Press the clear control and confirm the clear control names the count and asks for confirmation first; after clearing confirm the empty wishlist shows Your wishlist over the heading No picks yet?, offers Start adding leading to the catalogue, shows no quotation control, the header wishlist count is hidden at zero, and an unreadable stored wishlist loads as empty after a reload"
+      cov: C-CF-157, C-CF-166, C-CF-167, C-CF-168, C-CF-170, C-CF-172
+    - kind: browser
+      do: "Save a product with no option chosen and confirm the row offers to choose an unchosen axis in the options modal; with the network off confirm adding to the wishlist keeps working, a previously visited route opens offline with a dismissible connection line, a form submission offline is refused with values kept and never queued, the wishlist refuses a 51st entry with a message naming the count, and removing the last entry closes an open quotation modal with a message"
+      cov: C-CF-174, C-CF-179, C-CF-180, C-CF-219, C-TR-30, C-TR-31
+
+- id: duplicate_quotation_submit_creates_one_enquiry
+  purpose: "Pressing send twice, replaying a key or racing two identical requests still yields exactly one enquiry"
+  substeps:
+    - kind: browser
+      do: "Fill the quotation modal and double-press send; confirm one confirmation with one reference appears, because the modal sends one idempotency key per form instance"
+      cov: C-CF-216
+    - kind: pytest
+      test: test_output.py::test_duplicate_idempotent_submission_creates_one_quotation
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_identical_submissions_create_one_lead
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reused_key_with_different_body_conflicts
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_missing_idempotency_key_is_refused
+      category: validation
+      weight: 3
+
+- id: invalid_form_input_is_refused_inline
+  purpose: "Invalid form input is refused inline and by the server with a field map, and nothing is written"
+  substeps:
+    - kind: browser
+      do: "Open the contact mode, which asks for First Name, Last Name, Email, Country and Message; confirm an untouched field is never marked before the first submit, then submit empty and confirm every form rejects invalid input inline naming the field, submitting moves focus to the first invalid control, the submit control stays enabled on invalid input, and a failed quotation leaves the form values in place"
+      cov: C-CF-218, C-CF-265, C-CF-276, C-CF-279, C-CF-280, C-CF-281
+    - kind: browser
+      do: "Confirm lead forms show a privacy sentence opening I have read, the privacy box starts unticked, and following the privacy link never toggles the privacy box"
+      cov: C-CF-269, C-CF-270, C-FE-49
+    - kind: pytest
+      test: test_output.py::test_quotation_contact_fields_are_validated
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invalid_email_is_refused_with_field_error
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_property_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_client_supplied_title_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_quotation_with_no_entries_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_quotation_over_fifty_entries_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_missing_privacy_consent_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_mismatched_consent_hash_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_tax_id_keeps_leading_zeros
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_error_body_uses_the_single_shape
+      category: presentation
+      weight: 1
+
+- id: repeated_contact_submissions_hit_the_limit
+  purpose: "Contact enquiries are stored and confirmed, while decoys, fresh tokens, repeated submissions and link-heavy messages are handled without losing a real enquiry"
+  substeps:
+    - kind: browser
+      do: "Send a contact enquiry several times from one address and confirm validation, rate limiting, failed save and success each show different wording, with the rate-limit message naming the wait in minutes beside the enquiry address"
+      cov: C-CF-294, C-CF-301
+    - kind: pytest
+      test: test_output.py::test_contact_enquiry_is_stored_and_answered_with_request_id
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_contact_confirmation_email_restates_the_message
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_contact_staff_notification_carries_no_message
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_filled_decoy_field_writes_nothing
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_too_fresh_form_token_writes_nothing
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_missing_form_token_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_repeated_submissions_from_one_address_are_limited
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_link_heavy_message_is_quarantined
+      category: business_rule
+      weight: 3
+
+- id: file_request_grants_a_document
+  purpose: "A gated document is granted once for one document, served through a short-lived signed location, emailed, and refused for unknown or exhausted tokens"
+  substeps:
+    - kind: browser
+      do: "On Tee Sign Heritage press REQUEST INFORMATION and confirm the files mode asks for first name, last name, email and privacy consent only, since the file gate is offered on products, catalogue cards and chapter download controls"
+      cov: C-CF-223, C-CF-224
+    - kind: browser
+      do: "Submit the files mode and confirm the file confirmation names the document Tee Sign Heritage technical files with a download control, says the same link was emailed, and that a document granted earlier in the session downloads without the form on the next request"
+      cov: C-CF-239, C-CF-240, C-CF-241, C-UF-12
+    - kind: browser
+      do: "Open /en/products/urban, confirm the collection catalogue card reads PDF with Download Urban Catalogue, and confirm the catalogue card opens the file request in collection-catalogue scope"
+      cov: C-CF-101, C-FE-38
+    - kind: browser
+      do: "Open a download address under /api/files/ with a made-up token and confirm the unknown token answers not found rather than forbidden"
+      cov: C-CF-236
+    - kind: pytest
+      test: test_output.py::test_file_request_issues_a_grant_for_one_document
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_file_grant_redirects_to_a_signed_pdf
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_collection_catalogue_request_is_granted
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_file_grant_email_carries_the_download_link
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_file_grant_expires_seven_days_after_creation
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unknown_file_token_answers_not_found
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_file_grant_is_exhausted_after_five_redemptions
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_file_grant_ignores_a_supplied_asset_parameter
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_file_request_for_missing_documents_is_refused
+      category: validation
+      weight: 3
+
+- id: newsletter_double_opt_in_confirms_a_subscriber
+  purpose: "A newsletter sign-up stays pending until its emailed link is followed, never discloses the list, and unsubscribes in one action"
+  substeps:
+    - kind: browser
+      do: "Use the footer newsletter form and confirm the newsletter form collects only an email address beside By submitting your email you agree to our Privacy Policy., that the newsletter form appears in every footer, the journal index, sustainability and about, and that the sign-up confirmation line never says the visitor is subscribed"
+      cov: C-CF-244, C-CF-245, C-CF-246, C-CF-248
+    - kind: browser
+      do: "Open /en/newsletter/expired and confirm the expired page offers to sign up again"
+      cov: C-CF-258
+    - kind: pytest
+      test: test_output.py::test_newsletter_signup_creates_pending_subscriber
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_newsletter_confirmation_email_is_sent_once
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_newsletter_confirmation_link_confirms_subscriber
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_confirmed_address_signup_discloses_nothing
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_newsletter_message_carries_unsubscribe_headers
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unsubscribe_link_takes_effect_at_once
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_resubscribe_returns_to_pending_with_new_confirmation
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_one_click_unsubscribe_post_answers_no_content
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_newsletter_rate_limit_applies_per_address
+      category: security
+      weight: 5
+
+- id: language_switcher_keeps_the_same_document
+  purpose: "The four locales keep their own addresses, the switcher lands on the same document, and the root and fallbacks redirect by the stated rules"
+  substeps:
+    - kind: browser
+      do: "On Tee Sign Heritage open the language selector, confirm the language selector is a menu marking the current locale, choose es, and confirm the language switcher links to the same document so the journey lands on /es/productos/golf/senal-de-salida-heritage, and that the chosen language is never overridden later"
+      cov: C-CF-32, C-CF-43, C-UF-13, C-FE-06
+    - kind: browser
+      do: "Open Slim Room Sign in English and confirm the switcher item with no equivalent for es leads to that locale's home and is marked before choosing"
+      cov: C-CF-44
+    - kind: browser
+      do: "Open /fr/produits and confirm the French page carries no English label"
+      cov: C-CF-45
+    - kind: browser
+      do: "Open /fr/produits/details/slim-room-sign, follow the redirect, and confirm the Portuguese fallback page shows a dismissible not-available line; open a collection empty in a locale and confirm its header with a Portuguese offer"
+      cov: C-CF-41, C-CF-103
+    - kind: pytest
+      test: test_output.py::test_root_redirect_follows_accept_language
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_root_redirect_honours_stored_locale_only_with_consent
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_deep_link_is_never_redirected_by_language
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_localised_segments_serve_the_catalogue
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_uppercase_and_trailing_slash_redirect_permanently
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_wrong_collection_segment_redirects_to_canonical
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_missing_translation_redirects_to_portuguese
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_product_alternates_resolve_by_identifier
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_product_page_declares_reciprocal_alternates
+      category: presentation
+      weight: 1
+
+- id: journal_pages_and_article_gallery
+  purpose: "The journal index, a paged category, an article with its gallery, the careers list and a superseded legal version all read correctly"
+  substeps:
+    - kind: browser
+      do: "Open /en/journal and confirm the journal headline opening Exploring ideas, insights, that Institutional shows as an unavailable chip in English, and that the journal index shows Latest Articles, the featured rail whose repeated items are hidden from assistive technology, and per-category blocks"
+      cov: C-CF-348, C-CF-349, C-FE-59, C-FE-60
+    - kind: browser
+      do: "Choose Case Studies, move to page 2 with the paginator, and confirm a category with one page has no paginator; open an empty category route in a locale and confirm the empty category route offers the Portuguese version rather than not-found"
+      cov: C-CF-355, C-CF-358
+    - kind: browser
+      do: "Open Ridge Viewpoint Boardwalk and confirm the article shows reading time as a number followed by min Read, English dates render with the full month name like May 12, 2026, the article gallery opens full-screen with a current-of-total counter, the reader moves through the gallery with arrow keys and closes it with Escape, a one-image figure set renders as a figure, article links outside https, mailto or tel render as plain text, and mixed-language body text renders exactly as authored"
+      cov: C-CF-49, C-CF-363, C-CF-368, C-CF-369, C-CF-370, C-UF-14, C-FE-61
+    - kind: browser
+      do: "Follow a related product link on the article and confirm the related product link leads to Boardwalk Module"
+      cov: C-UF-15
+    - kind: browser
+      do: "Open /en/careers and confirm an apply control opens the external recruitment site with outbound links carrying an external mark and opening elsewhere, that the site has no application form and no upload, and that /en/careers/<id> shows one position with its apply control"
+      cov: C-CF-373, C-CF-374, C-CF-375, C-FE-16, C-CN-08
+    - kind: browser
+      do: "Open /en/legal/privacy-policy and confirm the legal page with more than four second-level headings shows a contents list and each legal heading carries a stable anchor"
+      cov: C-CF-391, C-CF-392
+    - kind: pytest
+      test: test_output.py::test_journal_categories_and_counts
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_journal_counts_per_locale
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_pages_hold_twelve_then_one
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_recent_articles_are_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_category_page_links_its_later_pages
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_category_is_not_found
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_open_positions_are_listed
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_legal_versions_are_retained
+      category: business_rule
+      weight: 3
+
+- id: search_finds_products_across_accents
+  purpose: "Search groups products and pages, folds accents, treats the query as text and works from the keyboard"
+  substeps:
+    - kind: browser
+      do: "Open the search control, type tee sig, confirm dropdown results appear after two characters once typing settles, then press Enter and confirm the search journey lands on Tee Sign Heritage"
+      cov: C-CF-340, C-UF-16
+    - kind: browser
+      do: "Search for zzzz and confirm a search with no results shows one announced message offering the catalogue"
+      cov: C-CF-341
+    - kind: browser
+      do: "Search for bench and confirm arrow keys move the highlight, Enter opens the highlighted result, a first Escape closes the dropdown and a second Escape collapses the field"
+      cov: C-CF-344, C-CF-345
+    - kind: pytest
+      test: test_output.py::test_search_folds_diacritics_per_locale
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_matches_prefix_of_last_word
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_treats_query_as_text
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_search_refuses_single_character_query
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_groups_and_caps_results
+      category: business_rule
+      weight: 3
+
+- id: editor_is_denied_enquiry_contents
+  purpose: "An editor reads counts and changes publish state but is denied every enquiry and subscriber content at the API"
+  substeps:
+    - kind: browser
+      do: "Sign in at /office/login as editor@example.com with deku-demo-pw-2026 and confirm the enquiry screen shows counts with a line saying contents are unavailable, and that the staff member on a screen the role may not use sees a denial naming the action"
+      cov: C-UF-08, C-FE-67
+    - kind: browser
+      do: "Open /office/products as the editor, whose only write is publish or unpublish, unpublish Golf Bag Stand in pt, confirm the journey leaves /pt/produtos at 19, then republish Golf Bag Stand in pt"
+      cov: C-UF-17, C-CN-04
+    - kind: pytest
+      test: test_output.py::test_editor_is_denied_lead_contents
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editor_sees_lead_counts
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editor_cannot_release_or_list_subscribers
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_commercial_is_denied_product_publishing
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editor_unpublish_hides_product_until_republished
+      category: business_rule
+      weight: 3
+
+- id: commercial_works_quotations_in_the_back_office
+  purpose: "A commercial user signs in, reads quotations with their lines, releases quarantined enquiries and signs out"
+  substeps:
+    - kind: browser
+      do: "Sign in at /office/login as commercial@example.com with deku-demo-pw-2026, the login credentials written to /app/USER_README.md, and confirm the back office screens /office/leads, /office/leads/<id>, /office/subscribers and /office/products exist, with the enquiry table filtering by kind with status"
+      cov: C-CF-401, C-CF-418, C-DC-06
+    - kind: browser
+      do: "Open a quotation and confirm its lines, the reference and the rendered payload, and that the enquiry detail offers a control copying the rendered payload"
+      cov: C-CF-420
+    - kind: browser
+      do: "Open a quarantined enquiry, confirm quarantined or failed enquiries are marked by a word, release it, then sign out and confirm signing out returns to /office/login"
+      cov: C-CF-419, C-UF-09
+    - kind: pytest
+      test: test_output.py::test_staff_login_returns_access_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wrong_password_and_unknown_address_are_denied_alike
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_commercial_reads_quotation_with_its_lines
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_commercial_releases_quarantined_enquiry
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_releasing_a_non_quarantined_enquiry_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_logout_revokes_the_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_suspended_account_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_staff_accounts_are_not_duplicated
+      category: data_integrity
+      weight: 5
+
+- id: unauthenticated_caller_cannot_reach_the_office
+  purpose: "A caller without a valid staff token reaches no back-office data, and no route creates an account"
+  substeps:
+    - kind: browser
+      do: "Signed out, open /office/leads and confirm a back-office page opened without a session goes to /office/login, so a visitor reaches no back-office screen; sign in and confirm the back office returns to the local page first requested, and that a session expiring mid-action returns to /office/login remembering the page"
+      cov: C-RL-02, C-CF-14, C-CF-15, C-UF-07
+    - kind: pytest
+      test: test_output.py::test_office_requires_a_valid_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_route_does_not_exist
+      category: security
+      weight: 5
+
+- id: public_pages_serve_complete_documents
+  purpose: "Public routes arrive as complete documents with their content, chrome, consent choice, security headers and discovery documents"
+  substeps:
+    - kind: browser
+      do: "Open /en and confirm the site shows a catalogue of outdoor signage, furniture and equipment from one Portuguese manufacturer, the navigation pills read Products, About, Sustainability and Journal in that order, the home headline reads Spaces for people, made for life., the first chapter headline ends for welcoming urban spaces, chapter controls read like See Urban Products, the home Recent News shows the three most recent articles, the home ends on Made to last, designed to endure., the site offers no cart, no checkout and no payment step, and the product has no separate dark mode"
+      cov: C-OV-01, C-OV-06, C-CF-376, C-FE-03, C-FE-31, C-FE-33, C-FE-34, C-FE-36, C-CN-10
+    - kind: browser
+      do: "Open /en/about and confirm the about history heading opening A trail of hard work, arrow keys move between history entries, the about pillars read 01. Environmental Awareness, 02. Innovation, 03. Quality and 04. Durability, the about route lists 68 members with eight departments, a missing page section renders nothing, a failing section removes itself leaving the page working, and the sound control is present on every route reachable by keyboard while the sound layer stays off until the visitor switches sound on"
+      cov: C-UF-20, C-TR-10, C-FE-17, C-FE-50, C-FE-52, C-FE-53, C-FE-54, C-FE-65
+    - kind: browser
+      do: "Open /en/sustainability and confirm the sustainability headline reads Built in Portugal. Made for life., the materials read Recycled plastic, High-pressure laminate and Steel with LEARN MORE, the Bike Parking Totem callouts read 2 Schuko Plugs, Shimano Standard Charger and Bosch Standard Charger, the highlighted project reads Ecodesign that empowers naming Alvora, Portugal, and Get in contact opens the contact modal"
+      cov: C-CF-266, C-DM-22, C-FE-55, C-FE-56, C-FE-58
+    - kind: browser
+      do: "Inspect the footer and confirm the footer headings read Headquarters, Production and Verdea Spain, addresses with telephone numbers render exactly as authored, the footer shows Call to a national landline beside +351 234 600 118, and the footer links read Careers, Complaints Book and Privacy Policy with Made by Atra"
+      cov: C-CF-50, C-FE-11, C-FE-12, C-FE-13
+    - kind: browser
+      do: "Open /en/products/golf/tee-sign-heritag and confirm the not-found page names the near destination Tee Sign Heritage first when one exists"
+      cov: C-CF-396
+    - kind: browser
+      do: "In a fresh session confirm a first visit shows a banner offering Accept all, Reject all and Choose, that closing the consent banner is not consent, that a choice is stored in verdea_consent as comma-separated categories, that a persistent consent control reopens the banner on every route, and that the site stays usable with every optional category refused"
+      cov: C-CF-379, C-CF-380, C-CF-381, C-CF-384, C-CF-385
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_security_headers_on_documents_and_api
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_content_policy_forbids_inline_script
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_browser_bundles_carry_no_secret
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sitemap_and_robots_describe_public_routes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_markdown_page_carries_product_substance
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_header_theme_is_rendered_on_the_server
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_not_found_page_offers_three_destinations
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_consent_choice_is_recorded_as_receipt
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unknown_product_slug_is_not_found
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_malformed_slug_is_not_found
+      category: security
+      weight: 5
