@@ -1,0 +1,326 @@
+- id: app_is_reachable_and_healthy
+  purpose: The console answers at its public address and reports ready before any credential is offered
+  substeps:
+    - kind: browser
+      do: Open the home page and confirm Skip to content is the first focusable element on every route, that the page leads with exactly one primary action visually distinct from every secondary one, and that the command menu opens on the platform modifier plus K
+      cov: C-CF-95, C-CF-97, C-CF-98
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_before_any_credential
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: seeded_accounts_sign_in
+  purpose: Each of the six seeded principals signs in with the corpus password and reaches its own team
+  substeps:
+    - kind: browser
+      do: Open the log-in screen and confirm the screen lists Continue with Email, Google, GitHub, ChatGPT, SAML SSO, Passkey, Show other options in that order
+      cov: C-CF-09
+    - kind: browser
+      do: Open the sign-up screen and confirm the screen lists Google, GitHub, ChatGPT, Apple, Show other options, Continue with Email in that order, and that the terms page is linked from the sign-up form
+      cov: C-CF-10, C-CF-91
+    - kind: browser
+      do: Confirm both identity screens fit one viewport at every supported size, and that cancelling a provider sign-in returns to the same screen with no error shown
+      cov: C-CF-12, C-CF-13
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_login_is_refused
+  purpose: A wrong password and an unknown address are refused in the same shape and the same words
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_login_with_a_wrong_password_is_refused_like_an_unknown_address
+      category: security
+      weight: 5
+
+- id: anonymous_read_is_unauthenticated
+  purpose: An anonymous caller is refused at every protected collection and no address changes state on a read
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_protected_collections_require_a_bearer_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_state_change_is_reachable_by_get
+      category: security
+      weight: 5
+
+- id: deployment_board_lists_seeded_builds
+  purpose: The seeded deployments are stored with their pinned commits and states and read back newest first
+  substeps:
+    - kind: browser
+      do: Open the deployment board for checkout-web and confirm a queued deployment shows a real queue position, and that the breadcrumb names team, then project, then section
+      cov: C-CF-30, C-CF-23
+    - kind: browser
+      do: Confirm every list carries an empty state naming what would appear plus how to create the first one, and that every page carries a loading state sized to the content that is coming
+      cov: C-UF-09, C-UF-10
+    - kind: pytest
+      test: test_output.py::test_seeded_deployment_rows_are_persisted_with_pinned_states
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_deployment_list_is_keyset_paginated_newest_first
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_webhook_delivery_creates_one_deployment
+  purpose: A build notification delivered twice produces exactly one deployment row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_replayed_webhook_delivery_stores_one_deployment_row
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: invalid_webhook_signature_is_refused
+  purpose: An unsigned build notification is refused and writes no deployment row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_webhook_without_a_signature_is_refused
+      category: validation
+      weight: 3
+
+- id: failed_build_cannot_move_production
+  purpose: A deployment in ERROR leaves the production alias exactly where it was
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_failed_build_leaves_the_live_alias_untouched
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: requester_cannot_approve_own_request
+  purpose: The developer who raised a promotion request is refused approving it and the stored request is untouched
+  substeps:
+    - kind: browser
+      do: Sign in as the developer and confirm raising a promotion request runs across three addressed steps ending in a full-page confirmation, and that the approve control is not offered to the requester on their own request
+      cov: C-UF-07, C-UF-08
+    - kind: pytest
+      test: test_output.py::test_a_developer_is_denied_approving_their_own_request_and_the_row_is_untouched
+      critical: true
+      category: security
+      weight: 5
+
+- id: lower_role_denied_approving_at_api
+  purpose: A developer, a finance principal and a viewer are each denied approving a promotion request at the API
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_developer_role_is_denied_approving_any_request_at_the_api
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_finance_and_viewer_roles_are_forbidden_promoting_or_approving
+      critical: true
+      category: security
+      weight: 5
+
+- id: cross_team_read_is_denied
+  purpose: A principal of another team is refused every read inside northwind in the same shape a missing project returns
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_cross_entity_team_read_is_denied_with_an_identical_shape
+      critical: true
+      category: security
+      weight: 5
+
+- id: role_change_forbidden_to_developer
+  purpose: A developer is refused changing a firewall rule while a reviewer may read the rule list
+  substeps:
+    - kind: browser
+      do: Confirm the team switcher names the current team, listing every team the principal belongs to, and that switching teams is a navigation to the new team address rather than a swap of client state
+      cov: C-CF-22, C-CF-21
+    - kind: browser
+      do: Confirm after login the principal lands on the return target, or on /northwind when none was given, that logging out clears the session returning to /, and that Visit Your Firewall routes a signed-out visitor through /login with a return target
+      cov: C-UF-03, C-UF-05, C-UF-04
+    - kind: browser
+      do: Open /account and confirm the page lists every active session, each individually revocable
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_a_role_change_is_forbidden_to_a_developer
+      critical: true
+      category: security
+      weight: 5
+
+- id: reserved_slug_is_invalid
+  purpose: A team slug that collides with a public route is refused and writes no team row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_reserved_team_slug_is_refused_and_no_row_is_stored
+      category: validation
+      weight: 3
+
+- id: two_reviewers_approve_and_promotion_executes
+  purpose: Two distinct eligible reviewers approve a request and the production alias moves to that deployment
+  substeps:
+    - kind: browser
+      do: Confirm the approval board groups open requests by state, newest first, and that a request card shows the deployment, the commit, the requester, the elapsed time, the gathered approvals against the required approvals
+      cov: C-CF-50, C-CF-51
+    - kind: browser
+      do: Confirm a request detail shows the environment-value diff by key with values never rendered, and that the gathered approval count updates for a second reviewer without a reload
+      cov: C-CF-52, C-CF-53
+    - kind: pytest
+      test: test_output.py::test_two_distinct_reviewers_approve_and_the_promotion_is_executed
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rollback_moves_the_alias_back_to_a_superseded_deployment
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_approval_is_refused
+  purpose: One reviewer approving twice is refused and a rejection closes the request with its comment
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_the_same_reviewer_approving_twice_is_refused_as_a_duplicate
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_rejection_closes_the_request_and_stores_its_comment
+      category: business_rule
+      weight: 3
+
+- id: concurrent_approvals_are_recorded
+  purpose: Two approvals arriving together are both stored and two promotions racing for one alias leave one winner
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_approvals_are_both_persisted
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_promotions_leave_one_winner_and_one_conflict
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: audit_trail_is_append_only
+  purpose: Every transition lands in a gapless append-only audit log and a refusal lands there carrying its reason
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_audit_rows_are_append_only_with_a_gapless_sequence
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_denied_approval_stores_an_audit_row_carrying_a_deny_outcome
+      critical: true
+      category: security
+      weight: 5
+
+- id: firewall_rules_hold_the_plan_limit
+  purpose: The seeded firewall rules are stored in order and a rule past the plan cap is refused before it is written
+  substeps:
+    - kind: browser
+      do: Confirm reaching a firewall cap disables the create control, naming the cap, before a rule is written, and that an active challenge mode is announced prominently with a reason plus an off control
+      cov: C-CF-71, C-CF-73
+    - kind: pytest
+      test: test_output.py::test_seeded_firewall_rules_are_stored_with_their_pinned_names
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_firewall_rule_beyond_the_plan_cap_is_refused
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_firewall_preview_returns_a_would_match_count
+      category: business_rule
+      weight: 3
+
+- id: spend_cap_pauses_builds
+  purpose: Money is integer minor units throughout and a hard cap pause stops new work while production keeps serving
+  substeps:
+    - kind: browser
+      do: Confirm the usage figure states its lag on screen, never more than five minutes behind
+      cov: C-CF-81
+    - kind: pytest
+      test: test_output.py::test_spend_amounts_are_integer_minor_units
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_repeated_metering_submission_charges_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_spend_hard_cap_pause_stops_builds_and_keeps_production_serving
+      category: business_rule
+      weight: 3
+
+- id: observability_and_notifications_stay_scoped
+  purpose: A traffic query carries a scope the query text cannot remove and notifications resolve from the reader role
+  substeps:
+    - kind: browser
+      do: Confirm a telemetry gap renders as a gap with its extent marked, never as a zero
+      cov: C-CF-87
+    - kind: pytest
+      test: test_output.py::test_notifications_are_resolved_from_the_reader_role
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_observability_query_is_scoped_by_the_compiler
+      critical: true
+      category: security
+      weight: 5
+
+- id: public_surface_is_complete_and_an_empty_address_is_handled
+  purpose: Every public route answers, the sitemap and robots file agree with it, and an unknown address renders the product not-found page
+  substeps:
+    - kind: browser
+      do: Confirm a privacy page at /privacy is reachable from the footer of every page, and that a terms page at /terms is reachable from the footer of every page
+      cov: C-CF-89, C-CF-90
+    - kind: browser
+      do: Confirm the pricing matrix is a real table whose cells announce plan plus feature, that the feature search filters matrix rows in place keeping focus and keeping group headers with surviving children, and that below the medium container the matrix collapses to one column driven by a plan select
+      cov: C-CF-99, C-CF-100, C-CF-101
+    - kind: browser
+      do: Confirm facets combine as a union inside one group and as an intersection across groups reflected in the address, that template results extend by a control rather than on scroll, and that an editorial index page carries a canonical address per page
+      cov: C-CF-108, C-CF-109, C-CF-110
+    - kind: pytest
+      test: test_output.py::test_the_privacy_and_terms_pages_are_reachable
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_sitemap_lists_every_public_route_and_robots_names_it
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_answers_and_carries_its_own_title
+      category: presentation
+      weight: 1
+
+- id: lead_form_is_idempotent_and_no_error_leaks
+  purpose: A repeated lead submission returns the first result and no refusal leaks an internal detail
+  substeps:
+    - kind: browser
+      do: Confirm every form rejects invalid input inline, naming the field, writing nothing, and that a failed submit moves focus to the first invalid field
+      cov: C-CF-102, C-CF-103
+    - kind: browser
+      do: Confirm a failing section renders its own error inside its own frame carrying the request identifier, that one failing panel never blanks the shell, that a conflict renders as a screen naming what changed plus a refetch control, that a rate-limited action renders the wait, and that no error leaves a blank page or crashes the app
+      cov: C-UF-11, C-UF-12, C-UF-13, C-UF-14, C-UF-15
+    - kind: browser
+      do: Confirm a simulation module is inert with none of its controls navigating, submitting, or mutating, that a simulation module is one labelled figure in the tab order with its controls not focusable, and that a simulation module announces its numbers as illustrative rather than as the reader's own
+      cov: C-CF-105, C-CF-106, C-CF-107
+    - kind: pytest
+      test: test_output.py::test_a_repeated_lead_submission_returns_the_first_result
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_security_headers_and_error_bodies_leak_nothing
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_environment_declares_only_the_named_backing_services
+      category: presentation
+      weight: 1

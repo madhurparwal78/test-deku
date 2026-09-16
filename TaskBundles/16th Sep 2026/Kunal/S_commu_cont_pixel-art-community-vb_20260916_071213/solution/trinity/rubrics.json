@@ -1,0 +1,240 @@
+{
+  "banner": "GENERATED SECTION. DO NOT HAND-EDIT.",
+  "source_of_truth": "solution/trinity/grounding.yaml",
+  "task": "deku/pixel-art-community-vb",
+  "schema": [
+    "id",
+    "dimension",
+    "weight",
+    "evaluation_target",
+    "criterion",
+    "judgment",
+    "evidence",
+    "mode"
+  ],
+  "compiled_weight_share": 1.0,
+  "items": [
+    {
+      "id": "R1",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "A published piece exists as a row owned by its author and appears on that author's own gallery.",
+      "judgment": "Read the pieces row for the published title and compare its owner with the publishing account.",
+      "evidence": [
+        "database-row",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R2",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "The rendered artwork exists in the object store under pieces/{piece_id}/{sha256_of_bytes}.{ext}.",
+      "judgment": "List the bucket under the piece's prefix and read the key back.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R3",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "The stored key names a lowercase sixty-four character content hash and an extension.",
+      "judgment": "Split the stored key and read its final segment.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R4",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "No column of the pieces table holds image bytes, and every row points at its stored object.",
+      "judgment": "Read the column names of the pieces table.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R5",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A private piece's stored artwork is refused to a caller who is not its author.",
+      "judgment": "Request the piece file with no session and read the status.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R6",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A private piece is refused to a second author and its title does not leak in the refusal.",
+      "judgment": "Request the piece as another account and read the status and the body.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R7",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A reader session publishing a piece is refused and no piece row is written.",
+      "judgment": "Publish as a reader, read the status, then count the pieces rows for that title.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R8",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "The like count a piece reports equals the number of likes rows behind it.",
+      "judgment": "Like repeatedly from one account, then compare the reported count with the row count.",
+      "evidence": [
+        "database-row",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R9",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "One publish replayed with the same idempotency key leaves exactly one piece.",
+      "judgment": "Publish twice under one key and count the rows for the title.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R10",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The popular feed returns the same ordering for a second page read under one snapshot token.",
+      "judgment": "Read the first page, then read again under its snapshot token and compare the id lists.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R11",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A remix that would close a lineage cycle is refused and the root keeps no parent.",
+      "judgment": "Attempt the cycle, read the status, then read the root row's parent.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R12",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Deleting a parent piece leaves its remixes in place with the parent's author still named.",
+      "judgment": "Delete the parent, then read the child row and its detail body.",
+      "evidence": [
+        "database-row",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R13",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "A piece made private leaves every feed and every public search result.",
+      "judgment": "Flip the visibility, then read the new feed and a search for its title.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R14",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "http-status-code",
+      "criterion": "The app answers GET /api/health with 200 once it is ready.",
+      "judgment": "Call the health route and read the status.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R15",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "http-status-code",
+      "criterion": "An unknown address answers with a not-found status.",
+      "judgment": "Request an address the product does not serve and read the status.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R16",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Each seeded piece and each seeded account exists exactly once.",
+      "judgment": "Count the rows for every seeded title and every seeded address.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R17",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "http-response-body",
+      "criterion": "The new feed returns the most recently published piece first.",
+      "judgment": "Publish two pieces in order and read the head of the new feed.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R18",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "http-response-body",
+      "criterion": "Every rendition size exists in the object store for a published piece.",
+      "judgment": "List the bucket under the piece's rendition prefix and read the sizes present.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    }
+  ]
+}

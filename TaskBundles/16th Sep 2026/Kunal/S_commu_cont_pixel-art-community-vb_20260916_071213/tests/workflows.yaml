@@ -1,0 +1,388 @@
+- id: visitor_draws_and_publishes_a_first_piece
+  purpose: A visitor draws with no account, signs up inside the publish modal and the piece reaches the gallery
+  substeps:
+    - kind: browser
+      do: Open /draw with no session and confirm the editor loads, offers its thirteen tools with their keyboard shortcuts, and needs no account. Confirm: pixelary carries a browser pixel-art editor usable with no account; the editor opens with no account; the editor remains usable with no network; the editor offers thirteen tools each with a keyboard shortcut; the route /draw serves the editor with no session required; a visitor with no account can draw in the editor using every tool.
+      cov: C-OV-01, C-CF-06, C-CF-07, C-CF-18, C-UF-03, C-RL-01
+    - kind: browser
+      do: Draw a stroke, add a second layer above the active one, add a second frame, and pick two palette entries. Confirm: brush sizes are whole numbers from 1 to 32; adding a layer inserts directly above the active layer; deleting the only layer of a document is refused; locking a layer blocks every write with a surfaced refusal; a frame duration runs from 10 to 10000 milliseconds; an indexed pixel stores the palette index rather than the resolved colour; editing a palette entry recolours every pixel holding that index at once; an indexed palette holds 2 to 256 entries.
+      cov: C-CF-19, C-CF-36, C-CF-37, C-CF-38, C-CF-41, C-CF-46, C-CF-47, C-CF-48
+    - kind: browser
+      do: Press publish and confirm the modal lists every local document with a thumbnail and uploads none of them until one is chosen. Confirm: the publish modal lists local documents with thumbnails before any upload; no local document is uploaded until the visitor chooses that document; a document being drawn is written to the local store before anywhere else; a document existing only locally is labelled as not backed up.
+      cov: C-UF-16, C-UF-17, C-CF-64, C-CF-68
+    - kind: pytest
+      test: test_output.py::test_publish_creates_piece_on_author_profile
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_creates_account_and_returns_token
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Pan the artwork at high zoom and confirm the transparency checker moves with it, the pixel grid stays one device pixel wide, and the grid disappears below zoom eight. Confirm: the transparency checker is drawn in document space; the pixel grid is drawn in screen space at one device pixel; the pixel grid is hidden below zoom eight; the drawing surface backing store is sized by the device pixel ratio.
+      cov: C-CF-15, C-CF-16, C-CF-17, C-CF-10
+    - kind: browser
+      do: Zoom in twenty notches and out twenty on a fixed point, then paint either side of the artwork's left edge, and confirm the spot stayed put and two distinct pixels were painted. Confirm: converting a screen position to a document position rounds downward; document column minus one renders as a pixel distinct from document column zero; zoom runs from 0.125 to 64; zooming about a point is computed fresh from the pointer position every time.
+      cov: C-CF-08, C-CF-09, C-CF-11, C-CF-12
+    - kind: browser
+      do: Shrink the view below zoom one and confirm a one-pixel outline is still visible on all four sides, then enlarge it and confirm the squares stay hard-edged. Confirm: upscaling at zoom one or above uses nearest neighbour; downscaling below zoom one uses an area average.
+      cov: C-CF-13, C-CF-14
+    - kind: browser
+      do: Draw a circle, fill a region, pick a colour with the eyedropper, and confirm the outline is one pixel thick, the fill lands on the active layer, and a fill onto its own colour leaves undo pointing at the previous action. Confirm: a shape outline is exactly one pixel thick everywhere; fill writes only to the active layer; a fill whose seed already holds the target colour records no history entry; the eyedropper picks the palette index in indexed mode.
+      cov: C-CF-20, C-CF-21, C-CF-22, C-CF-23
+    - kind: browser
+      do: Make a selection, move it, press Escape, then move it again and commit it, confirming the mask clips every tool and one undo reverses the whole move. Confirm: a selection is a one-bit mask the size of the document; every drawing tool is clipped to the selection mask; a floating selection commits on any of six named triggers; escape cancels a floating selection restoring the source region; a committed selection move is a single history entry; escape during a shape drag leaves no history entry.
+      cov: C-CF-24, C-CF-25, C-CF-27, C-CF-28, C-CF-29, C-CF-30
+    - kind: browser
+      do: Open the document settings and confirm the accepted dimensions, frame count and layer count are the pinned limits, and that an empty large document opens without waiting. Confirm: a document dimension runs from 1 to 4096 on each axis; a document holds at most 4194304 pixels per frame; a document holds at most 512 frames; a document holds at most sixty-four layers ordered back to front; cels are sparse so a missing entry is the empty cel.
+      cov: C-CF-31, C-CF-32, C-CF-33, C-CF-34, C-CF-35
+    - kind: browser
+      do: Merge a half-transparent layer onto an opaque one and confirm the picture is unchanged, then trim and confirm content on a later frame survives. Confirm: merging down applies the upper layer transparency during the composite; merging leaves the lower cel untouched where the upper cel is empty; a structural change plus a pixel change from one action is one history entry; trimming crops to the bounding box across every frame plus every layer.
+      cov: C-CF-39, C-CF-40, C-CF-44, C-CF-45
+    - kind: browser
+      do: Play a long animation and confirm its running time matches the sum of its frame durations, then draw one long stroke and press undo once. Confirm: playback is scheduled against a wall clock so lateness never accumulates; one stroke produces exactly one history entry.
+      cov: C-CF-42, C-CF-43
+    - kind: browser
+      do: Edit, delete and reorder palette entries and confirm the rendered image is unchanged by a reorder and that one undo restores a deleted entry with its pixels. Confirm: deleting a palette entry remaps every pixel in the same history entry; reordering a palette remaps pixels so the rendered image is unchanged; quantization returns the same palette in the same order for the same input; error diffusion is never applied to art already in indexed mode; the seeded palettes are Harbour Eight plus Night Sixteen.
+      cov: C-CF-49, C-CF-50, C-CF-51, C-CF-52, C-DM-22
+    - kind: browser
+      do: Export the same drawing twice and confirm the two files are identical, then export an animation and a sprite sheet and confirm the description file and the stated alpha threshold are present. Confirm: an export path unable to carry partial alpha states its threshold; exporting the same document twice produces identical bytes; no export embeds a timestamp; an indexed document exports as a palette image rather than truecolor; no colour profile is written into an export; export scaling uses whole factors with nearest neighbour; the animated delay field has a floor of 2 hundredths of a second; a sprite sheet export includes a description file naming every cell rectangle; sprite sheet padding runs from 0 to 8 transparent pixels.
+      cov: C-CF-53, C-CF-54, C-CF-55, C-CF-56, C-CF-57, C-CF-58, C-CF-59, C-CF-60, C-CF-61
+    - kind: browser
+      do: Hide one layer, lock another, export, and confirm the export carries the locked layer and not the hidden one. Confirm: hidden layers are excluded from every export scope; a locked layer is included in an export.
+      cov: C-CF-62, C-CF-63
+    - kind: browser
+      do: Draw with the network disabled, confirm the work is saved locally and labelled as not backed up, then deny storage and confirm the banner appears and stays. Confirm: autosave writes only the tiles that changed; the last 20 versions of a document are retained; restoring a version opens a new document rather than overwriting; a failed store write raises a persistent banner saying saving is not working; the editor is operable from the keyboard with arrow keys moving one pixel.
+      cov: C-CF-65, C-CF-66, C-CF-67, C-CF-69, C-UX-26
+    - kind: browser
+      do: Confirm the drawing tool is reachable from the chrome on the home route, the art centre and a profile. Confirm: pixelary carries a community gallery built on what the editor produces; the drawing action appears in the chrome on every route; no real-time collaborative drawing session exists in the product; no presence, shared cursors, shared operation log exists.
+      cov: C-OV-02, C-OV-03, C-OV-04, C-CN-02
+
+- id: gallery_feeds_order_and_page
+  purpose: The new, tag and popular feeds order and page the way the brief pins
+  substeps:
+    - kind: browser
+      do: Open / and confirm the hero band sits above the filter row, the seven filters read in their fixed order, and the topic row shows six cards. Confirm: the home page carries a hero band above the filter row; the hero headline is rendered in capitals, centred over the backdrop; the hero credit line names the artist whose work is the backdrop; the filter row carries seven entries in a fixed order; the topic row carries six topic cards; a topic card label sits on a dark scrim over arbitrary artwork; every grid cell reserves height before the artwork arrives; grid images load lazily one screen ahead.
+      cov: C-CF-148, C-CF-149, C-CF-150, C-CF-151, C-CF-153, C-CF-154, C-UF-24, C-UF-25
+    - kind: browser
+      do: Open /art and confirm the header carries the route title with a count of works, the filter is held in the address, and opening a piece is an overlay. Confirm: the route /art serves the art centre grid with filters; the art centre header carries the route title plus a count of works; every art centre filter is held in the address; opening a piece from the grid presents an overlay with the address updated; an art centre empty state names the filter plus an action clearing the filter.
+      cov: C-UF-02, C-CF-156, C-CF-157, C-CF-159, C-CF-158
+    - kind: pytest
+      test: test_output.py::test_new_feed_orders_by_published_descending
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_tag_feed_returns_only_matching_pieces
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_popular_feed_pages_from_a_stable_snapshot
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Scroll the grid to its end and confirm a page is appended once per crossing, a load-more control is reachable without a pointer, and an off-screen animated piece holds its first frame. Confirm: an animated piece off screen holds the first frame without playing; the infinite grid appends a page exactly once per trigger crossing; the infinite grid exposes a load-more control reachable without a pointer.
+      cov: C-UF-26, C-UF-27, C-UF-28
+    - kind: browser
+      do: Confirm each card shows its counts, title and artist byline beneath the artwork, an animated piece carries its badge, and no piece is cropped to square the grid. Confirm: an artwork card carries the counts, the title, the artist byline beneath; an animated piece carries a badge at the card upper right; the grid is fixed-column with a uniform gutter; artwork is never cropped to fit a grid cell.
+      cov: C-FE-09, C-FE-10, C-FE-13, C-UX-29
+    - kind: browser
+      do: Hover an artist handle and confirm the card appears after a pause rather than instantly, and that it reads as floating above the row. Confirm: an artist hover card opens after a pause rather than instantly; the artist hover card shadow is cast upward.
+      cov: C-FE-11, C-FE-12
+
+- id: discovery_lists_topics_and_search
+  purpose: Topics, tags and palettes are discoverable and search reads the pinned fields
+  substeps:
+    - kind: browser
+      do: Open the tag directory and the palette directory and confirm each curated tag carries a count with a sample and palettes are ordered by use. Confirm: a tag directory lists curated tags each with a count plus a sample; a palette directory lists palettes ordered by use count; a curated feed is distinguishable in the data model from a computed feed.
+      cov: C-CF-146, C-CF-147, C-CF-152
+    - kind: browser
+      do: Confirm no surface anywhere offers a search by uploading a picture. Confirm: no general search by uploaded picture is offered; no search by uploaded image exists anywhere in the product; no endpoint returns accounts by age or by location.
+      cov: C-CF-141, C-OV-05, C-CF-175
+    - kind: pytest
+      test: test_output.py::test_topics_endpoint_lists_the_seeded_topics
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_matches_title_tag_and_handle
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Open the supporter tier page and confirm every drawing tool and every export format is outside the tier, and that a lapsed account can still open, export and delete its work. Confirm: the product reads entitlements rather than subscriptions at the point of use; no drawing tool sits behind the supporter tier; no export format sits behind the supporter tier; a lapsed entitlement never deletes artwork; a lapsed account can still open, export, delete every piece; a plan row carries a price of 1000 integer minor units in usd.
+      cov: C-CF-176, C-CF-177, C-CF-178, C-CF-179, C-CF-180, C-DM-15
+    - kind: browser
+      do: Confirm the product takes no card, sends no email, offers no direct messaging, and makes no claim about how many people use it. Confirm: no direct messaging between accounts exists; no card is taken so no invoice exists anywhere; no email is ever sent by the product; no audience-size claim appears anywhere in the product; the product is single tenant with one set of accounts.
+      cov: C-CN-03, C-CN-04, C-CN-05, C-CN-11, C-CN-01
+
+- id: following_feed_follows_the_graph
+  purpose: Following an artist changes the following feed and the derived counts
+  substeps:
+    - kind: browser
+      do: Open an artist profile and confirm the tab row shows gallery, followers and following counts beside their labels, showing a zero rather than hiding one. Confirm: a profile tab row shows counts beside the gallery, followers plus following labels; a zero count on a profile is shown rather than hidden; a profile owner sees an edit control in place of the follow control; an artist with no public work shows a drawn empty state; the profile avatar overlaps the banner lower edge.
+      cov: C-CF-113, C-CF-114, C-CF-115, C-CF-118, C-FE-14
+    - kind: pytest
+      test: test_output.py::test_following_feed_returns_followed_authors_only
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_follow_then_unfollow_updates_counts
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Confirm a restricted account is absent from every listing and reachable only by its direct address. Confirm: an account below the local age of digital consent starts in restricted mode; a restricted account's profile is absent from every listing.
+      cov: C-RL-11, C-RL-12
+    - kind: browser
+      do: Write a comment mentioning an artist, confirm the notification reaches them, then rename an account and confirm no old comment starts notifying anybody. Confirm: a mention is resolved to an account once at write time; a mention of an account blocking the author renders as plain text; marking notifications read is monotonic by notification id.
+      cov: C-CF-129, C-CF-130, C-CF-127
+
+- id: remix_lineage_credits_the_parent
+  purpose: A remix records its parent and the credit chain survives the parent being deleted
+  substeps:
+    - kind: browser
+      do: Open a piece, press remix, and confirm the editor opens with the parent document loaded and the credit chain shown on both pieces. Confirm: a remix opens the editor with the parent document loaded; an embed always carries the author name plus the remix chain root; an embed sets no cookies.
+      cov: C-UF-18, C-CF-172, C-CF-174
+    - kind: pytest
+      test: test_output.py::test_remix_records_parent_and_raises_counter
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_piece_detail_carries_lineage_and_comments
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_deleted_parent_leaves_tombstone_with_attribution
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Set a piece's remix permission to allowed with attribution and confirm existing remixes are unaffected. Confirm: a piece row carries a remix_permission of allowed_with_attribution among others.
+      cov: C-DM-08
+
+- id: remix_of_an_ancestor_is_rejected
+  purpose: A remix that would close a lineage cycle is refused when it is written
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_remix_of_an_ancestor_is_refused
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: reader_cannot_publish_denied
+  purpose: A reader session is refused at the API when publishing and the gallery is unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_publish_a_piece
+      critical: true
+      category: security
+      weight: 5
+
+- id: author_cannot_modify_another_authors_piece_forbidden
+  purpose: A second author is refused when changing a piece that is not theirs and the stored row is untouched
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_author_cannot_modify_another_authors_piece
+      critical: true
+      category: security
+      weight: 5
+
+- id: private_piece_cannot_be_read_by_another_account
+  purpose: A private piece is readable by its author alone, in the gallery and in search
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_private_piece_is_hidden_from_another_account
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_private_visibility_removes_piece_from_every_feed
+      category: data_integrity
+      weight: 5
+
+- id: private_artwork_object_request_is_denied
+  purpose: Protected artwork is served only through the app's own authenticated route
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_private_piece_file_is_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_private_piece_object_is_not_publicly_readable
+      category: security
+      weight: 5
+
+- id: unauthenticated_engagement_is_denied
+  purpose: An anonymous visitor cannot like, comment or see a blocker's profile
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_like_or_comment
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_blocked_viewer_sees_profile_as_not_found
+      category: security
+      weight: 5
+
+- id: published_artwork_lands_in_the_object_store
+  purpose: Publishing writes real bytes to the bucket under the pinned key scheme, with renditions
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_published_artwork_object_exists_in_the_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_object_key_follows_the_pinned_scheme
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_thumbnail_renditions_exist_for_a_published_piece
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_artwork_bytes_are_absent_from_the_database
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Import a still image beyond the size limit and one whose name disagrees with its contents, and confirm the refusals name the real reason. Confirm: an imported still image is at most 20MB; upload format is decided from the leading bytes rather than the file name.
+      cov: C-CF-87, C-CF-88
+    - kind: browser
+      do: Publish two unrelated small pieces that collide perceptually and confirm both survive with a review raised rather than either being removed. Confirm: each piece stores a cryptographic hash plus a perceptual hash; a perceptual hash match never removes a piece by itself.
+      cov: C-CF-134, C-CF-135
+    - kind: browser
+      do: Confirm every placeholder is generated pixel art with a visible grid, that an avatar is a seeded identicon, that the mark is pixel art, and that advertising space is reserved and empty. Confirm: the artwork placeholder is generated deterministically from the piece id; the artwork placeholder is real pixel art with a visible grid; an animated placeholder is a four-frame loop from the same generator; an avatar is a seeded identicon deterministic from the account id; the brand mark is generated as pixel art rather than as a smooth vector; advertising space is reserved as an empty bordered region.
+      cov: C-TR-17, C-TR-18, C-TR-19, C-TR-20, C-TR-21, C-TR-22
+
+- id: counters_are_derived_from_their_rows
+  purpose: Likes, comments and notifications are counted from the rows that produced them
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_like_count_equals_row_count
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_notifications_group_by_kind_subject_and_hour
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_published_piece_survives_a_reread
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: View one piece repeatedly within an hour and confirm the view count rises once, and that a piece with too few distinct engaging accounts stays out of the popular feed. Confirm: a piece needs 3 distinct engaging accounts before reaching the popular feed; a view is counted at most once per viewer per piece per hour; a page view row exists at most once per viewer per piece per hour.
+      cov: C-CF-97, C-CF-109, C-DM-16
+    - kind: browser
+      do: Remove a piece and reinstate it, confirming the original date, the counters and its place in the remix chain all come back. Confirm: reinstating a piece restores the original publication time; reinstating a piece restores the counters plus the remix lineage place; every moderation action appends a row carrying the predecessor hash; the moderation audit chain verifies end to end after concurrent actions; a moderation action row carries the predecessor hash plus its own hash.
+      cov: C-CF-136, C-CF-137, C-CF-138, C-CF-139, C-DM-14
+
+- id: duplicate_publish_key_creates_one_piece
+  purpose: A replayed publish creates nothing new and a cursor stays stable across an insertion
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_repeated_publish_key_creates_one_piece
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cursor_pagination_is_stable_across_insertion
+      category: data_integrity
+      weight: 5
+
+- id: invalid_submissions_are_refused
+  purpose: Over-limit tags, over-length comments, a third reply level and a reserved handle are all refused
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_more_than_ten_tags_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_over_length_comment_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reply_to_a_reply_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reserved_word_handle_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_tag_feed_returns_an_empty_list
+      category: validation
+      weight: 3
+
+- id: utility_surfaces_answer_correctly
+  purpose: Health, the privacy and terms pages, the not-found page and the seed all answer as pinned
+  substeps:
+    - kind: browser
+      do: Open a wrong address and confirm the product's own not-found card appears with its two actions, its artist credit line and two characters drifting in opposition. Confirm: the not-found page carries two characters drifting in opposition; no native application exists; no multi-region placement exists.
+      cov: C-CF-162, C-CN-07, C-CN-09
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_privacy_and_terms_pages_are_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_path_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unresolved_handle_page_offers_search
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_login_returns_access_and_refresh_tokens
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_appear_exactly_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_pending_piece_is_absent_from_feeds
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Confirm the chrome shows its reduced entry set on the home route and its full set elsewhere, with the segmented drawing control reading as one pill cut into three. Confirm: the chrome carries a reduced entry set on the home route; the chrome carries the full entry set on every other route; the segmented drawing control is one pill cut into three segments; the chrome bar is fixed at the top, unchanged by scrolling.
+      cov: C-FE-01, C-FE-02, C-FE-03, C-FE-04
+    - kind: browser
+      do: Open the drawer and confirm fourteen entries each pair an icon with a label, and that the button, Escape and the scrim all close it. Confirm: the drawer carries fourteen entries each an icon beside a label; the drawer closes by the button, by Escape, by a click on the scrim; the iconography is closed at twenty-eight inline marks.
+      cov: C-FE-05, C-FE-06, C-FE-08
+    - kind: browser
+      do: Trigger the offline, storage-failure and conflict states and confirm each carries its own plain message rather than generic error text. Confirm: nine system messages carry the product honesty commitments unsoftened.
+      cov: C-FE-16
+    - kind: browser
+      do: Open /notifications with no session and confirm the sign-in modal appears, that signing in returns to it, and that signing out lands on the home route. Confirm: the route /notifications requires a bearer session; a protected route reached without a session opens the sign-in modal; signing in returns the visitor to the remembered intended route; signing out returns the visitor to the home route; an expired token leaves the editor running with local saving intact.
+      cov: C-UF-09, C-UF-10, C-UF-11, C-UF-12, C-UF-13
+    - kind: browser
+      do: Sign in with an unknown address and with a wrong password and confirm both answer the same way. Confirm: the unknown-account path returns the same message as the wrong-password path; signup never reveals whether an address is already registered.
+      cov: C-CF-03, C-CF-04
+    - kind: browser
+      do: Confirm every internal link on every public route resolves and that no two routes share a title or a description. Confirm: every internal link on every public route resolves; every public route carries a title plus a description of its own.
+      cov: C-CF-170, C-CF-171
+    - kind: browser
+      do: Read the page source of a public route and confirm no credential, token or object-store key is present anywhere the browser downloads. Confirm: no credential appears in anything the browser downloads; no secret value reaches the client bundle, the markup, a source map.
+      cov: C-TR-10, C-TR-11
+    - kind: browser
+      do: Confirm the served pages arrive as complete HTML on first paint, that the API answers under the same origin, and that no third-party script, font binary or external stylesheet is requested. Confirm: rendered pages are built with SolidStart; the JSON API is served by Express under the /api prefix; the browser receives complete HTML for every route on first paint; no third-party script ships with the application; no external network call is made at runtime; no font binary, icon font, external stylesheet ships; no binary asset ships with the build; the HTTP API is served on the same origin under the /api prefix.
+      cov: C-TR-01, C-TR-02, C-TR-03, C-TR-12, C-TR-13, C-TR-14, C-TR-16, C-DC-03
+    - kind: browser
+      do: Confirm the app reads its datastore and its object store from the environment and reaches no other backing service. Confirm: relational data is persisted in PostgreSQL read from DATABASE_URL; no second database, cache, queue, object store, identity provider is introduced; no backing service is downloaded, installed, compiled, started; no edge function is used.
+      cov: C-TR-04, C-TR-09, C-DC-10, C-DC-11
+    - kind: browser
+      do: Confirm /app/USER_README.md carries the seeded logins, that the reserved screenshot and download directories exist empty, and that the served build is a production build on the published port. Confirm: login credentials are written to /app/USER_README.md; reserved .browser_screenshots/ plus .downloads/ directories exist empty; a production build is served behind a static or preview server; the port mapping is ${APP_PUBLIC_PORT}:4173.
+      cov: C-DC-05, C-DC-06, C-DC-07, C-DC-02
+    - kind: browser
+      do: Confirm the server is still answering after the session that started it has ended, and that it answers on the container's published address rather than on loopback alone. Confirm: the server keeps running after the session ends; the server binds 0.0.0.0 rather than a loopback address; no persistent volume, fixed container name, custom network is declared.
+      cov: C-DC-08, C-DC-09, C-DC-12
+    - kind: browser
+      do: Publish repeatedly past the hourly allowance and confirm the refusal names the limit rather than failing silently. Confirm: publishing is limited to 20 pieces per 3600 seconds per account.
+      cov: C-TR-26
+    - kind: browser
+      do: Confirm the product is named Pixelary throughout and that the icon set is drawn as geometry in the page. Confirm: the product name is Pixelary; icons are inline geometry on a twenty-four unit grid with a two unit stroke; the stacking scale is six named levels ending at toast.
+      cov: C-CN-10, C-TR-15, C-TR-25

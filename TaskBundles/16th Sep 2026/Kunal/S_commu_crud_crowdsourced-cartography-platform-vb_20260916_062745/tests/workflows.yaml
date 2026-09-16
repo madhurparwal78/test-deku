@@ -1,0 +1,495 @@
+- id: visitor_reads_the_map
+  purpose: A visitor with no account opens the map, dismisses the welcome card, searches a place and keeps the dismissal across a reload
+  substeps:
+    - kind: browser
+      do: Verify the search control is labelled with the word Search
+      cov: C-FE-04
+    - kind: browser
+      do: Verify the primary action is the only control wearing the light, vivid blue reserved for it
+      cov: C-UX-02
+    - kind: browser
+      do: Verify the body family renders from the system UI stack
+      cov: C-UX-06
+    - kind: browser
+      do: Open the site root and verify a full-viewport map is rendered with a search field over it
+    - kind: browser
+      do: Verify a welcome card headed "Welcome to Openhaven!" is shown, then close it with its close control
+    - kind: browser
+      do: Reload the site root and verify the welcome card is not shown again
+    - kind: browser
+      do: Type "Riverside Cafe" into the search field, submit it, and verify a result marker appears on the map
+    - kind: pytest
+      test: test_output.py::test_welcome_card_dismissal_survives_reload
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_search_drops_result_pin
+      category: core_outcome
+      weight: 5
+
+- id: mapper_signs_up_and_signs_in
+  purpose: A new mapper creates an account and signs in, and no endpoint ever returns a password
+  substeps:
+    - kind: browser
+      do: Verify a direct sign-in lands on the map home
+      cov: C-UF-03
+    - kind: browser
+      do: Open the signup page, submit a fresh email with a password, and verify the session lands signed in on the map home
+    - kind: browser
+      do: Sign out, open the login page, and sign in with the seeded account documented in /app/USER_README.md
+    - kind: browser
+      do: Verify the header shows the signed-in state with the edit control available
+    - kind: pytest
+      test: test_output.py::test_signup_creates_mapper
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_password_never_returned_by_any_endpoint
+      category: security
+      weight: 5
+
+- id: duplicate_email_signup_rejected
+  purpose: Signing up with an email already in use is refused and creates no second account
+  substeps:
+    - kind: browser
+      do: Verify the welcome card is headed with a greeting naming Openhaven
+      cov: C-FE-05
+    - kind: browser
+      do: Open the signup page and submit the email of the seeded account documented in /app/USER_README.md
+    - kind: browser
+      do: Verify the form reports the email is already in use and names the email field
+    - kind: browser
+      do: Verify the page has not navigated away and the other fields still hold what was typed
+    - kind: pytest
+      test: test_output.py::test_duplicate_email_signup_rejected
+      category: validation
+      weight: 3
+
+- id: mapper_corrects_a_feature
+  purpose: A signed-in mapper corrects a feature in a changeset and the correction is what the dataset holds after a reload
+  substeps:
+    - kind: browser
+      do: Sign in with the seeded account documented in /app/USER_README.md and open the editor
+    - kind: browser
+      do: Select the node named "Old Mill" and change its name in the form that opens over the map
+    - kind: browser
+      do: Give the changeset the comment "Corrected the mill name" and upload it
+    - kind: browser
+      do: Verify the browser lands on that changeset's own page listing the one element it wrote
+    - kind: browser
+      do: Reload the editor and verify the node shows the corrected name
+    - kind: pytest
+      test: test_output.py::test_persisted_element_matches_ui_and_survives_reload
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_changeset_open_upload_close_cycle
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_upload_raises_element_version_by_one
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_changeset_bbox_derived_from_elements
+      category: business_rule
+      weight: 3
+
+- id: concurrent_uploads_conflict
+  purpose: Two uploads claiming the same element version at once leave the element at exactly one new version, and the loser is told which version it was out of date against
+  substeps:
+    - kind: browser
+      do: Sign in with the seeded account documented in /app/USER_README.md and open the editor
+    - kind: browser
+      do: Select the node named "Riverside Cafe" and verify the editor shows the version it loaded
+    - kind: browser
+      do: Verify the editor offers a way to reload the element from the server before uploading
+    - kind: pytest
+      test: test_output.py::test_concurrent_uploads_produce_single_winner
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_replayed_upload_creates_no_second_version
+      category: data_integrity
+      weight: 5
+
+- id: unauthenticated_write_denied
+  purpose: A signed-out caller can read everything and write nothing, and an expired token is refused the same way
+  substeps:
+    - kind: browser
+      do: Verify a signed-out request for the editor routes to the login page
+      cov: C-UF-01
+    - kind: browser
+      do: Sign in from that redirect and verify the app continues to the editor
+      cov: C-UF-02
+    - kind: browser
+      do: Verify every read route stays reachable signed out
+      cov: C-UF-05
+    - kind: browser
+      do: Verify a token that expires mid-edit returns the mapper to login with the open changeset intact
+      cov: C-UF-04
+    - kind: browser
+      do: Without signing in, open the site root and verify the map, the diary and the about page all render
+    - kind: browser
+      do: Without signing in, open the editor route and verify the app routes to the login page
+    - kind: browser
+      do: Verify the signed-out header offers sign-in rather than an edit control
+    - kind: pytest
+      test: test_output.py::test_signed_out_upload_denied
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_expired_token_denied
+      category: security
+      weight: 5
+
+- id: one_way_belongs_to_two_routes
+  purpose: A single way participates in two relations by reference, so correcting it once corrects it in both
+  substeps:
+    - kind: browser
+      do: Open the element view for the way named "Kingsway" and verify its relations are listed
+    - kind: browser
+      do: Verify both "Route 12" and "Thames Cycle Way" appear in that list
+    - kind: browser
+      do: Open "Route 12" and verify it names the same way rather than a copy of it
+    - kind: pytest
+      test: test_output.py::test_way_belongs_to_two_relations
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent
+      category: data_integrity
+      weight: 5
+
+- id: history_and_blame_walk
+  purpose: Every version of an element stays readable, a delete hides rather than erases, and no older version is ever rewritten
+  substeps:
+    - kind: browser
+      do: Open the element view for the node named "Riverside Cafe" and follow its history link
+    - kind: browser
+      do: Verify the history lists each version with the mapper who wrote it and the changeset it belonged to
+    - kind: browser
+      do: Open the earliest version and verify it shows the original name
+    - kind: pytest
+      test: test_output.py::test_element_history_returns_every_version
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_past_version_is_addressable
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_delete_writes_new_version_not_erasure
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_older_version_rows_never_mutated
+      category: data_integrity
+      weight: 5
+
+- id: changeset_stream_reads_newest_first
+  purpose: The history surface lists changesets newest first and one changeset lists the exact elements it wrote
+  substeps:
+    - kind: browser
+      do: Open the history route and verify a list of changesets is shown
+    - kind: browser
+      do: Verify the most recent changeset is at the top of the list with its author and comment
+    - kind: browser
+      do: Open the changeset commented "Initial survey of the town centre" and verify it lists the elements it wrote
+    - kind: pytest
+      test: test_output.py::test_changeset_stream_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_changeset_lists_elements_it_wrote
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_empty_changeset_stream_state
+      category: presentation
+      weight: 1
+
+- id: revert_undoes_a_changeset
+  purpose: A whole changeset is undone by a new attributed changeset, and a revert whose elements have moved on is refused
+  substeps:
+    - kind: browser
+      do: Sign in with the seeded account documented in /app/USER_README.md and open the history route
+    - kind: browser
+      do: Open the changeset commented "Tagged the cycle route" and choose to revert it
+    - kind: browser
+      do: Verify a confirmation names what will be undone before the revert is applied
+    - kind: browser
+      do: Confirm the revert and verify a new changeset appears at the top of the stream
+    - kind: pytest
+      test: test_output.py::test_revert_creates_new_attributed_changeset
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_revert_of_moved_elements_refused
+      category: business_rule
+      weight: 3
+
+- id: delete_of_node_in_use_cannot_apply
+  purpose: A node a visible way still references cannot be deleted, and a batch carrying a refused element writes nothing at all
+  substeps:
+    - kind: browser
+      do: Sign in with the seeded account documented in /app/USER_README.md and open the editor
+    - kind: browser
+      do: Select a vertex of the way named "Kingsway" and try to delete it
+    - kind: browser
+      do: Verify the refusal says the node is still in use and names "Kingsway"
+    - kind: browser
+      do: Verify the node is still shown on the map after the refusal
+    - kind: pytest
+      test: test_output.py::test_delete_of_node_in_use_refused
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_atomic_upload_rolls_back_whole_batch
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_upload_to_closed_changeset_refused
+      category: business_rule
+      weight: 3
+
+- id: area_read_over_limit_rejected
+  purpose: The bounding-box read answers within its caps and refuses a request that would ask for too much
+  substeps:
+    - kind: browser
+      do: Open the export route and verify a panel offers the raw elements for the area in view
+    - kind: browser
+      do: Zoom the map out to a wide area and verify the panel reports the area is too large rather than hanging
+    - kind: browser
+      do: Zoom back in to a small area and verify the panel offers the download again
+    - kind: pytest
+      test: test_output.py::test_bbox_area_cap_rejected
+      category: validation
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_bbox_element_count_cap_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_changeset_element_ceiling_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_bbox_map_call_returns_elements
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_new_element_findable_by_bbox_at_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_export_downloads_elements_for_view
+      category: core_outcome
+      weight: 5
+
+- id: tiles_redraw_after_an_edit
+  purpose: Tiles are drawn on demand from the stored elements and a tile covering an edit is drawn again
+  substeps:
+    - kind: browser
+      do: Verify a loading state is shown during tile drawing
+      cov: C-UF-06
+    - kind: browser
+      do: Verify the map home fetches no image file
+      cov: C-FE-01
+    - kind: browser
+      do: Verify the map home fetches no icon font
+      cov: C-FE-02
+    - kind: browser
+      do: Verify every icon is drawn as inline vector geometry
+      cov: C-FE-03
+    - kind: browser
+      do: Open the site root and verify the map renders tiles as it is panned
+    - kind: browser
+      do: Zoom in two steps and verify more detailed tiles replace the previous ones
+    - kind: browser
+      do: Verify a loading state is shown while tiles are still arriving rather than a blank rectangle
+    - kind: pytest
+      test: test_output.py::test_tile_endpoint_returns_image
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_tile_marked_stale_after_edit_in_bounds
+      category: data_integrity
+      weight: 5
+
+- id: reading_pages_serve_everyone
+  purpose: The about, diary and help pages render server-side, carry their own descriptions, and stay usable at a narrow viewport
+  substeps:
+    - kind: browser
+      do: Verify the app shows an empty state for the changeset stream
+      cov: C-UF-07
+    - kind: browser
+      do: Verify the app shows an empty state for the diary list
+      cov: C-UF-08
+    - kind: browser
+      do: Verify the app carries alternative text on every content image
+      cov: C-UX-11
+    - kind: browser
+      do: Verify an attribution line naming Openhaven contributors is shown on every view of the map
+      cov: C-CF-41
+    - kind: browser
+      do: Verify the about page renders five named sections
+      cov: C-CF-52
+    - kind: browser
+      do: Verify a whole help card is clickable rather than its heading alone
+      cov: C-CF-54
+    - kind: browser
+      do: Verify every animation stops under reduced motion
+      cov: C-UX-08
+    - kind: browser
+      do: Verify the map home shows a welcome card to a first-time visitor
+      cov: C-CF-38
+    - kind: browser
+      do: Verify body copy is set at 14px
+      cov: C-UX-05
+    - kind: browser
+      do: Verify body text meets the WCAG AA contrast bar against its background
+      cov: C-UX-09
+    - kind: browser
+      do: Open the about page and verify the sections Local Knowledge, Community Driven, Open Data, Legal and Partners are all present
+    - kind: browser
+      do: Open the diary and verify entries are listed newest first with a byline reading "Posted by" and an author name
+    - kind: browser
+      do: Open the help page and verify clicking anywhere on a card follows its link
+    - kind: browser
+      do: Open an address that matches nothing and verify the product's own not-found page is shown
+    - kind: browser
+      do: Narrow the viewport to a phone width and verify nothing overflows sideways
+    - kind: pytest
+      test: test_output.py::test_diary_list_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_about_page_names_five_sections
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_help_card_is_wholly_clickable
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_address_renders_own_not_found_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_content_images_carry_alt_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_carry_unique_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_horizontal_overflow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_public_routes_with_robots
+      category: presentation
+      weight: 1
+
+- id: invalid_form_input_rejected
+  purpose: A form rejects invalid input inline, names the offending field, and writes nothing
+  substeps:
+    - kind: browser
+      do: Sign in with the seeded account documented in /app/USER_README.md and open the editor
+    - kind: browser
+      do: Open a changeset with an empty comment and verify the form refuses it and names the comment field
+    - kind: browser
+      do: Verify no changeset was created after that refusal
+    - kind: pytest
+      test: test_output.py::test_form_validation_rejects_and_writes_nothing
+      category: validation
+      weight: 3
+
+- id: the_app_meets_its_deployment_contract
+  purpose: The app answers at its public address on the same origin, serves a production build, and carries the reserved directories
+  substeps:
+    - kind: browser
+      do: Verify the reserved directories exist at the app root
+      cov: C-DC-07 (earned: the reserved directories are an image-filesystem obligation the harness proves at G13 and G18; under a separate verifier the grader runs in its own container and cannot read the agent's app root, so the browser walk records the requirement and the handoff gate discharges it)
+    - kind: browser
+      do: Verify the app reads its public address from APP_PUBLIC_URL
+      cov: C-DC-01
+    - kind: browser
+      do: Verify the app offers no GPS trace upload
+      cov: C-CN-01
+    - kind: browser
+      do: Verify the app offers no route planning
+      cov: C-CN-02
+    - kind: browser
+      do: Verify the app offers no moderator tier
+      cov: C-CN-03
+    - kind: browser
+      do: Verify the reading pages arrive as server-rendered HTML on first paint
+      cov: C-TR-01 (earned: the framework name is not observable from outside the app; its observable consequence, server-rendered HTML on first paint, is what this step checks, and the framework itself is graded by the source-reading quality channel which never touches reward), C-TR-02 (earned: the same, for the backend half of the drawn stack)
+    - kind: browser
+      do: Verify the app is reachable on the outside port it reads from APP_PUBLIC_PORT
+      cov: C-DC-02
+    - kind: browser
+      do: Verify the app starts from the environment image with no manual steps
+      cov: C-DC-06
+    - kind: browser
+      do: Verify the server keeps running after the build session ends
+      cov: C-DC-09
+    - kind: browser
+      do: Verify the app binds 0.0.0.0 so it is reachable from outside its container
+      cov: C-DC-10
+    - kind: browser
+      do: Verify the seeded credentials are written into /app/USER_README.md
+      cov: C-DM-04
+    - kind: browser
+      do: Verify the app makes no external network call at runtime
+      cov: C-CN-04
+    - kind: browser
+      do: Verify the app downloads no binary asset
+      cov: C-CN-05
+    - kind: browser
+      do: Verify the app offers no likes, no follows and no private messages
+      cov: C-OV-03
+    - kind: browser
+      do: Open the site root and verify the app is reachable at its public address with a rendered page
+    - kind: browser
+      do: Verify the reading pages arrive as server-rendered HTML on first paint rather than being drawn by the map client
+    - kind: browser
+      do: Verify the map home offers no GPS trace upload control and no route planning control
+    - kind: browser
+      do: Verify the app offers no moderator tier, so revert is available to any signed-in mapper
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_200
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_api_is_served_under_the_api_prefix
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_app_is_reachable_at_its_public_address
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_production_build_is_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_password_signs_in_every_account
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_timestamps_are_utc
+      category: data_integrity
+      weight: 5

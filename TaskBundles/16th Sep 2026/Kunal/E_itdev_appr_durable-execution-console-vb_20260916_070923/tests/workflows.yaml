@@ -1,0 +1,358 @@
+- id: app_is_reachable_and_healthy
+  purpose: The deployed app answers on its public origin and reports ready
+  substeps:
+    - kind: browser
+      do: Open the app at its public origin and run the home page demonstrator, observing the deliberate failure and the recovery, that no completed activity bar is redrawn or restarted on recovery, and that the transcript stays put when the reader has scrolled it upward
+      cov: C-CF-13, C-CF-14, C-CF-15, C-CF-17
+    - kind: pytest
+      test: test_output.py::test_health_route_reports_ready
+      category: presentation
+      weight: 1
+
+- id: seeded_state_is_stored_and_readable
+  purpose: The seeded organisations, namespaces and principals exist as real rows and real identity subjects
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com with the password deku-demo-pw-2026 and observe the namespace list showing payments-prod, orders-prod and their regions
+    - kind: pytest
+      test: test_output.py::test_seeded_namespace_rows_exist
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_principal_login_token_is_accepted
+      critical: true
+      category: security
+      weight: 5
+
+- id: developer_files_a_retention_change_request
+  purpose: A developer files a retention reduction from the namespace settings and lands on the confirmation
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com with the password deku-demo-pw-2026, follow the breadcrumb to payments-prod settings, open the filing modal to reduce retention from 30 days to 7 days, observe how many executions the reduction affects stated before confirming and the namespace name typed to confirm, then observe the full-page confirmation naming the kind reduce_retention
+      cov: C-CF-39, C-CF-76, C-CF-77
+    - kind: pytest
+      test: test_output.py::test_developer_files_retention_request_row_saved
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_request_states_match_the_pinned_lifecycle
+      category: business_rule
+      weight: 3
+
+- id: namespace_admin_approves_and_applies_the_request
+  purpose: A second principal approves the filed request and applying it changes the namespace retention
+  substeps:
+    - kind: browser
+      do: Sign in as namespace-admin@example.com, open the request queue, read the before and after retention on the change request detail, approve with a reason, then apply and observe the applied state
+    - kind: pytest
+      test: test_output.py::test_approved_request_applies_and_persists_retention
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: requester_cannot_approve_their_own_request
+  purpose: The requesting principal is refused as an approver at the API, whatever roles that principal holds
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the request queue under my requests, open a pending request and observe that the detail offers withdraw but no approve control
+    - kind: pytest
+      test: test_output.py::test_developer_cannot_approve_own_request
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_owner_with_every_role_cannot_self_approve
+      critical: true
+      category: security
+      weight: 5
+
+- id: developer_cannot_apply_or_create_and_row_is_denied
+  purpose: A developer session is refused on apply and on namespace creation, and the protected rows do not change
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the namespace list for northwind and observe that no create-namespace control is offered
+    - kind: pytest
+      test: test_output.py::test_developer_cannot_apply_approved_request
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_developer_cannot_create_namespace
+      category: security
+      weight: 5
+
+- id: authorisation_cannot_be_laundered_through_approval
+  purpose: A request whose filer lost the permission after submission fails at application and the subject is unchanged
+  substeps:
+    - kind: browser
+      do: Sign in as namespace-admin@example.com, open an approved change request and observe the policy summary naming the requesting principal and the permission the change depends on
+    - kind: pytest
+      test: test_output.py::test_policy_reevaluated_at_apply_rejects_revoked_permission
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_apply_and_approval_settle_on_one_winner
+  purpose: Repeated and simultaneous privileged writes produce exactly one effect
+  substeps:
+    - kind: browser
+      do: Sign in as namespace-admin@example.com, open an applied change request and observe a single approval history entry rather than a duplicated one
+    - kind: pytest
+      test: test_output.py::test_repeated_apply_stores_one_audit_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_approvals_apply_exactly_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_namespace_create_stores_one_row
+      category: data_integrity
+      weight: 5
+
+- id: cross_tenant_read_is_denied_at_the_api
+  purpose: A valid credential for one organisation cannot reach another organisation's namespace
+  substeps:
+    - kind: browser
+      do: Sign in as developer2@example.com and open the payments-prod namespace address under northwind, then observe a not-permitted state rendered rather than the namespace contents or an empty table
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_cross_tenant_namespace_read_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cross_tenant_refusal_matches_missing_resource
+      category: security
+      weight: 5
+
+- id: expired_and_denied_grants_cannot_be_used
+  purpose: An expired grant is refused at request time and an explicit deny defeats a wider allow
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the members screen and observe the grant on orders-prod marked as expired
+    - kind: pytest
+      test: test_output.py::test_expired_grant_is_denied_at_decision_time
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_explicit_deny_defeats_wider_allow_scope
+      category: security
+      weight: 5
+
+- id: unauthenticated_mutation_is_denied
+  purpose: A mutating call carrying no credential is refused by the server
+  substeps:
+    - kind: browser
+      do: Without signing in, open the request queue address for northwind and observe the sign-in route with the requested address kept
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_mutation_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: audit_trail_is_append_only_evidence
+  purpose: Audit rows are append-only, chained, include refused attempts and are readable only by an owner
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open the audit search, and observe the entry for the applied change request naming the requesting principal and the approving principal
+    - kind: pytest
+      test: test_output.py::test_audit_row_is_append_only
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_rows_chain_to_the_previous_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_denied_attempt_is_recorded_in_audit
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_trail_read_is_owner_only
+      category: security
+      weight: 5
+
+- id: execution_history_is_the_source_of_truth
+  purpose: An execution status is derived from its event history and the history pages by cursor
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the execution list for payments-prod, select the failures chip and watch its query written into the query bar, then open subscription-9f21c4d0 and observe the retried activity drawn as segments within one bar beside the input payload rendered in its decoded state
+      cov: C-CF-92, C-CF-99, C-CF-103
+    - kind: pytest
+      test: test_output.py::test_execution_status_survives_reload_from_history
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_history_pages_by_cursor_without_duplicates
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_execution_detail_omits_history_payload
+      category: business_rule
+      weight: 3
+
+- id: invalid_input_and_stale_cursor_are_refused
+  purpose: An invalid namespace creation writes nothing and a cursor from another sort is refused
+  substeps:
+    - kind: browser
+      do: Sign in as namespace-admin@example.com, open the namespace creation form, submit it with an empty name and observe the error named beside the name field with what was typed kept on the form
+      cov: C-UF-19
+    - kind: pytest
+      test: test_output.py::test_invalid_namespace_create_stores_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cursor_from_another_sort_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_expired_request_cannot_be_applied
+      category: business_rule
+      weight: 3
+
+- id: launch_surface_is_present_on_the_public_site
+  purpose: The privacy page, sitemap, robots file and favicon are served and an invalid form submission is refused
+  substeps:
+    - kind: browser
+      do: Open the product home page, follow the footer privacy link to the privacy page, and observe the statement of what the product stores about a person
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_linked_from_every_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_every_public_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_robots_refers_to_the_sitemap
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_declared_in_the_document_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_invalid_form_submission_is_refused_inline
+      category: validation
+      weight: 3
+
+- id: rate_limit_answer_is_distinct_from_validation
+  purpose: An exceeded rate limit is answered distinctly from a validation failure and carries a retry hint
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the execution list for payments-prod and observe the query bar with its quick-filter chips
+    - kind: pytest
+      test: test_output.py::test_rate_limit_answer_differs_from_validation
+      category: business_rule
+      weight: 3
+
+- id: identity_lifecycle_is_enforced
+  purpose: Principals are modelled separately and a duplicate member address is refused
+  substeps:
+    - kind: browser
+      do: Sign in as namespace-admin@example.com, open the members screen and observe each person listed with their roles, groups and provisioning source
+    - kind: pytest
+      test: test_output.py::test_principal_kinds_are_modelled_separately
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_person_email_is_unique_case_folded
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invitation_to_existing_member_is_refused
+      category: validation
+      weight: 3
+
+- id: last_owner_and_directory_group_cannot_be_edited
+  purpose: The last owner and a synchronised group are refused edits by the server
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open the members screen and observe that the last owner offers no remove control
+    - kind: pytest
+      test: test_output.py::test_last_owner_cannot_be_removed
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_directory_group_membership_is_read_only
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_removing_a_person_revokes_grants_and_keeps_audit
+      category: data_integrity
+      weight: 5
+
+- id: namespace_configuration_rotates_safely
+  purpose: A certificate rotation overlaps, replication reports its lag, and an unknown attribute type is refused
+  substeps:
+    - kind: browser
+      do: Sign in as namespace-admin@example.com, open the payments-prod settings and observe the retention, codec endpoint, certificate trust and search attribute sections, with the failover control showing the current replication lag beside it
+      cov: C-CF-85
+    - kind: pytest
+      test: test_output.py::test_certificate_bundle_overlap_is_accepted
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_namespace_replication_reports_lag_per_standby
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_attribute_types_are_the_declared_set
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_sso_enforcement_without_verified_domain_is_refused
+      critical: true
+      category: security
+      weight: 5
+
+- id: worker_fleet_and_queues_report_health
+  purpose: A stale worker is marked unreachable, certificate expiry is visible and task queues report a backlog
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the worker fleet for payments-prod and observe both workers listed with their last poll time
+    - kind: pytest
+      test: test_output.py::test_worker_fleet_marks_a_stale_poller_unreachable
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_trust_bundle_expiry_is_surfaced
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_task_queue_backlog_is_reported
+      category: business_rule
+      weight: 3
+
+- id: security_headers_and_shell_are_served
+  purpose: Every response carries the security headers and the first paint is an application shell
+  substeps:
+    - kind: browser
+      do: Open the product home page and observe the page compose its content after the first paint rather than arriving fully rendered
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_first_paint_carries_an_application_shell
+      category: presentation
+      weight: 1
+
+- id: customer_marks_are_placeholders
+  purpose: The customer logo band carries the pinned placeholder marks rather than a real company name
+  substeps:
+    - kind: browser
+      do: Open the product home page and observe the customer logo band naming the placeholder marks
+    - kind: pytest
+      test: test_output.py::test_placeholder_customer_marks_are_used
+      category: presentation
+      weight: 1

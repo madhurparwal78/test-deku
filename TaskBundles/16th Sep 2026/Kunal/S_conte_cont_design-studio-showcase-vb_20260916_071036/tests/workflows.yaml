@@ -1,0 +1,604 @@
+- id: home_route_tells_the_nine_band_story
+  purpose: "A first visitor meets the loader, then reads the nine bands of the home route in order"
+  substeps:
+    - kind: browser
+      do: "Open the home route of the Sable digital agency site, the public product, and watch the opening sequence: a dark field carries one light bar whose label reads LOADING... in upper case, the loader bar growing from nothing to the full frame width at a steady rate"
+      cov: C-CF-23, C-CF-24, C-CF-25, C-CF-26, C-OV-01
+    - kind: browser
+      do: "Scroll the home route from top to bottom and confirm the nine bands arrive in order: the service index heading pairing WE DO with What, the twenty services, the four tone words, the four capabilities, and the Selected Cases archive heading reading above the thirteen cases"
+      cov: C-CF-16, C-CF-30, C-CF-31, C-CF-32, C-CF-36, C-CF-39, C-CF-40
+    - kind: browser
+      do: "Scroll back upward through the case archive and confirm every moving element runs backwards with the input, the dots drifting back towards their home positions and the capability band holding still as its four items advance in reverse"
+      cov: C-CF-33, C-CF-34, C-CF-35, C-CF-37
+    - kind: browser
+      do: "Open the contact route, press Projects in the header, and confirm the page returns to the home route and settles at the projects band without a full document load"
+      cov: C-CF-17, C-CF-18, C-CF-19, C-UF-01
+    - kind: browser
+      do: "Select a case in the home archive, tab inside the overlay that opens, point at the round close control and watch it turn, then close the overlay with the escape key and confirm focus returns to that case"
+      cov: C-CF-46, C-CF-48, C-CF-49, C-CF-50, C-UX-18, C-FE-13
+    - kind: pytest
+      test: test_output.py::test_services_index_lists_twenty_names
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_capabilities_and_discipline_tags_are_seeded
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_route_serves_rendered_markup
+      category: presentation
+      weight: 1
+- id: visitor_completes_brief_and_books_call
+  purpose: "A visitor completes the six-stage brief and leaves with a discovery call booked at a named time"
+  substeps:
+    - kind: browser
+      do: "Open the staged brief and complete stage one with a name, a company and an email address, then move to stage two with the browser back button and return"
+      cov: C-CF-87, C-UF-06
+    - kind: browser
+      do: "On stage two select Brand Identity Systems and Motion Design, then read the engagement shape stage three proposes and the reason it gives, and change it"
+      cov: C-CF-88, C-CF-89
+    - kind: browser
+      do: "On stage four confirm the budget answers are bands and that the undecided band reads as an equal choice rather than a lesser one"
+      cov: C-CF-91, C-CF-92
+    - kind: browser
+      do: "On stage six read the time zone named above the slots before any slot is drawn, change it, then choose a slot and submit, reading the booked time in both zones"
+      cov: C-CF-103, C-CF-104, C-CF-100
+    - kind: pytest
+      test: test_output.py::test_brief_stage_one_creates_record_with_token
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_brief_shape_is_derived_from_disciplines
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_brief_submit_books_the_named_slot
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_availability_is_published_with_a_bounded_horizon
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_slot_picker_is_reachable_by_keyboard
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_tone_signature_is_stored_with_the_brief
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_tone_board_and_list_view_agree
+      category: business_rule
+      weight: 3
+- id: brief_attachment_lands_in_the_object_store
+  purpose: "A file attached to a brief exists as a real object in the bucket at its pinned key"
+  substeps:
+    - kind: browser
+      do: "On stage five of the brief attach a small document and confirm the attachment mark changes from its empty state to its completed state"
+      cov: C-FE-12
+    - kind: browser
+      do: "Open the saved resume address for that brief and confirm the attached document is reached through an authenticated streaming read of the protected object rather than a public address"
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_brief_attachment_object_exists_in_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_attachment_bytes_are_not_held_in_a_table
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_protected_object_requires_an_authenticated_read
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_deliverable_preview_object_exists_in_bucket
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_attachment_key_names_the_content_digest
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unscanned_object_is_not_served
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_attachment_of_another_brief_is_denied
+      category: security
+      weight: 5
+- id: concurrent_slot_submissions_book_at_most_one
+  purpose: "Two visitors submitting for one held slot produce exactly one booking and the loser keeps every answer"
+  substeps:
+    - kind: browser
+      do: "Choose the last free slot on the first day, submit, and read the booking confirmation rendering the booked time in the studio zone and in the visitor zone"
+      cov: C-DM-17
+    - kind: pytest
+      test: test_output.py::test_two_submissions_for_one_slot_book_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_losing_submission_is_offered_two_nearest_slots
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_losing_submission_keeps_narrative_and_attachment
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_slot_state_reaches_booked_exactly_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_soft_hold_expires_and_frees_the_slot
+      category: business_rule
+      weight: 3
+- id: brief_resumes_after_an_interrupted_session
+  purpose: "A half-finished brief survives a closed tab and returns at the furthest stage reached"
+  substeps:
+    - kind: browser
+      do: "Reach stage four of the brief, open the saved resume address in a fresh session, and confirm every earlier answer is present at stage four"
+      cov: C-CF-97
+    - kind: browser
+      do: "Open the resume address and confirm the tone board arrangement is shown back beside the brief as a sentence"
+      cov: C-CF-97
+    - kind: pytest
+      test: test_output.py::test_resumed_brief_returns_the_furthest_stage
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_resume_token_is_opaque_and_carries_no_address
+      critical: true
+      category: security
+      weight: 5
+- id: unpublished_case_cannot_be_read_by_a_visitor
+  purpose: "A case the studio has not published is unreachable at its own route for everyone but the studio"
+  substeps:
+    - kind: browser
+      do: "Open the address of an unpublished case directly and confirm the studio not-found page renders rather than the case"
+      cov: C-CF-62
+    - kind: pytest
+      test: test_output.py::test_unpublished_case_route_is_not_found_for_anonymous
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unpublished_case_route_is_not_found_for_a_client
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unpublished_case_is_absent_from_the_archive_listing
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publish_endpoint_is_studio_only
+      category: security
+      weight: 5
+- id: client_without_the_right_is_denied_approval
+  purpose: "A client account carrying no approval right cannot approve a deliverable version"
+  substeps:
+    - kind: browser
+      do: "Sign in to the portal as the client carrying no approval right and confirm no approve control is offered on the waiting version"
+      cov: C-CF-146
+    - kind: pytest
+      test: test_output.py::test_approval_without_the_right_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_denied_approval_leaves_the_version_unchanged
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_endpoints_are_denied_to_a_client_session
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_cannot_approve_on_behalf_of_a_client
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_second_factor_is_required_for_an_approver
+      category: security
+      weight: 5
+- id: cross_engagement_record_is_forbidden
+  purpose: "A client signed in to one engagement cannot reach another engagement's records by any route"
+  substeps:
+    - kind: browser
+      do: "Sign in as the second client and confirm the portal lists that client's own engagement alone"
+      cov: C-CF-139
+    - kind: pytest
+      test: test_output.py::test_cross_engagement_read_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_denied_engagement_response_carries_no_record
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_portal_request_without_a_token_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_portal_listing_is_scoped_to_the_attached_engagement
+      category: security
+      weight: 5
+- id: case_route_reads_as_typed_chapters
+  purpose: "A case study is readable at its own address as an ordered sequence of typed chapters"
+  substeps:
+    - kind: browser
+      do: "Open a published case from the archive route at /work/ and read it from the cover chapter to the outcome chapter, using the rail down the side to jump between chapters"
+      cov: C-CF-57, C-UF-05
+    - kind: browser
+      do: "Drag the divider on the comparison chapter, then move it with the arrow keys, confirming both labels stay visible throughout"
+      cov: C-CF-58, C-CF-59
+    - kind: browser
+      do: "Reach the sequence chapter and confirm the run of stills advances sideways as the page is scrolled down, then request reduced motion and confirm the pin releases into an ordinary scrollable region"
+      cov: C-CF-60, C-CF-61
+    - kind: browser
+      do: "Reach the foot of the case and read the three related cases, each stating in one line what the two cases share"
+      cov: C-CF-72
+    - kind: pytest
+      test: test_output.py::test_case_route_returns_chapters_in_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_with_too_few_chapters_is_refused_publication
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_renamed_case_old_slug_redirects
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_route_declares_its_own_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_case_still_is_generated_from_the_slug_seed
+      category: business_rule
+      weight: 3
+- id: archive_facets_and_comparison_tray
+  purpose: "The archive answers a question: facets carry live counts, the filter is a link, and three cases compare side by side"
+  substeps:
+    - kind: browser
+      do: "Open the archive, confirm the heading reads The Archive, then narrow to HEALTHCARE and confirm every remaining facet value shows its count, with a zero-count value shown greyed rather than removed"
+      cov: C-CF-63, C-CF-66
+    - kind: browser
+      do: "Add three cases to the comparison tray and confirm the rows line up across the three columns, an unpublished measure reading not published"
+      cov: C-CF-69, C-CF-70
+    - kind: browser
+      do: "Change a facet and confirm the cases already on screen move rather than replaying their arrival"
+      cov: C-CF-74
+    - kind: browser
+      do: "Type a case name into the archive search field and confirm the grid narrows in place without leaving the route"
+      cov: C-CF-73
+    - kind: browser
+      do: "Clear every facet with the single clear control and confirm the whole archive returns"
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_archive_facet_counts_reconcile_with_case_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_filtered_archive_address_reopens_the_same_filter
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_archive_filter_returns_an_empty_array
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_similarity_orders_by_discipline_then_sector
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_archive_search_filters_in_place
+      category: business_rule
+      weight: 3
+- id: deck_composes_and_leads_into_the_brief
+  purpose: "Three answers compose a capabilities deck that opens as a page and closes on a link into the brief"
+  substeps:
+    - kind: browser
+      do: "Answer the three composer questions at Standard detail and obtain the composed capabilities deck at once, as a procurement lead would without waiting for an email, confirming the telemetry notice sits on the first page"
+      cov: C-CF-121, C-CF-132, C-UF-07, C-OV-03
+    - kind: browser
+      do: "Page to the end of the composed deck and follow the closing control into the brief, confirming the shape and sector arrive already chosen"
+      cov: C-CF-125
+    - kind: browser
+      do: "Open the print preview of the composed deck and confirm one deck page lands on each sheet with no cropped media"
+      cov: C-CF-129
+    - kind: pytest
+      test: test_output.py::test_deck_compose_returns_a_token_and_blocks
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_deck_next_step_carries_shape_and_sector
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_deck_read_record_holds_no_reader_identity
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_deck_detail_sets_the_page_count
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_deck_route_serves_a_page_not_a_file
+      category: business_rule
+      weight: 3
+- id: expired_deck_link_matches_a_revoked_one
+  purpose: "An expired deck link and a revoked deck link answer identically, so a stranger learns nothing"
+  substeps:
+    - kind: browser
+      do: "Open an expired deck address and confirm the page says so and offers a control requesting a fresh link"
+      cov: C-CF-133
+    - kind: pytest
+      test: test_output.py::test_expired_deck_matches_revoked_deck_response
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_used_signin_link_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_expired_brief_token_offers_a_fresh_start
+      category: validation
+      weight: 3
+- id: oversized_attachment_is_refused_without_loss
+  purpose: "An attachment above the limit is refused on its own and the rest of the brief survives"
+  substeps:
+    - kind: browser
+      do: "Attach an oversized attachment at stage five and confirm the attachment alone is refused with the limit stated, the brief left intact on screen"
+      cov: C-CF-82, C-CF-99
+    - kind: pytest
+      test: test_output.py::test_oversized_attachment_is_refused_and_brief_intact
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_attachment_writes_no_object
+      category: validation
+      weight: 3
+- id: portal_approval_is_recorded_and_frozen
+  purpose: "An approval is an appended record naming actor and time, and the approved version is frozen"
+  substeps:
+    - kind: browser
+      do: "Sign in at the portal route /portal/ and open the panel of work waiting on you"
+      cov: C-CF-137, C-UF-08
+    - kind: browser
+      do: "Open a delivered version, read the preview in the page, leave a comment pinned to a point on the still, then read the two decisions offered, Approve plus Request changes, and choose Approve"
+      cov: C-CF-142, C-CF-143, C-CF-144
+    - kind: browser
+      do: "Choose request changes on a version without typing a note and confirm the portal refuses the submission"
+      cov: C-CF-145
+    - kind: browser
+      do: "Open the earlier version of the approved deliverable and confirm it is still readable with its approval named"
+      cov: C-DM-22
+    - kind: pytest
+      test: test_output.py::test_approval_is_appended_with_actor_and_time
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_approved_version_is_frozen_and_prior_version_survives
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_request_changes_without_a_note_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_digest_setting_defaults_to_daily
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_portal_panels_are_present_for_an_attached_client
+      category: business_rule
+      weight: 3
+- id: contact_form_refuses_invalid_input
+  purpose: "The short contact form refuses bad input inline, writes nothing, and survives an unreachable verification service"
+  substeps:
+    - kind: browser
+      do: "Open the enquiry route at /contact/ and submit the contact form with a required field left empty, confirming the message names that field without leaving the page"
+      cov: C-CF-76, C-CF-77, C-UF-02
+    - kind: browser
+      do: "Submit the contact form correctly and confirm the success block replaces it in place on the one-screen contact route"
+      cov: C-CF-83, C-CF-75, C-CF-86
+    - kind: browser
+      do: "Open the capabilities deck overlay from the header, submit a name, a company and an email, and confirm the success block replaces the form in place"
+      cov: C-CF-83
+    - kind: pytest
+      test: test_output.py::test_contact_form_rejection_writes_nothing
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_decoy_field_submission_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_published_address_is_absent_from_the_served_document
+      category: security
+      weight: 5
+- id: published_surface_and_not_found_page
+  purpose: "The published surface answers: health, privacy, terms, a cookie choice and the studio's own not-found page"
+  substeps:
+    - kind: browser
+      do: "Open an address that does not exist and confirm the studio not-found page renders, carrying a way back to the home route"
+      cov: C-CF-160
+    - kind: browser
+      do: "Open the site for the first time, answer the question about non-essential cookies, then reload and confirm the answer survives"
+      cov: C-CF-158, C-CF-159
+    - kind: browser
+      do: "Open the privacy route and the terms route from the footer, confirming both are reachable from every page"
+      cov: C-CF-153, C-CF-157, C-UF-03, C-UF-04
+    - kind: browser
+      do: "Open the home route at a narrow phone width and confirm nothing overflows sideways and the menu reveals every navigation target"
+      cov: C-UX-26
+    - kind: browser
+      do: "Sign in, then sign out from the portal, confirm the session clears on this device and that signing out offers to clear the session on every other device"
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_route_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_privacy_page_lists_every_collection_point
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_reachable_and_linked_from_signup
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_view_is_recorded_and_studio_only
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_across_a_restart
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_user_readme_names_every_seeded_login
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_signup_is_open_and_attaches_no_engagement
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signout_clears_the_session
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_portal_request_lands_on_sign_in
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_api_is_served_under_the_api_prefix
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_trailing_slash_redirect_is_permanent
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_environment_variables_drive_every_connection
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_credential_reaches_the_browser
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reserved_directories_exist_and_are_empty
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_served_bundle_is_a_production_build
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_absent_feature_surface_is_served
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_no_third_party_origin_is_requested_at_runtime
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_font_binary_or_media_binary_is_served
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reference_brand_name_is_absent_from_the_output
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reduced_motion_request_suppresses_video
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_portal_document_loads_no_scroll_module
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pointer_layers_are_absent_without_a_fine_pointer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_marks_are_inline_geometry_not_binaries
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_header_carries_no_scroll_bound_class_switch
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_smoothing_layer_is_removable_at_runtime
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reveal_releases_content_after_the_deadline
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_positioning_line_keeps_its_whole_sentence
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_studio_strip_and_year_mark_carry_their_exact_strings
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_root_type_size_follows_the_reader_preference
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_content_images_carry_alternative_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_loader_is_removed_after_the_first_load
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_scroll_bindings_do_not_accumulate_across_navigations
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_case_wipe_corner_alternates_down_the_archive
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_capability_band_is_unpinned_at_phone_width
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_commissioned_surfaces_are_all_reachable
+      category: business_rule
+      weight: 3
