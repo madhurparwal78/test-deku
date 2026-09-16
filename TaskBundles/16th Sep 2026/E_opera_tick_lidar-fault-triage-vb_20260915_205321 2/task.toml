@@ -1,0 +1,80 @@
+schema_version = "1.4"
+
+[task]
+name = "deku/lidar-fault-triage-vb"
+version = "1.0.0"
+description = "A fault triage console where pilots log LiDAR survey faults, engineers claim and decide them from a severity-ordered queue, and a confirmed fault emails the site owner"
+authors = [
+  "madhur.parwal@ethara.ai" ,
+  "yasiraliint17@ethara.ai"
+]
+uuid_v5 = "d93b3ec9-94f6-5cd6-8af9-5822dbb7a7f0"
+keywords = ["greenfield", "enterprise", "typescript", "postgres", "mailpit", "ticketing-queue"]
+
+[metadata]
+category     = "Greenfield"
+sub_category = "enterprise"
+
+domain          = "operations-field-service"
+pattern         = "ticketing-queue"
+service_profile = "P2-db-email"
+variant_axes    = ["critical_depth", "spec_sections"]
+capability_flags = "aesthetic"
+task_code       = "E_opera_tick_lidar-fault-triage-vb_20260915_205321"
+naming_scheme   = "task-code-v1"
+design_direction = "companion"
+grader_version  = "0.22.0"
+launch_surface  = "favicon,no_frontend_secrets,page_view_log,security_headers,single_cta"
+
+language     = "typescript"
+archetype    = "lidar-fault-triage"
+variant      = "b"
+spec_sections_given = ["overview", "roles", "features", "flow", "uiux", "techrequirements", "datamodel", "constraints", "contract"]
+turns_expected  = 170
+tokens_expected = 7000000
+contributor_id  = "yasiraliint17@ethara.ai"
+created_at      = "2026-09-15"
+canary_present  = true
+difficulty           = ""
+reference_model_used = ""
+pass_rate            = 0.0
+pass_rate_ci         = [0.0, 0.0]
+calibration_trials   = 0
+harbor_version       = "0.20.0"
+
+[metadata.services]
+backend = "postgres"
+email   = "mailpit"
+
+[agent]
+timeout_sec = 18000.0
+
+[environment]
+os                = "linux"
+cpus              = 4
+memory_mb         = 8192
+storage_mb        = 20480
+build_timeout_sec = 900.0
+
+network_mode  = "public"
+allowed_hosts = []
+
+env = { APP_PUBLIC_PORT = "4173", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://main:4173}", DATABASE_URL = "${DATABASE_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/deku}", SMTP_HOST = "${SMTP_HOST:-mailpit}", SMTP_PORT = "${SMTP_PORT:-1025}", SMTP_USER = "${SMTP_USER:-}", SMTP_PASS = "${SMTP_PASS:-}" }
+
+[environment.healthcheck]
+command            = "pg_isready -h postgres -p 5432 -q"
+interval_sec       = 5.0
+timeout_sec        = 5.0
+start_period_sec   = 60.0
+start_interval_sec = 2.0
+retries            = 60
+
+[verifier]
+environment_mode = "separate"
+timeout_sec      = 3600.0
+
+env = { ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY}", ANTHROPIC_BASE_URL = "${ANTHROPIC_BASE_URL}", DB_ADMIN_URL = "${DB_ADMIN_URL:-postgresql://deku_admin:deku-local-dev@postgres:5432/deku}", EMAIL_INBOX_API_URL = "${EMAIL_INBOX_API_URL:-http://mailpit:8025}", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://localhost:4173}", DEKU_SERVICE_BACKEND = "postgres", DEKU_SERVICE_EMAIL = "mailpit" }
+
+[[artifacts]]
+source      = "/app"
+destination = "app"

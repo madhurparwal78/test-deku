@@ -1,0 +1,349 @@
+- id: engineer_confirms_the_top_fault_and_the_owner_is_emailed
+  purpose: An engineer claims and confirms the most severe fault, the fault leaves the queue and the site owner receives one email
+  substeps:
+    - kind: browser
+      do: Open the app and sign in at /login as the engineer with the credentials written to /app/USER_README.md
+      cov: C-CF-01, C-DC-07 (earned: signing in with the documented credentials proves the file carries them), C-DM-02 (earned: the seeded accounts are read from /app/USER_README.md to sign in)
+    - kind: browser
+      do: Open the queue, open the seeded crack at Harrow Ridge Wind Farm at the top, claim it, confirm it and send the email to the owner
+      cov: C-UF-05, C-DM-11 (earned: the seeded crack at Harrow Ridge Wind Farm is the first of the three seeded open faults)
+    - kind: browser
+      do: Open /console and find the overview count of confirmed faults for wind turbines raised by one per asset class
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_confirmed_fault_is_stored_confirmed_with_a_history_entry_and_leaves_the_queue
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-OV-03
+    - kind: pytest
+      test: test_output.py::test_confirmed_fault_sends_one_email_to_the_site_owner
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-OV-02
+    - kind: pytest
+      test: test_output.py::test_confirmation_email_subject_begins_with_confirmed_fault_at_the_site_name
+      category: notification
+      weight: 3
+      cov: C-CF-40
+
+- id: concurrent_claims_on_one_fault_admit_exactly_one_claimant
+  purpose: Simultaneous claims produce one claimant, one refusal naming the holder, one claimed history entry
+  substeps:
+    - kind: browser
+      do: Sign in as the engineer and as engineer2 in two sessions, claim the same open fault from both, and find the losing claim refused in the fault panel
+      cov: C-CF-29
+    - kind: pytest
+      test: test_output.py::test_concurrent_claims_on_one_fault_admit_exactly_one_claimant
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-28
+    - kind: pytest
+      test: test_output.py::test_losing_concurrent_claim_is_refused_as_a_conflict_naming_the_holder
+      category: data_integrity
+      weight: 5
+      cov: C-CF-29
+    - kind: pytest
+      test: test_output.py::test_concurrent_claims_record_exactly_one_claimed_history_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-30
+    - kind: pytest
+      test: test_output.py::test_fault_history_entries_are_unchanged_after_a_later_decision
+      category: data_integrity
+      weight: 5
+      cov: C-DM-08
+
+- id: pilot_logs_a_survey_and_faults_enter_the_queue
+  purpose: A pilot logs a survey, the faults are stored open and the queue orders them
+  substeps:
+    - kind: browser
+      do: Sign in as the pilot, open /console/surveys/new, log a survey on Saltmarsh Solar Array with two fault zones and save it
+      cov: C-UF-08, C-OV-01
+    - kind: browser
+      do: Open the queue and find the two new Saltmarsh Solar Array faults listed as open faults
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_pilot_logged_survey_faults_are_stored_as_open_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-RL-03
+    - kind: pytest
+      test: test_output.py::test_queue_lists_open_faults_in_rank_deformation_flown_order
+      category: business_rule
+      weight: 3
+      cov: C-CF-20
+    - kind: pytest
+      test: test_output.py::test_queue_narrowed_by_asset_class_returns_only_that_class
+      category: business_rule
+      weight: 3
+      cov: C-CF-24
+
+- id: invalid_survey_is_refused_and_writes_nothing
+  purpose: A survey breaking a stated rule is refused and leaves no survey or fault row behind
+  substeps:
+    - kind: browser
+      do: Sign in as the pilot, open /console/surveys/new, save a survey with no fault zone and find the survey rejected as invalid on the form
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_survey_with_no_fault_zone_is_refused_and_stores_no_row
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_survey_with_twenty_one_fault_zones_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-10
+    - kind: pytest
+      test: test_output.py::test_fault_zone_with_an_unknown_kind_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_fault_zone_ranked_above_four_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-12
+    - kind: pytest
+      test: test_output.py::test_survey_flown_in_the_future_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_survey_coverage_above_one_hundred_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-14
+    - kind: pytest
+      test: test_output.py::test_survey_on_an_inactive_site_is_refused
+      category: business_rule
+      weight: 3
+      cov: C-CF-08
+
+- id: pilot_is_denied_decision_actions
+  purpose: A pilot cannot claim a fault or create a site, at the API
+  substeps:
+    - kind: browser
+      do: Sign in as the pilot, open a fault page and find no claim control for the pilot on the fault
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_pilot_claiming_a_fault_is_denied_and_the_row_stays_open
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_pilot_creating_a_site_is_denied
+      category: security
+      weight: 5
+      cov: C-RL-05
+
+- id: engineer_cannot_decide_a_fault_held_by_another_engineer
+  purpose: Only the engineer holding a fault can decide it
+  substeps:
+    - kind: browser
+      do: Sign in as engineer2, open a fault held by the first engineer and find no confirm or dismiss control for the fault
+      cov: C-RL-07
+    - kind: pytest
+      test: test_output.py::test_second_engineer_confirming_a_held_fault_is_denied_and_the_fault_stays_claimed
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-07
+
+- id: engineer_is_forbidden_from_administration
+  purpose: An engineer cannot create a site or a staff account, at the API
+  substeps:
+    - kind: browser
+      do: Sign in as the engineer, open /console/sites and find no control for the engineer to create a site
+      cov: C-RL-08
+    - kind: pytest
+      test: test_output.py::test_engineer_creating_a_site_is_denied_with_no_row_written
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-08
+    - kind: pytest
+      test: test_output.py::test_engineer_creating_a_staff_account_is_denied
+      category: security
+      weight: 5
+      cov: C-RL-09
+
+- id: unauthenticated_calls_are_denied
+  purpose: A signed-out visitor is redirected in the interface and denied at the API
+  substeps:
+    - kind: browser
+      do: While signed out, open /console/queue and verify the visit to the console route redirects to /login
+      cov: C-UF-01
+    - kind: browser
+      do: Sign in as the engineer from that redirect and verify the successful sign in returns to the console queue route first requested
+      cov: C-UF-02
+    - kind: pytest
+      test: test_output.py::test_anonymous_caller_is_denied_on_every_mutating_endpoint
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-10
+
+- id: sign_in_refused_for_wrong_owner_or_inactive_accounts
+  purpose: Only active staff with the right password receive a token
+  substeps:
+    - kind: browser
+      do: Open /login and find that the product offers no sign up link, no password reset link and no single sign-on option
+      cov: C-RL-11, C-CN-02, C-CN-03
+    - kind: pytest
+      test: test_output.py::test_wrong_password_sign_in_is_refused_with_no_token
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-03
+    - kind: pytest
+      test: test_output.py::test_each_seeded_account_signs_in_with_the_seeded_password_and_receives_an_access_token
+      category: security
+      weight: 5
+      cov: C-RL-12
+    - kind: pytest
+      test: test_output.py::test_site_owner_email_cannot_sign_in
+      category: security
+      weight: 5
+      cov: C-OV-04
+    - kind: pytest
+      test: test_output.py::test_deactivated_staff_account_sign_in_is_refused
+      category: security
+      weight: 5
+      cov: C-CF-04
+
+- id: administrator_manages_sites_and_staff
+  purpose: The administrator creates sites and staff, and the stored rules hold
+  substeps:
+    - kind: browser
+      do: Sign in as the administrator, open /console/sites and find the four seeded sites, one per asset class, with their owner contacts
+      cov: C-DM-10
+    - kind: browser
+      do: As the administrator create a site on /console/sites and find the new site listed in the site register
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_administrator_creates_a_site_that_is_stored_as_a_row
+      category: business_rule
+      weight: 3
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_administrator_creates_a_staff_account
+      category: business_rule
+      weight: 3
+      cov: C-RL-02
+    - kind: pytest
+      test: test_output.py::test_staff_account_with_an_existing_email_is_refused
+      category: validation
+      weight: 3
+      cov: C-DM-03
+    - kind: pytest
+      test: test_output.py::test_site_with_an_unknown_asset_class_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_duplicate_site_name_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-07
+
+- id: claim_release_and_decisions_change_fault_state
+  purpose: Claiming, releasing, confirming and dismissing move a fault through its states
+  substeps:
+    - kind: browser
+      do: Sign in as the engineer, open a fault page and find that the product offers no attachments control on the fault
+      cov: C-CN-04
+    - kind: browser
+      do: Claim a fault on its page, release the fault and find the released fault back in the queue as open with no claimant
+      cov: C-CF-32
+    - kind: pytest
+      test: test_output.py::test_engineer_claims_an_open_fault_which_becomes_claimed_with_one_history_entry
+      category: business_rule
+      weight: 3
+      cov: C-CF-26
+    - kind: pytest
+      test: test_output.py::test_claiming_a_decided_fault_is_refused_as_a_conflict
+      category: business_rule
+      weight: 3
+      cov: C-CF-31
+    - kind: pytest
+      test: test_output.py::test_released_fault_returns_to_open_with_no_claimant_and_sends_no_email
+      category: business_rule
+      weight: 3
+      cov: C-CF-32
+    - kind: pytest
+      test: test_output.py::test_dismissal_with_a_short_reason_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-36
+    - kind: pytest
+      test: test_output.py::test_dismissed_fault_stores_the_reason_and_sends_no_email
+      category: notification
+      weight: 3
+      cov: C-CF-41
+
+- id: overview_counts_reconcile_with_stored_faults
+  purpose: The overview counts move with the stored faults and the all-sites figure adds up
+  substeps:
+    - kind: browser
+      do: Sign in as the administrator, open /console and find the overview counts of faults per asset class for open, claimed, confirmed, dismissed
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_overview_open_count_rises_by_the_logged_fault_count
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_overview_all_sites_figure_equals_the_sum_of_the_classes
+      category: data_integrity
+      weight: 5
+      cov: C-CF-45
+
+- id: seed_contract_and_launch_surface_hold
+  purpose: The seed, the health route, the list shape, the headers, the favicon, the page view record and the downloaded files hold
+  substeps:
+    - kind: browser
+      do: Open / and find the public landing page leading to /login through its single sign in action
+      cov: C-DC-01 (earned: the landing page is served at APP_PUBLIC_URL)
+    - kind: pytest
+      test: test_output.py::test_seeded_sites_exist_once_each_after_restart
+      category: data_integrity
+      weight: 5
+      cov: C-DM-12
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_two_hundred_under_the_api_prefix
+      category: presentation
+      weight: 1
+      cov: C-TR-10
+    - kind: pytest
+      test: test_output.py::test_fault_list_is_a_top_level_array
+      category: presentation
+      weight: 1
+      cov: C-DC-04
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_the_security_headers
+      category: security
+      weight: 5
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_favicon_link_declared_in_the_head_resolves
+      category: presentation
+      weight: 1
+      cov: C-TR-05
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_downloaded_frontend_files
+      category: security
+      weight: 5
+      cov: C-TR-08
+    - kind: pytest
+      test: test_output.py::test_recorded_page_view_is_counted_per_route_for_the_administrator
+      category: business_rule
+      weight: 3
+      cov: C-CF-50
