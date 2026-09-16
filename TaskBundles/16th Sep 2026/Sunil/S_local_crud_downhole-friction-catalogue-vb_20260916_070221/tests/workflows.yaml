@@ -1,0 +1,271 @@
+- id: visitor_submits_well_data_enquiry
+  purpose: A drilling engineer sends well data from the enquiry band at the foot of a case route and the request is persisted exactly as it was sent
+  substeps:
+    - kind: browser
+      do: Open the case route for well 22061, scroll to the enquiry band, fill first name, last name and email, tick the consent box and send
+      cov: C-CF-128, C-CF-129, C-CF-13, C-CF-14, C-CF-15, C-CF-157, C-CF-16, C-CF-180, C-CF-23, C-CF-49, C-CF-52, C-FE-20, C-FE-24, C-FE-36, C-UX-37
+    - kind: pytest
+      test: test_output.py::test_enquiry_creates_one_modelling_request
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_stored_request_matches_every_submitted_field
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_stored_request_records_the_source_route
+      category: data_integrity
+      weight: 5
+
+- id: submitted_request_survives_a_reload
+  purpose: The persisted modelling request still matches what the visitor was shown after the session that created it has ended
+  substeps:
+    - kind: browser
+      do: Reopen the desk queue in a new session and read the request back, confirming every field the visitor typed is still shown
+      cov: C-UX-27
+    - kind: pytest
+      test: test_output.py::test_request_survives_a_reload_unchanged
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_submission_creates_no_second_row
+  purpose: An identical immediate resubmission of the enquiry or the subscribe form leaves exactly one row
+  substeps:
+    - kind: browser
+      do: Send the enquiry form twice in immediate succession and confirm the success panel reports one reference both times
+      cov: C-CF-31, C-CF-36, C-UF-20
+    - kind: pytest
+      test: test_output.py::test_duplicate_enquiry_creates_no_second_request
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_subscribe_creates_no_second_subscriber
+      category: data_integrity
+      weight: 5
+
+- id: enquiry_without_consent_is_refused
+  purpose: An enquiry missing consent or carrying a malformed address is refused inline with the field named and writes nothing
+  substeps:
+    - kind: browser
+      do: Send the enquiry form with the consent box unticked and with a malformed address, and read the inline message beside each field
+    - kind: pytest
+      test: test_output.py::test_enquiry_without_consent_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_rejected_enquiry_writes_no_row
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiry_with_invalid_email_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_enquiry_form_names_the_invalid_field_inline
+      category: validation
+      weight: 3
+
+- id: anonymous_caller_cannot_reach_the_request_desk
+  purpose: An anonymous caller is denied every read of the modelling request queue and every change to a request, and the targeted row is untouched
+  substeps:
+    - kind: browser
+      do: Open the desk queue address with no session and confirm the sign-in route is served instead of any request data
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_read_the_request_queue
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_change_a_request
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_denied_change_leaves_the_request_row_unchanged
+      category: security
+      weight: 5
+
+- id: engineer_works_the_request_queue
+  purpose: A signed-in engineer reads the queue, advances a request one step along the status order and assigns it
+  substeps:
+    - kind: browser
+      do: Sign in at the desk login as engineer@example.com, open the queue and change the newest request's status and assignee in its own row
+      cov: C-CF-50, C-CF-51, C-CF-53, C-CF-62, C-CF-63, C-UF-16
+    - kind: pytest
+      test: test_output.py::test_seeded_engineer_can_log_in
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_engineer_reads_the_request_queue
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_engineer_advances_the_request_status
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_engineer_assigns_a_request_to_an_engineer
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_request_exists_at_status_new
+      category: data_integrity
+      weight: 5
+
+- id: login_with_a_wrong_password_is_refused
+  purpose: A sign-in attempt with the wrong password is refused and hands back no token
+  substeps:
+    - kind: browser
+      do: Sign in at the desk login with the wrong password and confirm the refusal is shown without reaching the queue
+    - kind: pytest
+      test: test_output.py::test_login_with_wrong_password_is_rejected
+      category: security
+      weight: 5
+
+- id: invalid_status_transition_is_refused
+  purpose: A status move outside the named order is refused with a reason and the stored status does not change
+  substeps:
+    - kind: browser
+      do: In the queue row for the seeded request, try to move the status straight to reported and confirm the row returns to its previous value with a reason
+      cov: C-CF-65
+    - kind: pytest
+      test: test_output.py::test_invalid_status_transition_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_rejected_transition_leaves_the_status_unchanged
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: engineer_cannot_delete_a_request
+  purpose: No engineer can remove a modelling request, and the row is still there after the attempt
+  substeps:
+    - kind: browser
+      do: Open a request at the desk and confirm no control offers to remove it and no control edits the well data the visitor submitted
+      cov: C-CF-25, C-CF-26
+    - kind: pytest
+      test: test_output.py::test_engineer_cannot_delete_a_request
+      critical: true
+      category: security
+      weight: 5
+
+- id: visitor_browses_the_product_catalogue
+  purpose: A drilling contractor reads the five families and finds every size variant in its own family's specification table
+  substeps:
+    - kind: browser
+      do: Open the products index, read the five cards, then open the FRS card and read its size table and footnote
+      cov: C-CF-103, C-CF-148, C-CF-165, C-CF-167, C-CF-78, C-CF-79, C-CF-80, C-CF-81, C-CF-82, C-CF-83, C-CF-84, C-CF-87, C-FE-11, C-FE-28
+    - kind: pytest
+      test: test_output.py::test_products_index_lists_the_five_families
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_variant_appears_in_its_family_spec_table
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unmeasured_spec_cell_prints_a_dash
+      category: business_rule
+      weight: 3
+
+- id: visitor_browses_the_evidence_library
+  purpose: A drilling engineer reads the ten case cards newest first and opens the well 22061 case at its well number
+  substeps:
+    - kind: browser
+      do: Open the cases index, read the ten cards in date order, then open the card for well 22061
+      cov: C-CF-118, C-CF-119, C-CF-120, C-CF-123, C-CF-124, C-CF-125, C-FE-29
+    - kind: pytest
+      test: test_output.py::test_cases_index_lists_ten_cases_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_detail_is_addressed_by_well_number
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_case_metric_carries_a_provenance
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: catalogue_and_library_resolve_each_other
+  purpose: A product route names the cases that ran it and a case route names the product family that ran
+  substeps:
+    - kind: browser
+      do: From the FRS product route open a case that ran FRS, then from that case follow the link back to the product family that ran
+      cov: C-CF-130, C-CF-85
+    - kind: pytest
+      test: test_output.py::test_case_names_the_product_family_that_ran
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_product_names_the_cases_that_ran_it
+      category: business_rule
+      weight: 3
+
+- id: service_reports_ready_and_keeps_its_shapes
+  purpose: The application answers its health route and every list endpoint returns a top level array
+  substeps:
+    - kind: browser
+      do: Open the English home route and confirm the hero headline is readable in the served page before any interaction
+      cov: C-FE-21, C-FE-4, C-TR-12
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+
+- id: unknown_address_reaches_the_not_found_page
+  purpose: A mistyped address reaches the product's own not-found page and every internal link on every public route resolves
+  substeps:
+    - kind: browser
+      do: Open an address that does not exist and confirm the product's own page with a control back to the locale home
+      cov: C-CN-3, C-OV-8
+    - kind: pytest
+      test: test_output.py::test_unknown_route_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_resolves
+      category: presentation
+      weight: 1
+
+- id: locale_switch_holds_the_route
+  purpose: Switching language replaces the locale prefix and keeps the reader on the route they were reading
+  substeps:
+    - kind: browser
+      do: Open a product detail route, switch language with the globe control and confirm the same product route under the other prefix
+      cov: C-CF-112, C-CF-86
+    - kind: pytest
+      test: test_output.py::test_locale_switch_holds_the_path
+      category: business_rule
+      weight: 3
+
+- id: launch_obligations_hold_for_every_reader
+  purpose: Content pictures carry alternative text, the narrow width does not scroll sideways, and the privacy route is linked from every footer
+  substeps:
+    - kind: browser
+      do: Read a product route and a case route at a handset width, checking the pictures, the sideways overflow and the footer privacy link
+      cov: C-FE-17, C-FE-42, C-FE-43, C-FE-44
+    - kind: pytest
+      test: test_output.py::test_content_images_carry_alternative_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_privacy_route_is_linked_from_every_footer
+      category: presentation
+      weight: 1

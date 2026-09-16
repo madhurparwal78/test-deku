@@ -1,0 +1,302 @@
+- id: engineer_runs_playground_and_reads_accuracy
+  purpose: A member submits a seeded clip through the playground and reads the accuracy and latency the result reports
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com with the password deku-demo-pw-2026, open the project Contact Centre, open its playground, submit the clip Quarterly Review Call and read the transcript, the accuracy 97.4% and the latency in milliseconds
+      cov: C-CF-42 C-CF-43 C-CF-44
+    - kind: pytest
+      test: test_output.py::test_playground_recognition_reports_accuracy_and_latency
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_playground_recognition_meters_exactly_one_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_playground_request_appears_in_request_list
+      category: business_rule
+      weight: 3
+
+- id: admin_issues_first_project_credential
+  purpose: An administrator issues the first scoped credential on a project and the secret is shown exactly once
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the project Voice Notes, open its credential index, issue a credential labelled Notes Ingest with the scopes recognize:batch and usage:read, then acknowledge the full-page confirmation showing the secret
+      cov: C-CF-26
+    - kind: pytest
+      test: test_output.py::test_first_credential_issue_returns_secret_once
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credential_secret_never_returned_after_creation
+      category: security
+      weight: 5
+    - kind: browser
+      do: Read the credential index of the project Voice Notes and observe the credential Notes Ingest listed by its prefix with the last used cell reading never
+      cov: C-CF-22
+    - kind: pytest
+      test: test_output.py::test_never_used_credential_renders_never
+      category: presentation
+      weight: 1
+
+- id: issued_credential_reports_usage
+  purpose: The issued credential authenticates the usage intake and the project total rises by the submitted quantity
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_issued_credential_authenticates_usage_intake
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: Open the usage screen of the project Voice Notes and read the total rising by the submitted quantity
+      cov: C-CF-49
+
+- id: usage_total_reconciles_with_rows
+  purpose: A usage total equals the sum of the metering rows beneath it and the chart and the table report the same figure
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open the organisation usage screen, set the range 2026-08-01 to 2026-08-31 and read the organisation total of 7200 audio seconds above a table whose rows sum to that figure
+      cov: C-CF-70 C-CF-64
+    - kind: pytest
+      test: test_output.py::test_project_usage_total_equals_sum_of_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_chart_and_table_report_the_same_total
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_daily_rollup_recomputes_from_rows
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_delivery_writes_no_second_row
+  purpose: A metering event redelivered with an idempotency key already seen writes no second row and moves no total
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_repeat_idempotency_key_writes_no_second_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Open the usage screen of the project Contact Centre and read the same total after the repeat submission
+      cov: C-CF-59
+
+- id: late_event_restates_closed_period
+  purpose: An event occurring inside an already finalised period restates that period and leaves the invoice total unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_late_event_restates_period_without_touching_invoice
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Sign in as owner@example.com, open the finalised invoice NW-2026-0001 and read a total of 19100 minor units that the late event has left un-updated
+      cov: C-CF-84
+
+- id: invoice_total_reconciles_with_lines
+  purpose: An invoice total equals the sum of its lines and its number is allocated only at finalisation
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open the invoice NW-2026-0001 and read a total equal to the sum of the invoice lines listed beneath it
+      cov: C-CF-85
+    - kind: pytest
+      test: test_output.py::test_invoice_total_equals_sum_of_lines
+      category: data_integrity
+      weight: 5
+
+- id: balance_equals_its_ledger
+  purpose: The organisation balance equals the sum of its append-only ledger entries
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open the billing screen and read a balance of 900 minor units that equals the sum of the ledger entries listed beneath it
+      cov: C-CF-78
+    - kind: pytest
+      test: test_output.py::test_balance_equals_sum_of_ledger_entries
+      category: data_integrity
+      weight: 5
+
+- id: member_cannot_create_project
+  purpose: A member is refused project creation at the service and no project is created
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, open the project index and observe no control that creates a project
+      cov: C-CF-16
+    - kind: pytest
+      test: test_output.py::test_member_cannot_create_project
+      critical: true
+      category: security
+      weight: 5
+
+- id: administrator_cannot_read_invoice
+  purpose: An administrator is refused reading an invoice at the service
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the billing screen and observe no invoice listed for reading
+      cov: C-RL-4
+    - kind: pytest
+      test: test_output.py::test_administrator_cannot_read_invoice
+      critical: true
+      category: security
+      weight: 5
+
+- id: member_denied_project_is_not_found
+  purpose: A per-project deny override defeats the organisation role and the denied project is absent from every surface
+  substeps:
+    - kind: browser
+      do: Sign in as member2@example.com, open the project index and observe the project Voice Notes absent from the index and from the project switcher
+      cov: C-CF-8
+    - kind: pytest
+      test: test_output.py::test_project_deny_override_hides_project
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_denied_project_usage_excluded_from_org_total
+      category: data_integrity
+      weight: 5
+
+- id: self_approval_rejected_for_elevated_scope
+  purpose: An elevated credential needs a second owner and a request approved by its own requester issues nothing
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, request a credential on Contact Centre carrying the scope manage:keys with a reason, then open the approvals screen and observe the request awaiting a decision with no credential issued
+      cov: C-CF-35
+    - kind: pytest
+      test: test_output.py::test_self_approval_issues_no_credential
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_elevated_scope_requires_second_owner
+      category: security
+      weight: 5
+
+- id: revoked_credential_cannot_report_usage
+  purpose: A revoked credential is refused at the usage intake from the instant of revocation
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the credential index of Meeting Capture and observe the credential Capture Legacy carrying the status revoked
+      cov: C-DM-8
+    - kind: pytest
+      test: test_output.py::test_revoked_credential_refused_at_intake
+      critical: true
+      category: security
+      weight: 5
+
+- id: unauthenticated_request_is_denied
+  purpose: A caller carrying no bearer token reaches no console data
+  substeps:
+    - kind: browser
+      do: Make an unauthenticated request for the protected overview route while signed out and land on the sign-in route
+      cov: C-UF-9
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: organisation_switch_resets_project_scope
+  purpose: Changing organisation clears the project selection and carries no project identifier across the tenant boundary
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, switch the organisation from Northwind Audio to Halyard Labs and land on the organisation overview with the project selection cleared
+      cov: C-CF-9 C-CF-10
+    - kind: pytest
+      test: test_output.py::test_organisation_switch_drops_previous_project_scope
+      critical: true
+      category: security
+      weight: 5
+
+- id: auditor_cannot_use_playground
+  purpose: An auditor reads the audit record and is refused every write, the playground included
+  substeps:
+    - kind: browser
+      do: Sign in as auditor@example.com, open the audit record and read the entries it lists
+      cov: C-RL-8
+    - kind: pytest
+      test: test_output.py::test_auditor_cannot_use_playground
+      critical: true
+      category: security
+      weight: 5
+
+- id: archived_project_refuses_new_usage
+  purpose: An archived project accepts no new metering row and keeps every row it already held
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the project Meeting Capture and read the archived state it carries
+      cov: C-DM-6
+    - kind: pytest
+      test: test_output.py::test_archived_project_refuses_new_usage
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_archived_project_keeps_billable_history
+      category: data_integrity
+      weight: 5
+
+- id: intake_refuses_credential_without_scope
+  purpose: A credential lacking the scope for a submitted line is refused and nothing is written
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_intake_refuses_credential_without_scope
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Open the usage screen of the project Contact Centre and read a total unmoved by the refused submission
+      cov: C-CF-57
+
+- id: invalid_project_name_is_refused
+  purpose: A project creation carrying no usable name is refused in place and writes nothing
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the project index, open the create modal, submit with no name and read the invalid field named in place
+      cov: C-CF-106
+    - kind: pytest
+      test: test_output.py::test_invalid_project_name_is_refused
+      category: validation
+      weight: 3
+
+- id: console_surfaces_are_reachable
+  purpose: The terms page is reachable from every footer and every internal link on every reachable page resolves
+  substeps:
+    - kind: browser
+      do: Open the terms page from the footer of the sign-in screen and read what the product records about an organisation
+      cov: C-CF-99 C-CF-100
+    - kind: browser
+      do: Open each internal link reachable from the sign-in screen footer and observe every one of them resolving
+      cov: C-CF-103
+    - kind: pytest
+      test: test_output.py::test_terms_page_reachable_from_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_internal_links_all_resolve
+      category: presentation
+      weight: 1
+
+- id: unknown_address_renders_not_found
+  purpose: An address matching no route renders the product's own not-found page and answers not found
+  substeps:
+    - kind: browser
+      do: Open an address matching no route and read the product's own not-found page carrying the console chrome and a way back
+      cov: C-CF-101
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+
+- id: every_response_carries_security_headers
+  purpose: Every response carries the standard security headers and the health route reports readiness
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_security_headers_present_on_every_response
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_ready
+      category: presentation
+      weight: 1

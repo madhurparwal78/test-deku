@@ -1,0 +1,63 @@
+services:
+  main:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4173:4173"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16.4-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: deku_admin
+      POSTGRES_PASSWORD: deku-local-dev
+      POSTGRES_DB: deku
+    volumes:
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deku_admin -d deku && PGPASSWORD=deku-local-dev psql -h 127.0.0.1 -U deku_app -d deku -c 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minio-root-3d81f7a2
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "MC_HOST_local=http://minioadmin:minio-root-3d81f7a2@localhost:9000 mc ls local/ > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  minio-init:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        MC_HOST_local=http://minioadmin:minio-root-3d81f7a2@minio:9000
+        export MC_HOST_local &&
+        mc mb --ignore-existing local/deku &&
+        mc anonymous set none local/deku &&
+        echo 'bucket deku is ready and private' &&
+        tail -f /dev/null
+      "
+
+volumes:
+  postgres-data:
+  minio-data:

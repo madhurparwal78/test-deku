@@ -1,0 +1,262 @@
+- id: driver_signs_up_and_signs_in
+  purpose: A visitor creates a driver account and signs in with it
+  substeps:
+    - kind: browser
+      do: Open /signup and create an account with an email address, sign out and read the return to the default entry route, then ask for a driver-only route, sign in with a seeded email that returns a bearer token, and read the return to the route originally asked for
+      cov: C-RL-08, C-CF-03, C-UF-05, C-UF-06
+    - kind: pytest
+      test: test_pytest.py::test_signup_returns_access_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_signup_with_existing_email_is_refused
+      category: validation
+      weight: 3
+
+- id: visitor_plans_a_drive_for_an_arrival_time
+  purpose: A visitor searches both endpoints and the scheduler solves for the time to set off
+  substeps:
+    - kind: browser
+      do: Open the route / with no account and read the full viewport live map application it renders, pan the map as a visitor without an account, type into the starting point field carrying the placeholder Choose starting point, pick Connaught Place, pick Cyber Hub Gurugram in the field carrying the placeholder Choose destination, then open the scheduler from the control labelled Leave now and choose an arrival time
+      cov: C-OV-01, C-OV-03, C-RL-01, C-RL-02, C-RL-03, C-CF-11, C-CF-53, C-CF-55, C-UF-01, C-UF-08
+    - kind: browser
+      do: With both endpoints resolved, use the swap control and read the two resolved endpoints exchange, read the suggestions panel casting an inset shadow from the top edge as it opens under a field, and read which single element on the page wears the primary action colour
+      cov: C-FE-09
+    - kind: pytest
+      test: test_pytest.py::test_arrival_time_solves_to_leave_time_and_reminder
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_route_returns_ordered_segments_with_travel_time
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_pytest.py::test_place_search_ranks_seeded_places
+      category: business_rule
+      weight: 3
+
+- id: driver_saves_a_planned_drive
+  purpose: A signed in driver saves the solved result and lands on that drive's own page
+  substeps:
+    - kind: browser
+      do: Sign in as driver2@example.com, save the planned drive, and read the origin, destination, arrival time, leave time and reminder on the page that opens
+      cov: C-CF-56, C-UF-09, C-CF-60
+    - kind: pytest
+      test: test_pytest.py::test_planned_drive_is_persisted_with_solved_window
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_planned_drive_row_matches_the_confirmation_page
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_overlapping_windows_admit_at_most_one
+  purpose: Two simultaneous requests for overlapping departure windows leave exactly one planned drive
+  substeps:
+    - kind: pytest
+      test: test_pytest.py::test_concurrent_overlapping_windows_admit_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_touching_windows_are_both_accepted
+      category: business_rule
+      weight: 3
+
+- id: driver_report_recolours_the_road
+  purpose: A report filed by a driver changes the road condition every visitor reads
+  substeps:
+    - kind: browser
+      do: Sign in as driver3@example.com, open /report, pick Ring Road North and the type jam, read the report markers drawing on a layer above the tiles, read the jammed road drawn as a dashed line crawling along its own length, then open /as and open /gs and read that each renders the same live map application as the default entry route
+      cov: C-CF-26, C-CF-10, C-UF-02, C-UF-03
+    - kind: pytest
+      test: test_pytest.py::test_report_recolours_its_segment_at_once
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_pytest.py::test_segment_condition_reconciles_with_stored_reports
+      category: data_integrity
+      weight: 5
+
+- id: crowd_verification_confirms_and_expires_a_report
+  purpose: Other drivers confirm or dispute a report and its freshness moves accordingly
+  substeps:
+    - kind: browser
+      do: Sign in as driver2@example.com, confirm an active report on Outer Ring Road, read the position marker breathing so a visitor finds the marker at a glance, and read that nothing else on the map animates unless a real road condition changed
+      cov: C-FE-12
+    - kind: pytest
+      test: test_pytest.py::test_confirm_vote_extends_report_freshness
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_pytest.py::test_dispute_from_reputable_driver_dismisses_report
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_pytest.py::test_second_vote_from_one_driver_is_refused
+      category: validation
+      weight: 3
+
+- id: visitor_cannot_report_or_save_a_drive
+  purpose: An unauthenticated caller is refused at the API on every driver-only endpoint
+  substeps:
+    - kind: pytest
+      test: test_pytest.py::test_visitor_cannot_file_a_report_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_visitor_cannot_save_a_planned_drive_denied
+      category: security
+      weight: 5
+
+- id: driver_cannot_reach_another_drivers_rows
+  purpose: One driver is refused every read and write against another driver's rows
+  substeps:
+    - kind: pytest
+      test: test_pytest.py::test_driver_cannot_read_another_drivers_planned_drive_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_driver_cannot_read_another_drivers_page_views_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_driver_cannot_vote_on_own_report_denied
+      category: security
+      weight: 5
+
+- id: stale_session_cannot_mutate
+  purpose: A token that has expired leaves the request denied and the row untouched
+  substeps:
+    - kind: pytest
+      test: test_pytest.py::test_expired_token_denied_and_row_unchanged
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_drive_and_report_input_is_refused
+  purpose: Bad input on a drive or a report is refused and nothing is written
+  substeps:
+    - kind: browser
+      do: Draw a route, open /scheduler and choose an arrival time that has already passed, read the failed route calculation leaving the previously drawn route in place, then file a report the app refuses and read the reason it names without anything changing
+      cov: C-UF-13, C-UF-14
+    - kind: pytest
+      test: test_pytest.py::test_past_arrival_time_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_pytest.py::test_unknown_report_type_is_refused
+      category: validation
+      weight: 3
+
+- id: empty_state_reads_cleanly
+  purpose: A fresh driver and a search with no match both read as an empty state rather than an error
+  substeps:
+    - kind: browser
+      do: Sign in as a newly created driver, read the map holding a placeholder of flat fill with a centred loader until tiles arrive, read the rail before either endpoint resolves showing two placeholders with no route, then open the planned drives route with nothing scheduled and read that it says so
+      cov: C-UF-10, C-UF-11, C-UF-12, C-FE-11
+    - kind: pytest
+      test: test_pytest.py::test_drives_list_empty_for_a_fresh_driver
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_pytest.py::test_empty_place_search_returns_empty_array
+      category: presentation
+      weight: 1
+
+- id: seeded_world_is_stable
+  purpose: The seeded accounts, places, segments, reports and drive are present and are not duplicated
+  substeps:
+    - kind: pytest
+      test: test_pytest.py::test_seeded_rows_persisted_and_idempotent_after_restart
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_travel_time_reconciles_with_segment_free_flow_times
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_app_contract_artifacts_present
+      category: presentation
+      weight: 1
+
+- id: route_recalculates_when_the_road_changes
+  purpose: A drawn route is recomputed when a report changes the road beneath it
+  substeps:
+    - kind: browser
+      do: Read the map requesting tiles only for the current viewport plus a small margin, read a tile fading in on arrival rather than popping, read the stack of circular controls sitting bottom right of the map, read the coordinate readout showing the map centre as two decimal degree values divided by a vertical bar, read the map meta row carrying the link How suggestions work, then draw a route from Connaught Place to Cyber Hub Gurugram, sign in, file a jam report on a segment the route uses, and read the new leave time in the rail
+      cov: C-CF-05, C-CF-07, C-CF-08, C-CF-09
+    - kind: pytest
+      test: test_pytest.py::test_route_recalculates_after_a_report_changes_the_road
+      category: business_rule
+      weight: 3
+
+- id: duplicate_form_submissions_are_refused
+  purpose: A submission carrying the decoy field, or repeated too often, is refused and writes nothing
+  substeps:
+    - kind: pytest
+      test: test_pytest.py::test_decoy_field_submission_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_repeated_submissions_are_refused
+      category: security
+      weight: 5
+
+- id: public_routes_carry_their_chrome
+  purpose: The map chrome, the footer, the conversion route and the product's own not found page all render with their pinned copy
+  substeps:
+    - kind: browser
+      do: Open /, read the nine dot app launcher listing the destination Wazeopedia beside the three dot overflow menu listing Report an issue, then read the footer columns with the tagline, the Live Map column listing Plan a drive, the language selector defaulting to English and the copyright line, then read the download bar carrying the sub label Navigation and Live Traffic beside the control Send to your phone
+      cov: C-CF-68, C-CF-69, C-CF-70, C-CF-73, C-CF-74, C-CF-75, C-CF-76, C-CF-77
+    - kind: browser
+      do: Open /ul and read the conversion route lead copy, then open /412 and read the marketing header carrying the navigation entry Waze for Cities, then ask for an address that does not exist and read the not found page heading Page not found with its subhead The page you were looking for is out of reach and the way back to the map it offers
+      cov: C-CF-71, C-CF-78, C-CF-79, C-CF-80, C-CF-82
+    - kind: browser
+      do: Open /privacy from the footer, read what the product records about a driver, then open /terms from the footer
+      cov: C-CF-83, C-CF-84, C-CF-85
+    - kind: pytest
+      test: test_pytest.py::test_not_found_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_pytest.py::test_privacy_and_terms_reachable_from_every_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_pytest.py::test_security_headers_present_on_every_response
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_social_preview_titles_are_unique_per_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_pytest.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_pytest.py::test_page_view_row_stored_for_each_public_route
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_pytest.py::test_map_tiles_are_served_by_the_app
+      category: presentation
+      weight: 1
+
+- id: layout_holds_at_every_viewport
+  purpose: The map shell reflows across the named widths and stays reachable from the keyboard
+  substeps:
+    - kind: browser
+      do: Resize to a narrow phone viewport and read the stacked order of the download call to action, the condensed header, the full width rail and the map
+    - kind: browser
+      do: Resize to a desktop viewport past the tablet breakpoint and read the rail floating over the map from that breakpoint upward, with stacking following a fixed ladder that keeps the map panes at the base beneath every floating control
+      cov: C-UX-08, C-FE-06
+    - kind: browser
+      do: Move through the map controls by keyboard navigation and read the visible focus ring on each one, read the visually hidden text label announced for the locate control, and read the icons drawn as vector geometry rather than as image files
+      cov: C-UX-06, C-UX-10, C-FE-07
