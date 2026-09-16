@@ -1,0 +1,305 @@
+- id: "visitor_creates_a_private_room_and_plays_a_turn"
+  purpose: "A stranger types a name, builds an avatar, creates a private room and takes a seat in it"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that the join panel carries a name field, a language control, an avatar builder"
+      cov: C-FE-05
+    - kind: browser
+      do: "Confirm in the running product that the landing title reads Doodlerush - Free Multiplayer Drawing & Guessing Game"
+      cov: C-FE-30
+    - kind: browser
+      do: "Confirm in the running product that the primary action reads Play!"
+      cov: C-FE-31
+    - kind: browser
+      do: "Confirm in the running product that the secondary action reads Create Private Room"
+      cov: C-FE-32
+    - kind: browser
+      do: "Confirm in the running product that type is Nunito with a stated fallback stack"
+      cov: C-UX-07
+    - kind: browser
+      do: "Confirm in the running product that body text sets at 16px, controls at 14px"
+      cov: C-UX-08
+    - kind: pytest
+      test: test_output.py::test_private_room_is_created_and_joined_by_its_code
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+
+- id: "word_reaches_the_drawer_and_no_other_seat"
+  purpose: "The drawer holds the word and every other seat holds only its mask"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that the game bar carries the round counter, the clock, the word or mask"
+      cov: C-FE-10
+    - kind: browser
+      do: "Confirm in the running product that the game bar carries a fixed uppercase instruction label for the drawer"
+      cov: C-FE-33
+    - kind: browser
+      do: "Confirm in the running product that the toolbar is present only for the drawer"
+      cov: C-FE-13
+    - kind: pytest
+      test: test_output.py::test_word_reaches_the_drawer_and_no_other_seat
+      critical: true
+      category: security
+      weight: 5
+
+- id: "correct_guess_is_announced_without_the_word"
+  purpose: "A correct guess names the guesser, a near miss stays private, and the word never reaches the room"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that a near-miss wears a mid, vivid amber worn by nothing else"
+      cov: C-UX-04
+    - kind: browser
+      do: "Confirm in the running product that a player row turns a light, vivid green once that player has guessed"
+      cov: C-UX-05
+    - kind: browser
+      do: "Confirm in the running product that the chat pins to the newest line unless the reader has scrolled up"
+      cov: C-FE-17
+    - kind: browser
+      do: "Confirm in the running product that the already-guessed channel is visibly distinct from an ordinary row"
+      cov: C-FE-18
+    - kind: pytest
+      test: test_output.py::test_correct_guess_is_announced_without_the_text
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_near_miss_reaches_the_guesser_alone
+      category: business_rule
+      weight: 3
+
+- id: "turn_ends_once_every_player_has_guessed"
+  purpose: "The turn closes the moment the last guesser gets it, and the drawer is awarded for being guessed"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that the player list ranks rows of avatar, name, award, rank"
+      cov: C-FE-11
+    - kind: browser
+      do: "Confirm in the running product that the owner's avatar wears a crown, the owner state also in text"
+      cov: C-FE-12
+    - kind: browser
+      do: "Confirm in the running product that the reveal line reads The word was"
+      cov: C-FE-34
+    - kind: pytest
+      test: test_output.py::test_turn_ends_once_every_non_drawer_has_guessed
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_drawer_is_awarded_when_the_room_guesses
+      category: business_rule
+      weight: 3
+
+- id: "every_player_draws_once_per_round"
+  purpose: "A round hands one turn to each player in a fixed order"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that the game room never scrolls at any size"
+      cov: C-UX-14
+    - kind: browser
+      do: "Confirm in the running product that the canvas letterboxes into its space, never stretching"
+      cov: C-UX-17
+    - kind: browser
+      do: "Confirm in the running product that the four room regions are labelled landmarks"
+      cov: C-FE-29
+    - kind: browser
+      do: "Confirm in the running product that the interface derives every dimension from one layout unit"
+      cov: C-UX-01
+    - kind: pytest
+      test: test_output.py::test_every_player_draws_the_same_number_of_times
+      category: business_rule
+      weight: 3
+
+- id: "duplicate_guess_is_awarded_at_most_once"
+  purpose: "The same correct guess sent four times moves a standing once"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that tool shortcuts never fire when the chat input holds focus"
+      cov: C-UX-21
+    - kind: browser
+      do: "Confirm in the running product that nothing responds more slowly than about an eighth of a second"
+      cov: C-UX-11
+    - kind: pytest
+      test: test_output.py::test_repeated_guess_is_awarded_once
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: "reconnect_restores_the_seat_and_its_guessed_mark"
+  purpose: "A dropped player returns to the same seat with the same standing and the same guessed mark"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that a disconnected player is shown as present but disconnected"
+      cov: C-CF-159
+    - kind: browser
+      do: "Confirm in the running product that the loading overlay names the step rather than spinning silently"
+      cov: C-UF-16
+    - kind: pytest
+      test: test_output.py::test_reconnect_restores_the_seat_and_its_guessed_mark
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: "late_joiner_receives_the_stroke_buffer"
+  purpose: "A player seated mid-turn is handed the drawing as it stands, and no table holds the word"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that a single-finger drag draws, two-finger gestures do not draw"
+      cov: C-FE-15
+    - kind: browser
+      do: "Confirm in the running product that the canvas prevents the page scrolling under a drag"
+      cov: C-FE-16
+    - kind: browser
+      do: "Confirm in the running product that all seven sounds are synthesised at play time"
+      cov: C-FE-25
+    - kind: browser
+      do: "Confirm in the running product that the audio context is created on first interaction, never before"
+      cov: C-FE-26
+    - kind: browser
+      do: "Confirm in the running product that every synthesised sound carries an attack, a release"
+      cov: C-FE-27
+    - kind: pytest
+      test: test_output.py::test_late_joiner_receives_the_stroke_buffer
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_table_stores_the_current_word
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: "concurrent_join_fills_the_last_seat_at_most_once"
+  purpose: "Two strangers racing for one free seat produce one join and one redirect"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that every list carries an empty state"
+      cov: C-UF-15
+    - kind: pytest
+      test: test_output.py::test_concurrent_join_fills_the_last_seat_at_most_once
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: "private_room_state_is_denied_without_a_seat"
+  purpose: "A caller holding neither a seat nor a room code learns nothing about a private room"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that the confirmation names the room, showing the code plus the invite link"
+      cov: C-UF-13
+    - kind: browser
+      do: "Confirm in the running product that the confirmation offers a control that copies the invite link"
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_private_room_state_is_denied_without_a_seat
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_stroke_from_a_non_drawer_is_rejected
+      critical: true
+      category: security
+      weight: 5
+
+- id: "report_queue_is_denied_to_a_player"
+  purpose: "The report queue answers a moderator and refuses a player and an anonymous caller"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that a modal closes on Escape, returning focus to the control that opened the modal"
+      cov: C-FE-19
+    - kind: pytest
+      test: test_output.py::test_report_queue_is_denied_to_a_player
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_is_denied_at_the_api
+      critical: true
+      category: security
+      weight: 5
+
+- id: "invalid_settings_and_names_are_refused"
+  purpose: "Out-of-range settings, a settings change from a non-host and an over-long guess are all refused"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that a custom property holds the real measured viewport height"
+      cov: C-FE-01
+    - kind: browser
+      do: "Confirm in the running product that the measured height is recomputed on resize, on orientation change"
+      cov: C-FE-02
+    - kind: browser
+      do: "Confirm in the running product that the chat input is never covered when the on-screen keyboard opens"
+      cov: C-FE-03
+    - kind: pytest
+      test: test_output.py::test_out_of_range_settings_change_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_settings_change_from_a_non_host_is_rejected
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_guess_beyond_the_length_cap_is_refused
+      category: validation
+      weight: 3
+
+- id: "unknown_address_answers_the_products_own_page"
+  purpose: "An unknown address renders the product's own page, and every public route carries its headers"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that the footer notice disclaims responsibility for player-generated content"
+      cov: C-FE-09
+    - kind: browser
+      do: "Confirm in the running product that panels are translucent so the doodle ground shows through"
+      cov: C-UX-03
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_public_route
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_are_present_for_every_account
+      category: data_integrity
+      weight: 5
+
+- id: "public_surfaces_hold_their_accessibility_bars"
+  purpose: "The footer reaches the privacy page, every internal link resolves, and the text holds its contrast at every width"
+  substeps:
+    - kind: browser
+      do: "Confirm in the running product that keyboard focus is a light, vivid orange that is never removed"
+      cov: C-UX-06
+    - kind: browser
+      do: "Confirm in the running product that reduced motion stills every animation except the countdown"
+      cov: C-UX-12
+    - kind: browser
+      do: "Confirm in the running product that the privacy page is linked from the footer of every page"
+      cov: C-CF-24
+    - kind: browser
+      do: "Confirm in the running product that every internal link on every public route resolves to a page the app serves"
+      cov: C-CF-26
+    - kind: browser
+      do: "Confirm in the running product that nothing overflows sideways at a narrow viewport"
+      cov: C-UX-16
+    - kind: browser
+      do: "Confirm in the running product that body text meets WCAG AA contrast against the background"
+      cov: C-UX-18
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_reachable_from_the_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_a_public_route_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_landing_body_text_meets_the_contrast_bar
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_does_not_overflow_sideways
+      category: presentation
+      weight: 1

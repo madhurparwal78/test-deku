@@ -1,0 +1,568 @@
+- id: "author_drafts_and_submits_a_release"
+  purpose: "An author writes a release on a division they hold and submits it into the review chain"
+  substeps:
+    - kind: browser
+      do: "Sign in at the console as author@example.com and confirm the rail lists Calder Trading and Calder Capital and nothing else"
+      cov: "C-UF-23"
+    - kind: browser
+      do: "Open the create route, write a Trading release with a title, a standfirst and a body, and save it as a draft"
+      cov: ""
+    - kind: browser
+      do: "Submit the trading release and confirm the review rail moves to legal_review and the record is removed from the drafts queue"
+      cov: "C-UF-24, C-UF-25"
+    - kind: pytest
+      test: test_output.py::test_a_draft_created_by_an_author_starts_in_draft
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_edit_produces_a_new_revision_and_keeps_the_old_one
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_me_returns_the_callers_memberships
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_seeded_release_has_a_stable_block_identifier_across_revisions
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_block_type_outside_the_permitted_set_is_refused_at_write
+      category: validation
+      weight: 3
+
+- id: "legal_and_compliance_clear_a_release"
+  purpose: "Two distinct approvers clear a release through the legal stage and the compliance stage"
+  substeps:
+    - kind: browser
+      do: "Sign in as legal_reviewer@example.com and confirm the submitted release shows in the first inbox queue"
+      cov: "C-UF-26"
+    - kind: browser
+      do: "Approve the legal stage, then sign in as compliance_officer@example.com, set the disclosure class and approve the compliance stage"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_the_full_chain_moves_a_release_to_approved
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_revision_carries_both_hashes
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_inbox_returns_the_four_queues
+      category: business_rule
+      weight: 3
+
+- id: "embargoed_release_is_published_at_its_instant"
+  purpose: "A market-sensitive release is scheduled rather than released at once, then becomes public once at its instant with the header counter advancing by one"
+  substeps:
+    - kind: browser
+      do: "Sign in as publisher@example.com, schedule the approved market-sensitive release for a moment a little ahead, and read the banner naming that moment"
+      cov: ""
+    - kind: browser
+      do: "Wait past the scheduled moment, reload the release archive and confirm the release is listed first and the header count has advanced by one"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_a_scheduled_release_publishes_once_when_its_instant_passes
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_market_sensitive_release_cannot_be_published_without_a_schedule
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_record_cannot_leave_compliance_review_without_a_class
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_counter_matches_the_published_releases_in_the_store
+      category: data_integrity
+      weight: 5
+
+- id: "visitor_reads_a_published_release"
+  purpose: "A signed-out visitor travels the home descent and reads a published release with its lead image at its public address"
+  substeps:
+    - kind: browser
+      do: "Signed out, open the home page and travel the descent from the summit through the five divisions, the globe and the sustainability chapter to the footer"
+      cov: ""
+    - kind: browser
+      do: "Open a release from the archive and confirm the page carries its division, its date, its headline, its picture and the right small print"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_a_published_release_reads_back_what_the_record_holds
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_media_object_belonging_to_a_published_release_is_public
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_regulated_release_carries_a_frozen_disclaimer_version
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_home_route_carries_its_pinned_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_home_route_exposes_its_four_chapter_anchors
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_public_document_loads_no_third_party_origin
+      category: security
+      weight: 5
+
+- id: "visitor_pages_and_filters_the_archive"
+  purpose: "The release archive pages and filters by address rather than by an endless scroll"
+  substeps:
+    - kind: browser
+      do: "Open /news/?page=2 and confirm the remaining three cards render with nine published releases"
+      cov: "C-UF-31"
+    - kind: browser
+      do: "Filter the archive to one division from the address bar and confirm only that division's releases remain"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_the_archive_pages_at_the_stated_size
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_archive_is_ordered_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_archive_filters_by_division_and_by_year
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_search_query_under_two_characters_returns_the_no_query_state
+      category: validation
+      weight: 3
+
+- id: "visitor_submits_an_enquiry"
+  purpose: "An enquiry is written before the visitor is answered and routes to the office its country resolves to"
+  substeps:
+    - kind: browser
+      do: "Submit the contact enquiry with an Asian country and confirm the confirmation names the Singapore office as the responder"
+      cov: "C-UF-32"
+    - kind: browser
+      do: "Answer the consent question on /contact/, reload the page and confirm the consent answer is kept"
+      cov: "C-UF-33"
+    - kind: pytest
+      test: test_output.py::test_an_enquiry_routes_by_the_declared_country
+      category: core_outcome
+      weight: 5
+
+- id: "author_self_approval_is_denied"
+  purpose: "An author is refused every approval on a submission they authored, and the record does not move"
+  substeps:
+    - kind: browser
+      do: "As the author of a release sitting in compliance review, open it and confirm no approval action is offered"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_an_author_is_denied_every_approval_endpoint
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_author_holding_a_reviewer_role_cannot_clear_their_own_work
+      category: security
+      weight: 5
+
+- id: "dual_hatted_reviewer_cannot_decide_two_stages"
+  purpose: "A principal holding both reviewer roles completes one stage and is refused the other"
+  substeps:
+    - kind: browser
+      do: "Attempt the second stage on the same submission as the reviewer and read the refusal, confirming it names the reason"
+      cov: "C-UF-27"
+    - kind: pytest
+      test: test_output.py::test_one_principal_cannot_decide_two_stages_of_one_submission
+      critical: true
+      category: security
+      weight: 5
+
+- id: "group_admin_is_denied_an_unpublished_body"
+  purpose: "The administrator of the platform reads every title and the whole trail and no unpublished word"
+  substeps:
+    - kind: browser
+      do: "Sign in as group_admin@example.com, open the members surface and the audit surface, and confirm no record body is reachable from either"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_a_group_admin_is_denied_an_unpublished_body
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_group_admin_reads_record_metadata_and_the_trail
+      category: business_rule
+      weight: 3
+
+- id: "author_on_another_division_is_denied"
+  purpose: "A record on a division the caller does not hold is refused as an identifier that was never issued is"
+  substeps:
+    - kind: browser
+      do: "Open a division console route as a principal refused that division and confirm no record table is rendered"
+      cov: "C-UF-19"
+    - kind: pytest
+      test: test_output.py::test_a_record_on_an_unheld_division_is_refused_like_an_unissued_identifier
+      critical: true
+      category: security
+      weight: 5
+
+- id: "publisher_cannot_approve_and_approver_cannot_publish"
+  purpose: "The release role and the approval roles stay separate at the interface, not only in the console"
+  substeps:
+    - kind: browser
+      do: "Open a /console/admin route holding no group_admin and confirm the refusal names the role the route needs"
+      cov: "C-UF-20"
+    - kind: pytest
+      test: test_output.py::test_a_publisher_cannot_approve_and_an_approver_cannot_publish
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_author_cannot_set_a_disclosure_class
+      category: security
+      weight: 5
+
+- id: "anonymous_caller_is_unauthenticated_on_the_console"
+  purpose: "Every console surface refuses a caller carrying no credential, and the sign-in surface leaks nothing about which addresses exist"
+  substeps:
+    - kind: browser
+      do: "Signed out, open a console address directly and confirm the sign-in surface appears rather than the console"
+      cov: ""
+    - kind: browser
+      do: "Sign in with a wrong password and confirm the message says nothing about whether that address exists"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_to_a_console_endpoint_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unparseable_bearer_token_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_logout_refuses_the_previous_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wrong_password_is_refused_without_naming_the_address
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_and_reset_surfaces_do_not_exist
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_failed_logins_for_one_address_are_refused
+      category: security
+      weight: 5
+
+- id: "embargoed_release_is_denied_to_the_public"
+  purpose: "A release held for a future moment is absent from every public surface, including its own address and its lead image"
+  substeps:
+    - kind: browser
+      do: "Signed out, open the address of the release held for a future moment and confirm the product answers not found rather than showing it"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_an_embargoed_release_does_not_exist_publicly
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_embargoed_release_lead_image_is_closed_to_the_public
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_published_projection_carries_no_unpublished_record
+      category: data_integrity
+      weight: 5
+
+- id: "concurrent_approvals_leave_at_most_one_decision"
+  purpose: "Two approvals arriving together produce one recorded decision and one conflict"
+  substeps:
+    - kind: browser
+      do: "Open one release in two console sessions, approve in both, and confirm the second reports a conflict carrying the current state"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_two_concurrent_approvals_produce_one_success
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_two_concurrent_edits_from_one_revision_produce_one_success
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_transition_from_a_stale_state_is_rejected_as_a_conflict
+      category: validation
+      weight: 3
+
+- id: "edit_after_approval_voids_the_approvals"
+  purpose: "Changing the approved words takes the approvals away, and changing the credit does not"
+  substeps:
+    - kind: browser
+      do: "Edit the body of an approved release and confirm the review rail returns to draft with both decisions cleared"
+      cov: ""
+    - kind: browser
+      do: "Edit only the picture credit on another approved release and confirm the decisions are still shown as given"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_an_edit_inside_the_approved_set_voids_the_approvals
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_edit_outside_the_approved_set_leaves_the_approvals_standing
+      category: business_rule
+      weight: 3
+
+- id: "withdrawn_release_answers_gone"
+  purpose: "A withdrawn release keeps its address, answers gone and states the date it was withdrawn"
+  substeps:
+    - kind: browser
+      do: "Open the withdrawn release address and confirm the page answers gone and renders the withdrawal notice"
+      cov: "C-UF-22"
+    - kind: browser
+      do: "Retitle a published release from the console and confirm its original address still reaches it"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_the_withdrawn_release_answers_gone_and_keeps_its_record
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_withdrawal_carries_its_reason_and_instant
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_retitled_published_release_keeps_its_old_address
+      category: business_rule
+      weight: 3
+
+- id: "media_upload_lands_in_the_bucket"
+  purpose: "A lead image is written to the object store at the pinned key scheme rather than to the app's own disk"
+  substeps:
+    - kind: browser
+      do: "Attach a picture to a draft release, give it alternative text, and confirm the picture renders in the preview beside the editor"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_an_uploaded_object_lands_in_the_bucket_at_the_key_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_unpublished_records_object_is_refused_to_an_anonymous_caller
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_media_without_alternative_text_is_refused
+      category: validation
+      weight: 3
+
+- id: "invalid_enquiry_is_refused"
+  purpose: "An enquiry failing the declared rules is refused by the server and nothing is written"
+  substeps:
+    - kind: browser
+      do: "Submit the contact form with a message shorter than the stated floor and confirm the field is named, the count of problems is announced and the typed words are still there"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_the_enquiry_form_rejects_a_short_message_and_writes_nothing
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_enquiry_form_requires_an_explicit_consent
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_unknown_subject_area_is_refused
+      category: validation
+      weight: 3
+
+- id: "past_embargo_instant_is_refused"
+  purpose: "An instant already in the past is refused at the transition rather than publishing at once"
+  substeps:
+    - kind: browser
+      do: "Attempt to schedule an approved release for a moment already gone and confirm the console refuses it rather than publishing"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_an_embargo_instant_in_the_past_is_rejected
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_repeated_publish_with_one_idempotency_key_publishes_once
+      category: data_integrity
+      weight: 5
+
+- id: "membership_grant_without_justification_is_refused"
+  purpose: "An individually granted membership carries a justification and an expiry, and a grant from any other session changes nothing"
+  substeps:
+    - kind: browser
+      do: "As group_admin@example.com open the members surface and confirm every membership shows who granted it and when it lapses"
+      cov: ""
+    - kind: browser
+      do: "Open the weekly exception surface and confirm it lists individual grants, active handovers and the typo-fix shortcut"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_an_individual_grant_requires_a_justification
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_membership_grant_from_a_non_admin_session_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_delegation_beyond_thirty_days_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_exception_report_carries_its_four_row_kinds
+      category: business_rule
+      weight: 3
+
+- id: "the_audit_trail_cannot_be_rewritten"
+  purpose: "No endpoint at any level of access updates or deletes an entry, and the chain links every entry to the one before"
+  substeps:
+    - kind: browser
+      do: "Open the trail for one release from its own record surface and confirm the decisions, the actors and the instants are all listed there"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_the_audit_trail_has_no_write_path
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_audit_chain_links_each_entry_to_the_one_before
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_denial_is_recorded_in_the_trail
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_trail_answers_who_approved_a_record
+      category: business_rule
+      weight: 3
+
+- id: "the_product_serves_its_own_surfaces"
+  purpose: "The product carries its own not-found page, its own favicon and per-route previews rather than framework defaults"
+  substeps:
+    - kind: browser
+      do: "Open an address that is not a route and confirm the product's own not-found page renders"
+      cov: "C-UF-13"
+    - kind: browser
+      do: "Walk the product's error surfaces and confirm no blank screen and no stack trace is ever rendered"
+      cov: "C-UF-39, C-UF-40"
+    - kind: browser
+      do: "Filter the archive to nothing and confirm the page names the filters that emptied it"
+      cov: "C-UF-35"
+    - kind: browser
+      do: "Provoke an error on a loaded console surface and confirm it renders as a banner above the content already loaded"
+      cov: "C-UF-38"
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_renders_the_products_own_not_found_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_document_head_declares_a_favicon_that_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_published_route_declares_its_own_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_social_preview_image_that_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_error_shape_is_one_shape_everywhere
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_request_identifier_is_echoed_on_the_response
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_a_filter_combination_with_no_result_is_empty_rather_than_an_error
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_unknown_field_in_a_request_body_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_slug_that_was_never_issued_answers_not_found
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_the_security_headers
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_nothing_the_browser_downloads_carries_a_credential
+      category: security
+      weight: 5
+
+- id: "the_seeded_corpus_is_stored_exactly_once"
+  purpose: "Seeding is idempotent and every seeded division, office, figure and register entry is present once"
+  substeps:
+    - kind: browser
+      do: "Reload the archive and confirm six card skeletons render at the real card dimensions before the cards arrive"
+      cov: "C-UF-36"
+    - kind: browser
+      do: "Reload a console table and confirm its header and the column set render before the rows arrive"
+      cov: "C-UF-37"
+    - kind: browser
+      do: "Open the contact page and confirm the three offices, their addresses, their telephone numbers and the media address all render"
+      cov: ""
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_are_stored_exactly_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_five_divisions_are_seeded_with_their_names
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_three_offices_are_seeded_with_their_jurisdictions
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_group_figures_are_a_record_not_a_template
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_policy_register_seeds_six_entries
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_health_route_returns_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_venture_division_carries_its_own_mark
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_twelve_products_are_records_in_two_families
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_three_privacy_variants_share_a_version
+      category: business_rule
+      weight: 3

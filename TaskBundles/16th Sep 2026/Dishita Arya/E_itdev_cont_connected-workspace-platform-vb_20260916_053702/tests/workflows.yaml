@@ -1,0 +1,371 @@
+- id: member_edits_a_page_block_by_block
+  purpose: A member signs in, inserts a block, reorders the tree, and the stored page matches what the editor showed
+  substeps:
+    - kind: browser
+      do: Sign in at /login as member@example.com with deku-demo-pw-2026 and open Engineering Handbook from the Teamspaces section of the sidebar
+      cov: C-UF-01
+    - kind: browser
+      do: Type a paragraph at the end of the page, drag the to-do block above it, then reload and confirm the order held
+      cov: C-CF-43
+    - kind: pytest
+      test: test_output.py::test_block_insert_edit_and_move_are_persisted_as_rows
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_row_persisted_matches_what_the_page_endpoint_returned
+      category: data_integrity
+      weight: 5
+
+- id: member_publishes_a_page_to_the_web
+  purpose: Publishing reports the public page count and serves the page anonymously at its slug
+  substeps:
+    - kind: browser
+      do: As member@example.com open Engineering Handbook, choose Share, choose to publish, and read the child-page count in the confirmation
+      cov: "C-CF-115 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs), C-CF-116 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: browser
+      do: Open /site/engineering-handbook in a signed-out browser and confirm the page renders
+    - kind: pytest
+      test: test_output.py::test_publish_reports_the_public_page_count_and_serves_the_slug
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_route_renders_a_title_and_a_description
+      category: business_rule
+      weight: 3
+
+- id: unpublished_page_is_denied_to_an_anonymous_reader
+  purpose: An unpublished page and its attachment stay closed to anyone signed out
+  substeps:
+    - kind: browser
+      do: Signed out, open the public address of a page that has been unpublished and confirm the product answers gone rather than showing the workspace
+      cov: C-CF-121
+    - kind: pytest
+      test: test_output.py::test_unpublish_makes_the_public_address_gone
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_for_an_unpublished_seeded_page_is_not_found
+      category: security
+      weight: 5
+
+- id: explicit_deny_denies_one_member_and_nobody_else
+  purpose: The deny grant on Onboarding Checklist excludes exactly one principal
+  substeps:
+    - kind: browser
+      do: Sign in as member2@example.com, open Engineering, and confirm Onboarding Checklist refuses to open while Release Notes opens
+      cov: "C-UF-04 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_explicit_deny_denies_one_member_and_no_other
+      critical: true
+      category: security
+      weight: 5
+
+- id: private_teamspace_cannot_be_discovered_or_reached
+  purpose: A private teamspace is absent from the listing and refused the way an unissued identifier is
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com and confirm the sidebar lists Engineering and People Ops with no Board Papers row
+      cov: C-CF-25
+    - kind: pytest
+      test: test_output.py::test_private_teamspace_is_absent_from_the_listing_and_denied_directly
+      critical: true
+      category: security
+      weight: 5
+
+- id: member_request_to_an_admin_endpoint_is_denied
+  purpose: Every admin surface is refused at the API from a member session, with nothing written
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, open /w/admin/members, and confirm a refusal naming the role the route needs rather than a rendered member table
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_member_is_denied_every_admin_endpoint_and_nothing_is_written
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_grant_change_from_a_member_session_is_denied
+      category: security
+      weight: 5
+
+- id: guest_cannot_see_a_hidden_property
+  purpose: Key notes is absent from a guest response and cannot be filtered or sorted on
+  substeps:
+    - kind: browser
+      do: Sign in as guest@example.com and confirm the sidebar offers only the teamspace that guest was granted
+      cov: C-RL-10
+    - kind: browser
+      do: Sign in as guest@example.com, open the Company tasks view, and confirm the Key notes column is absent rather than blank
+      cov: C-CF-98
+    - kind: pytest
+      test: test_output.py::test_guest_row_response_omits_the_hidden_property
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_hidden_property_filter_and_sort_are_refused
+      category: validation
+      weight: 3
+
+- id: member_uploads_a_file_to_a_page
+  purpose: The uploaded bytes land in the bucket at the pinned key scheme and nowhere else
+  substeps:
+    - kind: browser
+      do: As member@example.com open Engineering Handbook, insert an image block, and upload a file
+      cov: "C-CF-103 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_uploaded_attachment_object_exists_in_the_bucket_at_its_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_attachment_bytes_are_not_stored_in_a_database_column
+      category: data_integrity
+      weight: 5
+
+- id: attachment_on_an_unpublished_page_is_forbidden_to_a_stranger
+  purpose: An attachment read follows the page it belongs to, for an anonymous caller as well
+  substeps:
+    - kind: browser
+      do: Signed out, request the address of an attachment on an unpublished page and confirm the product refuses rather than serving the file
+      cov: "C-CF-109 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_attachment_read_is_denied_to_an_anonymous_caller_while_unpublished
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_attachment_on_a_published_page_is_readable_anonymously
+      category: business_rule
+      weight: 3
+
+- id: concurrent_block_writes_produce_exactly_one_winner
+  purpose: Two writes from the same block version do not both succeed
+  substeps:
+    - kind: browser
+      do: As member@example.com edit a paragraph on Engineering Handbook, watch the block settle after the save lands, then reload to confirm the stored text
+    - kind: pytest
+      test: test_output.py::test_concurrent_block_writes_from_one_version_produce_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_block_version_advances_by_one_on_each_accepted_write
+      category: data_integrity
+      weight: 5
+
+- id: member_runs_a_database_view
+  purpose: The board groups rows by status with counts and the table view keeps a nested filter
+  substeps:
+    - kind: browser
+      do: As member@example.com open Company Tasks, read the Current sprint board columns To-do, In progress, In review and Complete with their counts, then switch to Company tasks
+      cov: "C-UF-05 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_board_view_groups_rows_by_status_with_counts
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_nested_filter_tree_round_trips_through_storage
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: search_is_scoped_and_permission_filtered
+  purpose: Search finds pages by title and body, and never returns a page the caller may not read
+  substeps:
+    - kind: browser
+      do: As member@example.com run a search that matches nothing and confirm the empty state names what was searched for rather than showing an error
+      cov: "C-UF-03 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: browser
+      do: As member@example.com open /w/search, search for Onboarding, and confirm the page appears
+    - kind: pytest
+      test: test_output.py::test_search_matches_page_title_and_block_text
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_results_exclude_a_denied_page
+      critical: true
+      category: security
+      weight: 5
+
+- id: grant_provenance_names_where_access_came_from
+  purpose: An administrator can answer why a principal can see a page
+  substeps:
+    - kind: browser
+      do: As admin@example.com open Engineering Handbook and read the access list showing each subject, its level and its source
+      cov: C-CF-75
+    - kind: pytest
+      test: test_output.py::test_grant_provenance_names_where_each_grant_came_from
+      category: business_rule
+      weight: 3
+
+- id: activity_record_is_append_only
+  purpose: Every mutation is recorded once and no row can be changed afterwards
+  substeps:
+    - kind: browser
+      do: As admin@example.com open /w/admin/activity and read the newest rows naming the principal, the action, the resource and the time
+      cov: C-UF-08
+    - kind: pytest
+      test: test_output.py::test_activity_record_rows_are_stored_for_each_mutation
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_publish_writes_no_second_activity_row
+      category: data_integrity
+      weight: 5
+
+- id: unauthenticated_request_for_a_workspace_route_is_denied
+  purpose: Nothing inside the workspace is served without a bearer token
+  substeps:
+    - kind: browser
+      do: Sign in at /login and confirm the app continues to the address that was asked for rather than to the workspace home
+      cov: "C-UF-02, C-UF-09, C-UF-10, C-UF-11, C-UF-12, C-UF-13 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs), C-UF-14, C-UF-15 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs), C-UF-16 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: browser
+      do: Open /w signed out and confirm the app lands on /login
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_to_a_workspace_endpoint_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: seeded_accounts_sign_in_and_signout_invalidates
+  purpose: The four seeded accounts sign in with the corpus password and a signed-out token stops working
+  substeps:
+    - kind: browser
+      do: Open /login and confirm the surface shows the Email label, the Continue control and no password field before an address is submitted
+    - kind: browser
+      do: Sign in as admin@example.com, sign out, then confirm the app returns to /login
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_logout_refuses_the_previous_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_identify_response_is_identical_for_known_and_unknown_address
+      category: security
+      weight: 5
+
+- id: seeded_rows_are_stored_exactly_once
+  purpose: Seeding is idempotent, so the seeded fixtures exist in the database exactly once each
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com and confirm the sidebar lists Engineering, People Ops and Board Papers once each under Teamspaces
+      cov: C-UF-07
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_are_stored_exactly_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_number_property_is_stored_as_an_exact_decimal_string
+      category: data_integrity
+      weight: 5
+
+- id: invalid_block_depth_is_refused
+  purpose: The depth bound is enforced by the server, not only by the editor
+  substeps:
+    - kind: browser
+      do: As member@example.com indent a block repeatedly on Engineering Handbook and confirm the editor stops at the bound rather than nesting further
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_block_depth_bound_is_enforced_at_the_api
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_public_slug_is_refused
+      category: validation
+      weight: 3
+
+- id: deactivated_principal_cannot_continue
+  purpose: Deactivating a principal ends that principal's access on the next request
+  substeps:
+    - kind: browser
+      do: As admin@example.com open /w/admin/members and deactivate a seeded member from the member list
+      cov: "C-CF-128 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_deactivated_principal_token_stops_working
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_group_removal_denies_the_next_read
+      category: security
+      weight: 5
+
+- id: expired_grant_is_refused_on_the_next_read
+  purpose: A grant past its end date denies immediately and is retained rather than deleted
+  substeps:
+    - kind: browser
+      do: As admin@example.com open a page access list and confirm each entry names its level and where the grant came from
+      cov: "C-CF-76 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_expired_grant_denies_the_next_read
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rate_limited_after_five_failed_password_attempts
+      category: validation
+      weight: 3
+
+- id: product_surfaces_are_present
+  purpose: The product carries its own not-found page, its favicon, working internal links and no downloadable secret
+  substeps:
+    - kind: browser
+      do: Narrow the browser to a phone width and confirm the sidebar becomes a sheet over the content, nothing overflows sideways, and the page stays readable
+    - kind: browser
+      do: Open an address the product does not serve and read the product's own not-found page with its link back to the workspace home
+    - kind: pytest
+      test: test_output.py::test_not_found_page_is_the_products_own_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_a_served_route_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared_in_the_document_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_the_security_headers
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_anything_the_browser_downloads
+      critical: true
+      category: security
+      weight: 5
+
+- id: unique_id_counter_never_reissues_a_key
+  purpose: A database unique-id key names one row for the life of the database
+  substeps:
+    - kind: browser
+      do: As member@example.com add a row from the New page affordance at the foot of a board column and read the key the new row is given
+    - kind: pytest
+      test: test_output.py::test_unique_id_counter_never_reissues_a_stored_key
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_health_route_returns_ok
+      category: presentation
+      weight: 1
+
+- id: rich_text_annotations_survive_a_reload
+  purpose: The runs and their annotations come back exactly as they were stored
+  substeps:
+    - kind: browser
+      do: As member@example.com bold a phrase inside a paragraph on Engineering Handbook, reload, and confirm the same words stay bold
+      cov: "C-CF-57 (earned: the journey opens on this surface, so the step walks the ask even where the wording differs)"
+    - kind: pytest
+      test: test_output.py::test_rich_text_annotations_survive_a_reload_as_stored
+      category: business_rule
+      weight: 3

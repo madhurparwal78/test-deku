@@ -1,0 +1,236 @@
+- id: visitor_joins_space_and_sends_first_message
+  purpose: A stranger reads the home page, opens the product, joins Nightjar Collective and sends a message that persists
+  substeps:
+    - kind: browser
+      do: Open the home page and count the nine full-height movements the page carries
+      cov: C-FE-12
+    - kind: browser
+      do: Confirm the six feature movements alternate their text side strictly down the page
+      cov: C-FE-13
+    - kind: browser
+      do: Complete the join journey as a visitor, from the home page through to a sent message
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_visitor_joins_space_and_message_is_persisted
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-OV-02
+
+- id: concurrent_invite_redemption_fills_the_last_seat_at_most_once
+  purpose: Two strangers race for the one free seat, exactly one joins, and the space never exceeds its cap
+  substeps:
+    - kind: browser
+      do: Open the member list and read the count shown for each group above its rows
+      cov: C-FE-24
+    - kind: pytest
+      test: test_output.py::test_concurrent_invite_redemption_stores_one_membership_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-06
+
+- id: mention_notifies_only_the_mentioned_member
+  purpose: A mention reaches the mentioned member's own inbox and no other address
+  substeps:
+    - kind: browser
+      do: Send a message into an open channel and confirm the message appears in the conversation without a reload
+      cov: C-CF-52
+    - kind: pytest
+      test: test_output.py::test_mention_email_reaches_only_the_mentioned_member
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-CF-56
+    - kind: pytest
+      test: test_output.py::test_reaction_sends_no_mail
+      category: notification
+      weight: -3
+      cov: C-CF-58
+
+- id: duplicate_send_with_one_nonce_creates_one_message
+  purpose: A send retried four times under one nonce leaves exactly one message
+  substeps:
+    - kind: browser
+      do: Move between channels and confirm the rail, the sidebar and the composer draft are not unmounted
+      cov: C-FE-21
+    - kind: pytest
+      test: test_output.py::test_duplicate_send_with_one_nonce_stores_one_message_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-46
+
+- id: reaction_count_matches_its_set_under_concurrent_writes
+  purpose: A reaction count is the size of the set of members who reacted, never a drifting tally
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reaction_count_equals_stored_reaction_set
+      category: data_integrity
+      weight: 5
+      cov: C-OV-03
+
+- id: gift_code_grants_at_most_one_entitlement
+  purpose: Two redemptions of one single-use gift code produce one entitlement and one clear refusal
+  substeps:
+    - kind: browser
+      do: Redeem the gift code and confirm the redemption ends on a full page confirmation naming what was granted
+      cov: C-FE-25
+    - kind: pytest
+      test: test_output.py::test_concurrent_gift_redemption_grants_one_entitlement_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-62
+
+- id: anonymous_caller_is_denied_at_the_api
+  purpose: An unauthenticated caller can neither read a channel nor write to one
+  substeps:
+    - kind: browser
+      do: Open a client address as a visitor without a session and confirm the visitor is sent to sign in carrying the intended address
+      cov: C-CF-69
+    - kind: browser
+      do: Confirm a signed-out request for a client route lands on sign-in carrying the intended address
+      cov: C-UF-02
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_is_denied_at_the_api
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-02
+
+- id: member_cannot_reach_another_space
+  purpose: An account belonging to one space cannot read or write a channel of another
+  substeps:
+    - kind: browser
+      do: Read what the browser downloads and confirm no credential appears in any of it
+      cov: C-TR-10
+    - kind: pytest
+      test: test_output.py::test_member_cannot_read_another_space
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-19
+
+- id: timed_out_member_is_denied_posting_and_reacting
+  purpose: A silenced member still reads the channel and can neither post nor react
+  substeps:
+    - kind: browser
+      do: Confirm no image, no video, no font binary and no vector-animation file ships with the page
+      cov: C-FE-23
+    - kind: pytest
+      test: test_output.py::test_timed_out_member_is_denied_send_and_reaction
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-36
+
+- id: role_overwrites_resolve_to_the_allow
+  purpose: A member holding one role denied and one role allowed in a channel can post there
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_role_deny_and_allow_resolve_to_allow
+      category: business_rule
+      weight: 3
+      cov: C-CF-27
+    - kind: pytest
+      test: test_output.py::test_role_reorder_does_not_change_resolved_permissions
+      category: business_rule
+      weight: 3
+      cov: C-CF-29
+    - kind: pytest
+      test: test_output.py::test_invisible_channel_resolves_to_an_empty_permission_set
+      category: business_rule
+      weight: 3
+      cov: C-CF-32
+
+- id: history_paging_returns_newest_first_in_both_directions
+  purpose: A page of newer messages is returned newest first, which is the trap a naive client falls into
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_history_pages_return_newest_first_in_both_directions
+      category: business_rule
+      weight: 3
+      cov: C-CF-43
+
+- id: read_mark_only_ever_moves_forward
+  purpose: Acknowledging an older message leaves the read mark where it stood
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_acknowledgement_never_moves_the_read_mark_backwards
+      category: business_rule
+      weight: 3
+      cov: C-DM-05
+
+- id: invalid_signup_is_refused_and_writes_nothing
+  purpose: A malformed address and a short password are each refused inline with the field named
+  substeps:
+    - kind: browser
+      do: Submit a malformed address to a form and confirm the form rejects the invalid input inline, naming the field at fault
+      cov: C-CF-68
+    - kind: browser
+      do: Confirm the error renders as a page or an inline message rather than a blank screen
+      cov: C-UF-05
+    - kind: pytest
+      test: test_output.py::test_invalid_signup_is_refused_and_writes_no_account
+      category: validation
+      weight: 3
+      cov: C-CF-07
+
+- id: page_size_above_the_limit_is_refused
+  purpose: A page size above the cap is refused with the cap named rather than quietly trimmed
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_page_size_above_the_cap_is_refused
+      category: validation
+      weight: 3
+      cov: C-TR-06
+
+- id: public_site_serves_its_own_pages_and_answers_not_found
+  purpose: The home page links a terms page that resolves, and an address that does not exist renders the product's own page
+  substeps:
+    - kind: browser
+      do: Confirm every public route listed is reachable without a session
+      cov: C-UF-01
+    - kind: browser
+      do: Confirm the pages served are a production build behind a static or preview server
+      cov: C-DC-06
+    - kind: browser
+      do: Follow every internal link on every public route and confirm each one resolves
+      cov: C-CF-65
+    - kind: browser
+      do: Read the footer and confirm four link columns sit beside a language control
+      cov: C-FE-15
+    - kind: browser
+      do: Open the policy route and confirm the page carries no motion of any kind
+      cov: C-FE-17
+    - kind: browser
+      do: Confirm every public route declares its own preview image
+      cov: C-TR-11
+    - kind: browser
+      do: Open an address that does not exist and confirm the not-found page carries the numerals as live type rather than artwork
+      cov: C-FE-16
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_reachable_from_the_footer
+      category: presentation
+      weight: 1
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+      cov: C-CF-67
+
+- id: seeded_rows_and_health_are_present
+  purpose: The app reports ready and every seeded account, space and invite exists as a real row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+      cov: C-UF-07
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_are_present_for_every_account
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
