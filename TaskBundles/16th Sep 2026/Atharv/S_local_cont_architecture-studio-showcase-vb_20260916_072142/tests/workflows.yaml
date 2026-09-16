@@ -1,0 +1,458 @@
+- id: visitor_scrolls_home_and_sends_an_enquiry
+  purpose: A visitor reads the whole home route, browses the project index, opens a building and sends an enquiry that lands on its own confirmation address
+  substeps:
+    - kind: browser
+      do: Open `/` and read the hero render with the wordmark set bottom-left in the display serif
+      cov: C-FE-01
+    - kind: browser
+      do: Scroll past the founding block and watch each heading arrive a line at a time
+      cov: C-CF-38
+    - kind: browser
+      do: Scroll to the radial figure behind `Refined & Bold Essential` and watch it fade in
+      cov: C-CF-39
+    - kind: browser
+      do: Scroll into the black arc section and watch the fanned photographs rotate and settle over `15+ Years of experience`
+      cov: C-CF-40
+    - kind: browser
+      do: Read the three statistics and then the fifteen-office list that closes the route
+      cov: C-CF-41
+    - kind: browser
+      do: Open `/work`, press `Visit` on a project, and read its body beside its gallery
+      cov: C-UF-03
+    - kind: browser
+      do: Press `Order design` in the footer, fill the modal with a name, an email and a message, and send it
+      cov: C-FE-02
+    - kind: browser
+      do: Read the confirmation address and the reference it shows
+      cov: C-UF-04
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_ok
+      category: presentation
+      weight: 1
+      cov: C-DC-01,C-DC-06,C-DC-07,C-DC-08,C-DC-09,C-DC-10
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_pinned_password
+      category: security
+      weight: 5
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_user_readme_carries_every_seeded_login
+      category: presentation
+      weight: 1
+      cov: C-DC-02,C-DM-06
+    - kind: pytest
+      test: test_output.py::test_project_list_returns_published_projects_in_order
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-04
+    - kind: pytest
+      test: test_output.py::test_project_detail_carries_body_and_gallery_image_rows
+      category: business_rule
+      weight: 3
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_enquiry_is_stored_with_a_unique_twelve_character_reference
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-21,C-DM-09
+    - kind: pytest
+      test: test_output.py::test_enquiry_confirmation_address_shows_its_reference
+      category: business_rule
+      weight: 3
+      cov: C-CF-29
+    - kind: pytest
+      test: test_output.py::test_public_routes_resolve_at_their_pinned_addresses
+      category: presentation
+      weight: 1
+      cov: C-DC-05,C-UF-02
+    - kind: pytest
+      test: test_output.py::test_project_area_renders_with_a_thousands_separator
+      category: presentation
+      weight: 1
+      cov: C-CF-05
+- id: draft_project_cannot_be_read_by_a_visitor
+  purpose: A project the studio has not published is absent from every public surface and its own address answers not found
+  substeps:
+    - kind: browser
+      do: Open `/work` and confirm neither draft project appears in any of the three modes
+      cov: C-CF-42
+    - kind: browser
+      do: Open the draft project's own address and read the not-found page rather than a refusal
+      cov: C-CF-43
+    - kind: pytest
+      test: test_output.py::test_draft_project_is_absent_from_every_public_list
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_draft_project_address_answers_not_found_to_a_visitor
+      category: security
+      weight: 5
+      cov: C-CF-14,C-UF-10
+    - kind: pytest
+      test: test_output.py::test_public_list_query_cannot_ask_for_unpublished_rows
+      category: security
+      weight: 5
+      cov: C-CF-25
+- id: draft_object_read_is_denied_by_the_store
+  purpose: A draft project's image object is refused by the store to a caller with no credential, while a published cover is served
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_draft_object_is_not_publicly_readable_from_the_bucket
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_published_cover_object_is_readable_from_the_bucket
+      category: data_integrity
+      weight: 5
+      cov: C-CF-16
+- id: reader_cannot_publish_a_project
+  purpose: A reader reaching for any editorial write is denied by the server with the content unchanged
+  substeps:
+    - kind: browser
+      do: Sign in as `reader@example.com` and confirm no publish control appears on any route
+      cov: C-RL-07
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_publish_or_edit_any_content
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-03,C-UF-11
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_a_draft_project_by_any_route
+      category: security
+      weight: 5
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_another_accounts_enquiry
+      category: security
+      weight: 5
+      cov: C-CN-06,C-RL-05
+- id: unauthenticated_studio_route_is_denied
+  purpose: A request with no token, or with an expired token, is denied on the studio and account routes
+  substeps:
+    - kind: browser
+      do: Open `/studio` while signed out and land on `/login` with the destination remembered
+      cov: C-UF-05
+    - kind: browser
+      do: Sign in as an editor and land on the remembered destination
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_studio_route_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-06
+    - kind: pytest
+      test: test_output.py::test_expired_token_is_denied_on_every_protected_route
+      category: security
+      weight: 5
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_password_hash_is_never_returned_by_any_endpoint
+      category: security
+      weight: 5
+      cov: C-CF-03,C-TR-03
+    - kind: pytest
+      test: test_output.py::test_signup_always_produces_a_reader_role
+      category: security
+      weight: 5
+      cov: C-RL-02
+- id: invalid_enquiry_is_refused_and_writes_nothing
+  purpose: An enquiry missing a name, carrying an email with no at-sign or carrying an empty message is refused inline with nothing written
+  substeps:
+    - kind: browser
+      do: Submit the enquiry with the message empty and read the named field carrying the faint tint
+      cov: C-FE-03
+    - kind: browser
+      do: Submit the enquiry with an email address that has no at-sign and read the same treatment
+      cov: C-FE-04
+    - kind: pytest
+      test: test_output.py::test_invalid_enquiry_is_refused_and_names_the_field
+      category: validation
+      weight: 3
+      cov: C-CF-26,C-DM-11
+    - kind: pytest
+      test: test_output.py::test_invalid_call_is_a_client_error_naming_the_reason
+      category: validation
+      weight: 3
+      cov: C-DC-04
+    - kind: pytest
+      test: test_output.py::test_signup_with_an_existing_email_is_refused_and_writes_no_row
+      category: validation
+      weight: 3
+      cov: C-CF-01,C-DM-07
+- id: decoy_enquiry_is_invalid
+  purpose: An enquiry whose unattended decoy field has been filled is refused, and so is a burst of enquiries from one origin
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_decoy_field_marks_an_enquiry_invalid
+      category: validation
+      weight: 3
+      cov: C-CF-27
+    - kind: pytest
+      test: test_output.py::test_repeated_enquiries_from_one_origin_are_refused
+      category: validation
+      weight: 3
+      cov: C-CF-28
+- id: duplicate_enquiry_creates_one_row
+  purpose: Repeating one enquiry submission stores one row and returns the first reference
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_duplicate_enquiry_submission_creates_one_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-22
+    - kind: pytest
+      test: test_output.py::test_enquiry_rows_persist_and_survive_a_reread
+      category: data_integrity
+      weight: 5
+      cov: C-DM-02
+- id: image_bytes_live_in_the_object_store
+  purpose: Every generated picture is a real object in the bucket at the pinned key, and its digest matches the row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_cover_bytes_are_uploaded_to_the_bucket_at_the_key_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-17,C-TR-02
+    - kind: pytest
+      test: test_output.py::test_image_row_digest_matches_the_stored_object_bytes
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01
+    - kind: pytest
+      test: test_output.py::test_regenerating_an_image_from_one_seed_writes_no_second_object
+      category: data_integrity
+      weight: 5
+      cov: C-CF-18
+    - kind: pytest
+      test: test_output.py::test_image_reference_carries_alt_text_ratio_and_seed
+      category: business_rule
+      weight: 3
+      cov: C-CF-12
+    - kind: pytest
+      test: test_output.py::test_no_binary_asset_is_referenced_anywhere_in_the_build
+      category: presentation
+      weight: 1
+      cov: C-CN-02
+- id: editor_publishes_a_draft_and_it_appears
+  purpose: An editor publishes a draft project and it becomes visible everywhere, with its cover readable from the store
+  substeps:
+    - kind: browser
+      do: Sign in as `editor@example.com` and open the studio content index
+      cov: C-UF-07
+    - kind: browser
+      do: Publish `Vantaa Timber Pavilion` and read it appear in the project index
+      cov: C-UF-08
+    - kind: pytest
+      test: test_output.py::test_publish_flips_the_flag_and_records_when
+      category: business_rule
+      weight: 3
+      cov: C-CF-19,C-DM-10
+    - kind: pytest
+      test: test_output.py::test_unpublish_returns_the_project_and_its_objects_to_invisible
+      category: business_rule
+      weight: 3
+      cov: C-CF-20
+    - kind: pytest
+      test: test_output.py::test_editor_creates_a_project_from_the_studio_surface
+      category: business_rule
+      weight: 3
+      cov: C-CF-11,C-DM-08
+    - kind: pytest
+      test: test_output.py::test_editor_reads_every_enquiry_received
+      category: business_rule
+      weight: 3
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_project_images_are_unique_on_project_kind_and_order
+      category: data_integrity
+      weight: 5
+      cov: C-DM-04
+- id: project_index_switches_between_three_modes
+  purpose: The index opens in List and re-arranges one collection into Grid and Gallery without a reload, remembering the choice
+  substeps:
+    - kind: browser
+      do: Open `/work` and read it arranged as a single vertical column
+      cov: C-FE-05
+    - kind: browser
+      do: Switch to `Grid` and read the offset two-column arrangement
+      cov: C-FE-06
+    - kind: browser
+      do: Switch to `Gallery` and read the looser masonry of mixed-width frames
+      cov: C-FE-07
+    - kind: browser
+      do: Move to `/about` and back and read the remembered arrangement rather than the default
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_project_index_opens_in_list_mode
+      category: business_rule
+      weight: 3
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_view_mode_choice_survives_a_move_to_another_route
+      category: business_rule
+      weight: 3
+      cov: C-CF-34
+    - kind: pytest
+      test: test_output.py::test_navigation_marks_the_active_route
+      category: presentation
+      weight: 1
+      cov: C-CF-35
+- id: legal_accordion_opens_every_chapter
+  purpose: The legal route carries eight numbered chapters, each opening by keyboard and exposing whether it is open
+  substeps:
+    - kind: browser
+      do: Open `/legal` and read the eight numbered chapter labels
+      cov: C-FE-08
+    - kind: browser
+      do: Open every chapter from the keyboard and read its body grow into place
+      cov: C-FE-09
+    - kind: browser
+      do: Read `08 About This Site` and its illustrative-content statement
+      cov: C-CF-45
+    - kind: pytest
+      test: test_output.py::test_legal_route_carries_eight_numbered_chapters
+      category: business_rule
+      weight: 3
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_legal_chapters_expand_and_expose_their_state
+      category: presentation
+      weight: 1
+      cov: C-CF-37
+    - kind: pytest
+      test: test_output.py::test_legal_route_is_linked_from_the_signup_form
+      category: presentation
+      weight: 1
+      cov: C-CF-32
+- id: unknown_address_renders_the_not_found_page
+  purpose: An address that does not exist answers not found with the studio's own page and an honest title
+  substeps:
+    - kind: browser
+      do: Open an address that exists nowhere and read the studio's own not-found page
+      cov: C-FE-10
+    - kind: browser
+      do: Read the link back to the home page beside the line in the studio's voice
+      cov: C-CF-46
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_with_an_honest_title
+      category: presentation
+      weight: 1
+      cov: C-CF-30
+    - kind: pytest
+      test: test_output.py::test_empty_enquiry_list_renders_its_own_empty_state
+      category: presentation
+      weight: 1
+      cov: C-UF-01
+- id: reveals_unplay_when_scrolling_back
+  purpose: The scrubbed reveals track scroll position, so scrolling back up returns the lines below their boxes
+  substeps:
+    - kind: browser
+      do: Scroll half way into the arc section and read the reveal half done
+      cov: C-CF-47
+    - kind: browser
+      do: Scroll back up and watch the lines drop back below their boxes rather than replay
+      cov: C-CF-48
+    - kind: browser
+      do: Read the navigation stay legible as it crosses from the white hero into the black section
+      cov: C-CF-49
+    - kind: pytest
+      test: test_output.py::test_reduced_motion_resolves_every_reveal_to_its_end_state
+      category: presentation
+      weight: 1
+      cov: C-CF-36
+    - kind: pytest
+      test: test_output.py::test_pinned_interface_copy_appears_verbatim
+      category: presentation
+      weight: 1
+      cov: C-UX-04
+- id: public_pages_have_no_broken_internal_link
+  purpose: Every internal link on every public route resolves, and every public route carries its own title and description
+  substeps:
+    - kind: browser
+      do: Open `/` and follow every footer entry that is a link
+      cov: C-CF-50
+    - kind: browser
+      do: Confirm the seven media entries are text rather than links to another site
+      cov: C-CF-51
+    - kind: browser
+      do: Open `/contact` and read the three contact groups set large in the serif
+      cov: C-CF-52
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_a_public_route_resolves
+      category: presentation
+      weight: 1
+      cov: C-CF-31
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_unique_titles_and_descriptions
+      category: presentation
+      weight: 1
+      cov: C-TR-01
+    - kind: pytest
+      test: test_output.py::test_no_address_outside_the_application_is_referenced
+      category: security
+      weight: 5
+      cov: C-CN-01,C-CN-05,C-TR-04
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+      cov: C-DC-03
+    - kind: pytest
+      test: test_output.py::test_page_views_are_recorded_with_their_route
+      category: business_rule
+      weight: 3
+      cov: C-CF-23
+- id: content_model_feeds_every_route
+  purpose: Every collection the routes read is an ordered content-model collection an editor maintains rather than embedded copy
+  substeps:
+    - kind: browser
+      do: Open `/about` and read the twenty-member team grid four across and staggered
+      cov: C-FE-11
+    - kind: browser
+      do: Read the award statements that close the about route
+      cov: C-CF-53
+    - kind: pytest
+      test: test_output.py::test_team_offices_awards_publications_are_ordered_collections
+      category: business_rule
+      weight: 3
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_gallery_photographs_feed_the_arc_in_order
+      category: business_rule
+      weight: 3
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_arc_settings_is_one_editable_record
+      category: business_rule
+      weight: 3
+      cov: C-CF-10
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_across_a_restart
+      category: data_integrity
+      weight: 5
+      cov: C-DM-03,C-DM-05
+    - kind: pytest
+      test: test_output.py::test_every_generated_image_carries_alternative_text
+      category: presentation
+      weight: 1
+      cov: C-UX-03
+    - kind: pytest
+      test: test_output.py::test_body_text_meets_the_contrast_bar
+      category: presentation
+      weight: 1
+      cov: C-UX-01
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+      cov: C-UX-02

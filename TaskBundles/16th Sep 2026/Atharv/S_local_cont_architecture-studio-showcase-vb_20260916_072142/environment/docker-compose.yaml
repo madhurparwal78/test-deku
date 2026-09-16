@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16.4-bookworm
+    environment:
+      POSTGRES_USER: deku_admin
+      POSTGRES_PASSWORD: deku-local-dev
+      POSTGRES_DB: norrgaard
+    volumes:
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deku_admin -d norrgaard && PGPASSWORD=deku-local-dev psql -h 127.0.0.1 -U deku_app -d norrgaard -c 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: deku-storage-key
+      MINIO_ROOT_PASSWORD: deku-storage-secret
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  minio-init:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mc alias set local http://minio:9000 deku-storage-key deku-storage-secret
+        mc mb --ignore-existing local/norrgaard-media
+        mc anonymous set none local/norrgaard-media
+        tail -f /dev/null
+    healthcheck:
+      test: ["CMD-SHELL", "mc ls local/norrgaard-media > /dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  main:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4173:4173"

@@ -1,0 +1,679 @@
+- id: app_is_reachable_and_titled
+  purpose: The deployed app answers its health route from outside the container, serves a production build that outlives the session, and carries the whole fixture after an idempotent seed
+  substeps:
+    - kind: browser
+      do: Open the app at APP_PUBLIC_URL in a browser with no install step, confirm the home document renders, and confirm the production build serves on the container-internal port bound to every address rather than to loopback. Confirm the app started from the environment image with no manual step
+      cov: C-DC-06, C-OV-01
+    - kind: browser
+      do: Confirm the server runs detached so it outlives the build session, then confirm the credentials file at the app root names both seeded addresses with the seeded password and that both reserved directories exist empty
+      cov: C-DC-10
+    - kind: browser
+      do: Confirm the app declares no edge function, no persistent volume, no fixed container name and no custom network, starts no copy of PostgreSQL or the mail provider, introduces no second database, cache, queue, object store, identity provider or mail vendor, and reaches each backing service at its environment variable
+      cov: C-DC-12, C-DC-13, C-DC-14, C-TR-11, C-TR-12
+    - kind: pytest
+      test: test_output.py::test_health_route_returns_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_production_bundle_is_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_api_is_served_on_the_same_origin_under_api
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_request_logs_reach_stdout
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reserved_directories_exist_and_are_empty
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_credentials_file_names_both_seeded_accounts
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rows_persist_in_postgres
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_twice_does_not_duplicate_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_carry_their_names_and_roles
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_three_windows_are_seeded_at_their_stated_shapes
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_enquiry_is_proposed_with_two_messages
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_exactly_one_studio_account_exists
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_studio_recovery_and_notification_addresses_are_distinct
+      category: presentation
+      weight: 1
+
+- id: visitor_takes_an_account_and_signs_in
+  purpose: Signup writes a client whatever role it names, a login returns a working token, a private route remembers where the visitor was going, and a signed-out session cannot be resumed
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_creates_client_role_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_ignores_role_in_body
+      critical: true
+      category: presentation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_email_is_refused
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_endpoint_returns_a_password_hash
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_missing_expired_or_tampered_token_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_public_reads_need_no_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_account_field_bounds_are_enforced
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signin_link_response_is_identical_for_unknown_address
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signin_link_request_mails_that_address
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_private_route_lands_on_signin
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_remembered_destination_rejects_an_offsite_path
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_session_on_account_is_sent_to_studio
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signed_out_session_cannot_be_resumed
+      category: security
+      weight: 5
+
+- id: visitor_reads_the_home_document
+  purpose: The home document renders the hero, the about section and the selected-work preview on alternating grounds under the fixed chrome
+  substeps:
+    - kind: browser
+      do: Open the home document and confirm it carries the hero, then the about section, then the selected-work preview, in that order. Confirm the first screen renders before the display faces arrive, carrying the stroked eyebrow, the filled name beneath it, the location line with its three-segment drawn bar, and the slowly fading scroll prompt last of all
+      cov: C-CF-13, C-TR-26, C-UF-01
+    - kind: browser
+      do: Press Home and About and confirm each updates the fragment without loading a new page, then press Work and Contact and confirm each updates the path. Reload directly on the About fragment and confirm the document scrolls to that section rather than landing at the top
+      cov: C-CF-18, C-CF-19
+    - kind: browser
+      do: Read the sound control in the chrome, confirm it states its own current state, confirm sound is off by default, and confirm no confirmation or error anywhere is carried by sound alone
+      cov: C-CF-21, C-CN-04, C-UX-58
+    - kind: browser
+      do: Scroll to the about section and confirm the pale sheet slides up over the dark hero, the statement reveals word by word, the figure and its label sit beside it, the three services follow, and the project media below the first screen loads only as the document reaches it
+      cov: C-FE-23, C-TR-27
+    - kind: browser
+      do: Reach the horizontally scrolling tool band, confirm each mark carries an accessible name, confirm the band is hidden from assistive technology as a group, and confirm it stops auto-scrolling while it is being touched
+      cov: C-FE-24, C-UX-62
+    - kind: pytest
+      test: test_output.py::test_services_list_is_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_social_links_are_seeded_in_order
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_meta_endpoint_returns_stored_version_and_local_time
+      category: presentation
+      weight: 1
+
+- id: visitor_reads_the_work_index
+  purpose: The nine projects appear as rules and rows on the home page and as staggered pills on the work route, from one record set
+  substeps:
+    - kind: browser
+      do: Open the work route and confirm the fixed chrome survives the route change without a full page load, the nine projects render as staggered title and description pills, and the route label rises into place
+      cov: C-CF-14, C-TR-02, C-UF-02
+    - kind: browser
+      do: Read the work index count and confirm it states the number of published projects
+      cov: C-CF-26
+    - kind: browser
+      do: Confirm the work index offers no search field, then open one project and confirm it resolves to that project alone
+      cov: C-CF-166
+    - kind: browser
+      do: Unpublish every project and confirm the index reads its own empty-state line rather than collapsing, then confirm a loading index shows a quiet placeholder in place rather than jumping when the content arrives
+      cov: C-UF-27, C-UF-31
+    - kind: browser
+      do: Break the projects read and confirm the index states that it did not load, offers a retry control, and shows neither a blank screen nor an unhandled error
+      cov: C-UF-32, C-UF-37
+    - kind: pytest
+      test: test_output.py::test_projects_list_is_array_in_position_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_project_slug_resolves_and_unknown_slug_is_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_work_trailing_slash_redirects_permanently
+      category: security
+      weight: 5
+
+- id: visitor_checks_availability
+  purpose: The availability page and the chrome pill read one derived record, and neither can be typed over
+  substeps:
+    - kind: browser
+      do: Open the availability route and confirm the current state is set at display size, and that the chrome pill states the same thing in words
+      cov: C-CF-16, C-UF-04, C-UF-18
+    - kind: browser
+      do: Read the listed open windows and confirm each carries a start date written as a day, a month name and a year, a length in weeks and a capacity in days per week, with an explanation of what a window means beneath them
+      cov: C-CF-179, C-CF-180, C-CF-42, C-UF-19
+    - kind: browser
+      do: Confirm a control against a chosen window opens the enquiry form, then close every window and confirm both the pill and the page move to their booked wording without anybody editing either
+      cov: C-CF-43
+    - kind: pytest
+      test: test_output.py::test_availability_mode_is_derived_not_stored
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_availability_endpoint_refuses_a_typed_mode
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_availability_mode_open_now_when_window_starts_within_fourteen_days
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_availability_modes_open_from_and_not_taking
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_availability_mode_booked_until_when_no_window_is_open
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_pill_and_availability_page_read_one_record
+      category: business_rule
+      weight: 3
+
+- id: visitor_holds_a_window_and_enquires
+  purpose: A visitor with no account holds an open window, fills the six fields and sends a scoped brief
+  substeps:
+    - kind: browser
+      do: Press the enquiry control against the first open window with no account and no session at all
+    - kind: browser
+      do: Confirm the enquiry form opens with that window named at its head and that a hold now exists against it
+      cov: C-CF-49
+    - kind: browser
+      do: On the contact page, which serves the six-field enquiry form, fill the six numbered fields in order and confirm each is a label over an underlined input. Confirm the form accepts no attachment on any surface and offers no file upload, and confirm a visitor with no account is walked from the open window through the six fields to a submitted enquiry with no registration step
+      cov: C-CF-15, C-CN-03, C-OV-11, C-UF-03, C-UF-20
+    - kind: browser
+      do: Read the four budget bands in their offered order, read the line sitting under the select, and read the submit control's own wording
+      cov: C-CF-79, C-CF-80
+    - kind: browser
+      do: Take three holds on one window from three sessions, attempt a fourth, and confirm the form still opens without a window after the refusal
+      cov: C-CF-54
+    - kind: browser
+      do: Release a hold by hand and confirm it goes immediately with an undo offered for a few seconds and no confirmation asked for first
+      cov: C-CF-59
+    - kind: browser
+      do: Submit the brief and confirm the visitor lands on the enquiry's own page carrying the token from the confirmation
+      cov: C-CF-88, C-UF-06
+    - kind: browser
+      do: Read the side column beside the form and confirm it carries the further-enquiries head with the contact address, the location line, and the social head with three links
+      cov: C-FE-36
+    - kind: pytest
+      test: test_output.py::test_window_capacity_days_bounds_are_enforced
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_creates_and_closes_a_window
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_hold_creates_row_with_seventy_two_hour_expiry
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_hold_commits_no_capacity
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_fourth_live_hold_on_one_window_is_refused
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_hold_on_unavailable_window_is_refused
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_closing_a_window_releases_its_live_holds
+      category: core_outcome
+      weight: 5
+
+- id: enquiry_form_rejects_invalid_input
+  purpose: Validation runs on blur with the pinned copy, and a rejected field writes nothing while every other answer survives
+  substeps:
+    - kind: browser
+      do: Type into a field and confirm validation never runs on a keystroke, then leave the field empty and move away, confirming validation runs on blur and the message appears only once focus has left
+      cov: C-CF-81
+    - kind: browser
+      do: Return to the failed field and confirm it revalidates on each keystroke until it passes, then leave it valid and confirm the message goes
+      cov: C-CF-82
+    - kind: browser
+      do: Fill five fields correctly, fail the sixth, submit, and confirm the five answers are still exactly as typed
+    - kind: browser
+      do: Break the submit endpoint, submit, and confirm a band appears directly above the control that failed and stays until it is dismissed or the action is retried
+      cov: C-CF-152
+    - kind: pytest
+      test: test_output.py::test_anonymous_visitor_submits_an_enquiry
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_enquiry_submission_persists_six_fields_and_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiry_field_errors_carry_the_pinned_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_enquiry_rejects_short_message_and_writes_no_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_budget_bands_are_the_four_pinned_options_descending
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_enquiry_token_opens_only_its_own_enquiry
+      category: security
+      weight: 5
+
+- id: hold_lapses_while_writing
+  purpose: A hold that expires mid-draft costs the visitor nothing: the answers survive and the brief still sends
+  substeps:
+    - kind: browser
+      do: Hold a window, let the hold lapse during writing while the form is open, and read the pinned lapsed-hold message shown in the band under the chrome
+      cov: C-CF-150, C-CF-90
+    - kind: browser
+      do: Confirm every answer already typed is still present and the submit control still works
+      cov: C-CF-91
+    - kind: browser
+      do: Trigger a second condition that also wants a band and confirm only one band shows at a time, ranked offline first, then a lapsed hold, then a proposal awaiting the visitor, then a proposal expiring within 48 hours, then the studio has replied
+      cov: C-CF-154, C-CF-155
+    - kind: browser
+      do: Disconnect the browser, confirm the offline line appears and says the draft is safe, then reload and confirm the draft is still there while the session and the sound setting are the only other things kept in the browser
+      cov: C-DM-31, C-UF-35, C-UF-36
+    - kind: pytest
+      test: test_output.py::test_enquiry_accepted_without_window_when_hold_expired
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiry_form_is_rate_limited_per_address
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_spam_signalled_enquiry_is_held_for_review
+      category: security
+      weight: 5
+
+- id: client_calls_are_denied_on_the_server
+  purpose: A client session reaches nothing behind the studio boundary, and a denied surface discloses nothing
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_client_reads_own_enquiry_thread
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_client_cannot_read_another_accounts_enquiry
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_denied_enquiry_surface_is_identical_either_way
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_calls_to_studio_endpoints_are_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_pipeline_and_export_reads_are_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_acceptance_on_behalf_of_client_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_reads_any_enquiry
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_studio_reads_pipeline_and_export
+      category: business_rule
+      weight: 3
+
+- id: studio_reads_and_proposes
+  purpose: The studio reads an enquiry from the pipeline, replies, and proposes a start date inside the window
+  substeps:
+    - kind: browser
+      do: Sign in as the studio account and open the pipeline, confirming it sits under a persistent left sidebar rather than the public chrome
+      cov: C-UF-07
+    - kind: browser
+      do: Find the enquiry in its own column with its budget band and window, open it, and confirm the state moves on, walking the studio from the pipeline through a reply to a proposal
+      cov: C-UF-21
+    - kind: browser
+      do: Watch the client's own enquiry page and confirm it now shows that the enquiry is being read, with no cursor position, no typing indicator and no last-seen time anywhere
+      cov: C-CF-174, C-CF-175, C-CF-95
+    - kind: browser
+      do: Reply and confirm the message appears in the thread before the server confirms it, then break the send and confirm it rolls back with a message above the control
+      cov: C-CF-171, C-CF-172
+    - kind: browser
+      do: Open the proposal form, confirm it slides in from the right with the window's remaining capacity live above the fields, send it, and confirm an inline confirmation appears under the control that caused it and fades after about two seconds
+      cov: C-CF-151
+    - kind: pytest
+      test: test_output.py::test_opening_enquiry_moves_state_new_to_reading
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reply_creates_message_and_changes_no_state
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_proposal_creates_live_row_and_moves_state
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_proposal_outside_window_or_over_capacity_is_refused
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_second_proposal_supersedes_the_first
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_decline_sets_state_and_mails_the_client
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_lapsed_enquiry_releases_its_hold_and_mails_nobody
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiry_row_is_never_deleted
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_timestamps_render_in_the_reader_timezone
+      category: presentation
+      weight: 1
+
+- id: client_accepts_into_a_booking
+  purpose: The client accepts the proposed start date and the booking appears on both sides
+  substeps:
+    - kind: browser
+      do: Sign in as the seeded client and open the account surface, confirming it lists that client's own enquiries and bookings
+      cov: C-UF-05
+    - kind: browser
+      do: With the enquiry page already open, have the studio send a proposal and confirm the change reaches the open page within a few seconds without a reload
+      cov: C-CF-176
+    - kind: browser
+      do: Accept the proposal and confirm the page moves to its booked state
+    - kind: browser
+      do: Reload a public route and confirm the availability pill reflects the new calendar without anybody editing it
+    - kind: browser
+      do: Let a proposal expire, attempt to accept it, and confirm the refusal offers a control asking for a new one, then open an expired sign-in link and confirm its own distinct surface offers another
+      cov: C-CF-113, C-UF-14
+    - kind: browser
+      do: Sign in as a client with no enquiries and confirm the account surface reads its own empty-state line
+      cov: C-UF-29
+    - kind: pytest
+      test: test_output.py::test_acceptance_writes_booking_and_commits_capacity
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_window_state_becomes_booked_once_full
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_expired_proposal_acceptance_is_refused
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_withdraw_sets_state_and_releases_hold
+      category: core_outcome
+      weight: 5
+
+- id: two_acceptances_one_place_left
+  purpose: Two acceptances against one window's last remaining capacity resolve to exactly one booking
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_acceptances_produce_exactly_one_booking
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_committed_days_equals_sum_of_booking_days
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_acceptance_carries_the_open_windows
+      category: core_outcome
+      weight: 5
+
+- id: mail_is_real_in_mailpit
+  purpose: Every named message exists in the provider, addressed to exactly its recipient, and a send failure never fails the action
+  substeps:
+    - kind: browser
+      do: Submit an enquiry, then open the mail provider's inbox and confirm two real messages arrived rather than a success the app reported to itself
+    - kind: browser
+      do: Read both subjects and both recipients, and confirm the confirmation carries the sender's own six answers back
+    - kind: browser
+      do: Drive a reply, a proposal, an acceptance and a decline, then confirm each named message exists once, as plain text, carrying one primary link and stating at its foot which address it went to and why
+    - kind: browser
+      do: Break the mail provider, submit an enquiry, confirm the enquiry is still written and the page says so, then find the failure flagged on the pipeline with a control to send it again
+      cov: C-CF-146
+    - kind: pytest
+      test: test_output.py::test_mail_settings_come_from_the_environment
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_enquiry_submission_sends_both_named_messages
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_confirmation_carries_the_six_answers_back
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reply_from_each_side_mails_the_other
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_acceptance_sends_booked_to_both_parties
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_expiring_proposal_warns_the_client_once
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_message_carries_a_cc_or_a_bcc
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_message_is_plain_text_with_one_link
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_mail_failure_leaves_the_enquiry_standing
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_window_operations_send_no_mail
+      category: notification
+      weight: 3
+
+- id: pipeline_filters_and_export
+  purpose: The pipeline filters, sorts and searches, and the whole business exports in one action
+  substeps:
+    - kind: browser
+      do: Open the pipeline and read the enquiries laid out as a calendar grid by window and by state, newest first within each state
+    - kind: browser
+      do: Filter by state and by band, confirm the current filter is carried in the address, then navigate away and back to that same address and confirm the filtered view returns unchanged
+      cov: C-CF-125
+    - kind: browser
+      do: Move a pipeline control, sign out and back in, and confirm the control is where it was left
+      cov: C-UX-48
+    - kind: browser
+      do: Take the export in one action, then clear every enquiry and confirm the pipeline reads its own empty-state line
+      cov: C-UF-30
+    - kind: pytest
+      test: test_output.py::test_pipeline_orders_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pipeline_filters_by_state_and_band
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pipeline_search_matches_name_organisation_subject
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_export_returns_every_record_set
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seven_analytics_events_carry_their_named_properties
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_studio_reads_the_four_funnel_numbers
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_view_is_written_only_after_consent
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_view_carries_no_person_data
+      category: business_rule
+      weight: 3
+
+- id: public_edge_and_consent
+  purpose: The legal routes, the cookie answer, the previews and the headers are all in place
+  substeps:
+    - kind: browser
+      do: Open the enquiry form and follow the privacy link beside the submit control, then return and follow the same link from the footer of every public route
+      cov: C-CF-157, C-CF-85
+    - kind: browser
+      do: Arrive as a first-time visitor, confirm the cookie question is asked exactly once, answer it, and confirm the answer survives a reload
+      cov: C-CF-159
+    - kind: browser
+      do: Revoke the answer and confirm the recording stops from the next page onward
+    - kind: browser
+      do: Follow the terms link from the footer, and confirm the product takes no money at any point, asking nowhere on any public route for a card, an invoice or a payment of any kind
+      cov: C-CN-02, C-OV-10
+    - kind: browser
+      do: Read the footer's four heads, its clock and its credit line, and confirm the product ships in one language, translating nothing, untranslated anywhere, with no language switch offered
+      cov: C-CF-178, C-CN-09, C-FE-42
+    - kind: pytest
+      test: test_output.py::test_privacy_and_terms_routes_answer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_distinct_social_preview
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_and_robots_list_public_routes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_security_headers_present_on_every_response
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_credential_or_product_name_in_the_browser_bundle
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_built_bundle_ships_no_binary_or_font_asset
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_hostile_enquiry_input_is_stored_and_shown_as_text
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_call_is_a_client_error_naming_the_reason
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_pinned_copy_appears_verbatim
+      category: presentation
+      weight: 1
+
+- id: responsive_and_accessibility
+  purpose: The product reflows across four breakpoints and stays operable from the keyboard and from assistive technology
+  substeps:
+    - kind: browser
+      do: Narrow the viewport below the mid switch and confirm the navigation folds to a burger, the lockup drops to the monogram at the smallest width, the hero name and the statement each step down two sizes, nothing overflows sideways, every navigation target stays reachable, and every control is a comfortable fingertip target
+      cov: C-UX-50, C-UX-51, C-UX-55, C-UX-61
+    - kind: browser
+      do: At the same width confirm the work index loses its stagger and stacks in one left-aligned column in date order, the project view becomes a panel rather than a modal, the fixed rail is hidden, the contact form goes to one column, and the media treatment is tied to entering the frame rather than to hover
+      cov: C-UX-52, C-UX-53, C-UX-54, C-UX-60
+    - kind: browser
+      do: Run a contrast check over the body text and the placeholders, then confirm the per-word statement and the per-character work headline are hidden from assistive technology as split elements with the original string present once in reading order and still selectable
+      cov: C-UX-39, C-UX-63, C-UX-67
+    - kind: browser
+      do: Tab through every route and confirm focus is visible everywhere and never removed, every icon-only control carries a name, the sound control's accessible name states the action rather than the state, and no state, confirmation or error is carried by sound alone
+      cov: C-CF-22, C-CF-23, C-UX-68, C-UX-69
+    - kind: pytest
+      test: test_output.py::test_built_stylesheet_declares_four_breakpoints
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_app_stays_responsive_at_the_stated_bar
+      category: business_rule
+      weight: 3

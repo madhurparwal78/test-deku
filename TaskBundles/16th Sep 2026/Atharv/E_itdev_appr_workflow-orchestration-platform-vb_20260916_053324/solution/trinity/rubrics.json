@@ -1,0 +1,482 @@
+{
+  "banner": "GENERATED SECTION. DO NOT HAND-EDIT.",
+  "source_of_truth": "solution/trinity/grounding.yaml",
+  "task": "deku/workflow-orchestration-platform-vb",
+  "schema": [
+    "id",
+    "dimension",
+    "weight",
+    "evaluation_target",
+    "criterion",
+    "judgment",
+    "evidence",
+    "mode"
+  ],
+  "compiled_weight_share": 0.92437,
+  "items": [
+    {
+      "id": "R1",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A decision request from an operator session is refused by the server and the run stays waiting with no approval recorded.",
+      "judgment": "Post a decision as the seeded operator, require a 401 or 403, then re-read the run row and its approvals rows and require both unchanged.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R2",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "An approver outside the run's project is refused the decision and that run is unchanged.",
+      "judgment": "Post a decision as the Revenue Ops approver against a Platform Ops approval and require a client-error refusal with the approvals rows unchanged.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R3",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "A run parked at the approval step records no worker identifier.",
+      "judgment": "Poll the run to status waiting and require worker_id to be empty on it and on every other waiting run.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R4",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "An approved run resumes and reaches succeeded.",
+      "judgment": "Approve the seeded waiting run as the Platform Ops approver and poll the run row to status succeeded.",
+      "evidence": [
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R5",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Two simultaneous claims of one queued run produce exactly one winner.",
+      "judgment": "Fire two claims at one run from two threads and require one success status and one client-error status, then read back the recorded holder.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R6",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Two inbound calls carrying one idempotency key create exactly one run.",
+      "judgment": "Post the same inbound call twice with one Idempotency-Key header and compare the run count for that workflow before and after.",
+      "evidence": [
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R7",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "No endpoint returns a stored credential value to any role.",
+      "judgment": "Create a credential with a unique secret as the owner and require that value to appear in no create, list or detail response, and that the list is refused to the lower roles.",
+      "evidence": [
+        "http-response-body",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R8",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "A rejected run reaches failed and the steps after the approval step are skipped.",
+      "judgment": "Reject a pending approval and poll the run row to failed, then read the later step rows and require skipped or pending.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R9",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "An approval left past its deadline reads expired and records no decider.",
+      "judgment": "Start a run, let its approval deadline lapse against the injected value, and poll the approvals row to decision expired with an empty decider.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R10",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A minted approval address works once and a replay leaves the decision unchanged.",
+      "judgment": "Present the approve address twice and require the second to be refused with the recorded decision the same as after the first.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R11",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "A saved workflow version is written as a new row and the earlier rows are unchanged.",
+      "judgment": "Save a version with one added step and compare every pre-existing workflow_versions row byte for byte across the save.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R12",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Each attempt at a step is recorded as its own run step row counting from one.",
+      "judgment": "Start a run and require at least two run_steps rows, attempts starting at 1, and no duplicate step name at one attempt number.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R13",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "A started run leaves the queue and is claimed by a worker that is recorded on it.",
+      "judgment": "Start a run and poll the run row until its status leaves new, then require a worker identifier or a later status.",
+      "evidence": [
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R14",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "The run reaches the approval step and writes one pending approval for it.",
+      "judgment": "Start a run, poll to status waiting, and require one approvals row for the approval step at decision pending.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R15",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Deciding an approval appends an audit record for the deciding account.",
+      "judgment": "Count audit rows for the approver, decide an approval, and require the count to rise.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R16",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "The audit stream and the member list are refused to an operator and to an approver and served to an owner.",
+      "judgment": "Request both routes as each role and require client-error refusals for the lower two and a top-level array for the owner.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R17",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The member list reports every seeded member of a project with a project role and excludes members of the other project.",
+      "judgment": "Read the member list as the owner and require the three seeded Platform Ops accounts, legal project roles, and the absence of the Revenue Ops operator.",
+      "evidence": [
+        "http-response-body",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R18",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A console endpoint reached without a bearer token is refused.",
+      "judgment": "Request five console routes with no Authorization header and require a 401 or 403 on every one.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R19",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "Sign-in returns a token for a seeded account and returns none for a wrong password.",
+      "judgment": "Sign in with the corpus password and require a token, then sign in with a wrong password and require a client error carrying no token.",
+      "evidence": [
+        "http-response-body",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R20",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The plan endpoint carries the pinned minor-unit prices under both billing periods.",
+      "judgment": "Read the plans under each period and require the pinned monthly and annual figures in each of the three priced plans.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R21",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The catalogue reports the seeded connector total, pages at the default size and filters by type.",
+      "judgment": "Read the catalogue unfiltered and by type and require the seeded total, the default page size and a node type match on every returned row.",
+      "evidence": [
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R22",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "A catalogue page past the last page returns an empty result set carrying the correct total.",
+      "judgment": "Request a page number beyond the end and require a success status, an empty result list and the seeded total.",
+      "evidence": [
+        "http-response-body",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R23",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "A case study article carries its whole quote and its attribution.",
+      "judgment": "Read the index, open the Vantage article and require the pinned author, the pinned job title and a non-empty quote.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R24",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "The contact form refuses invalid input on the server and writes nothing.",
+      "judgment": "Post a malformed address and an unticked consent, require client errors that name the field, and compare the stored row count across both.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R25",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A submission filling an unattended decoy field is refused and a burst from one address is throttled.",
+      "judgment": "Post with a decoy field filled and require a refusal with nothing stored, then post repeatedly and require at least one refusal.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R26",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "A good contact submission is stored with its consent wording, its consent time and its three campaign fields.",
+      "judgment": "Post a valid submission and read back the stored row, requiring consent true, a non-empty consent text, a consent time and the three campaign values.",
+      "evidence": [
+        "database-row",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R27",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Every seeded project, account, workflow and plan exists exactly as the brief pins it.",
+      "judgment": "Read the seeded rows by their pinned names and require each to be present with the pinned counts.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R28",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "An address that does not exist answers not found and renders the product's own page.",
+      "judgment": "Request an invented address and the three mined fragments and require a 404 carrying the not-found page's own wording.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R29",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "Every public route declares its own title and its own description and no two share either.",
+      "judgment": "Fetch ten public routes, read the title element and the description meta of each, and require no duplicate among them.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R30",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "http-response-body",
+      "criterion": "The site declares a favicon in the document head and serves it.",
+      "judgment": "Read the home document for an icon link element and fetch the address it declares, requiring a success status and a non-empty body.",
+      "evidence": [
+        "http-response-body",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R31",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "http-status-code",
+      "criterion": "The health route answers a success status once the app is ready.",
+      "judgment": "Request the health route and require the pinned status.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R32",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "Every response carries the standard security headers and nothing the browser downloads carries a credential.",
+      "judgment": "Read the home response headers for a strict transport policy and a nosniff policy, then scan the document body for each seeded secret.",
+      "evidence": [
+        "http-response-body",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R33",
+      "dimension": "functionality",
+      "weight": 1,
+      "evaluation_target": "database-row",
+      "criterion": "The credential file at the app root names every seeded account with the seeded password.",
+      "judgment": "Read the file the deployment contract pins and require the password plus each seeded address, then require both reserved directories to exist.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R34",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A request carrying a token the server never issued is refused and changes nothing.",
+      "judgment": "Post a decision with an unresolvable bearer token, require a client-error refusal, and compare the approvals rows across the attempt.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R35",
+      "dimension": "ui_visual",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The console reads as a working interface rather than a marketing page.",
+      "judgment": "A person looks at the run board and the canvas and decides whether the density, the restraint and the absence of an oversized hero read as operational.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "judged"
+    },
+    {
+      "id": "R36",
+      "dimension": "ui_visual",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The dark palette holds its relationships and its exclusivity rules.",
+      "judgment": "A person checks that body text is the warm near-white rather than pure white, that the call-to-action gradient appears on one action per page, and that the light conference family appears only in the announcement bar.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "judged"
+    },
+    {
+      "id": "R37",
+      "dimension": "ux_flow",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "The path from a queued run to a resumed run reads as one continuous journey.",
+      "judgment": "A person follows the run from the board through the run detail to the approvals queue and the confirmation page and decides whether each step leads to the next without a dead end.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "judged"
+    }
+  ]
+}

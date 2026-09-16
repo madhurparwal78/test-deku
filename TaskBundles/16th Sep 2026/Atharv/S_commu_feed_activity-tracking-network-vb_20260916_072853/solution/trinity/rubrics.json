@@ -1,0 +1,289 @@
+{
+  "banner": "GENERATED SECTION. DO NOT HAND-EDIT.",
+  "source_of_truth": "solution/trinity/grounding.yaml",
+  "task": "deku/activity-tracking-network-vb",
+  "schema": [
+    "id",
+    "dimension",
+    "weight",
+    "evaluation_target",
+    "criterion",
+    "judgment",
+    "evidence",
+    "mode"
+  ],
+  "compiled_weight_share": 1.0,
+  "items": [
+    {
+      "id": "R1",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "leaderboard-rows",
+      "criterion": "A viewer who cannot see a hidden athlete is shown ranks running from one with no gap, and a total that counts only the rows that viewer can see.",
+      "judgment": "Read the seeded segment's leaderboard as an athlete who is not an accepted follower of the followers-only athlete, require the ranks to be exactly one upward with no gap, require that athlete absent, and require the reported total to equal the row count.",
+      "evidence": [
+        "leaderboard-rows",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R2",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A blocked athlete reaches the blocker's content by no read path at all.",
+      "judgment": "As the blocked seeded athlete, request the blocker's profile, their activity, the segment leaderboard, the shared club, the challenge standings and a search for their name, and require each to refuse or omit them while the remaining ranks stay contiguous.",
+      "evidence": [
+        "http-status-code",
+        "user-facing-list"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R3",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "Every capability reserved for a subscriber is refused to a free athlete by the server rather than by the interface.",
+      "judgment": "Call the heatmap, the route list and the route-save endpoint with a free athlete's valid session and require a client-error refusal on each.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R4",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "object-store-key",
+      "criterion": "The raw upload is retained in the object store, byte for byte, under a key derived from the hash of its own content.",
+      "judgment": "Upload a track, read the upload row's key, require it to begin with the pinned prefix and to carry both the upload identifier and the hash of the submitted bytes, and require an object to exist at that key.",
+      "evidence": [
+        "object-store-key",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R5",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "A second upload of one ride is caught as a suspected duplicate before any segment effort exists for it.",
+      "judgment": "Upload one track twice, require the second to terminate at duplicate_suspected naming the activity it duplicates, and require the candidate to hold no segment effort.",
+      "evidence": [
+        "database-row",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R6",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "A segment match requires the activity to follow the geometry in order and in direction inside a corridor, so a drifting traverse matches and an endpoints-only pass does not.",
+      "judgment": "Upload a traverse carrying lateral drift and require one effort; upload a track reaching both endpoints by another road and require none.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R7",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "A traverse ridden in the wrong direction produces no effort.",
+      "judgment": "Upload the seeded segment's geometry reversed and require no effort on that segment.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R8",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "The effort's start instant is interpolated between samples rather than snapped to one of them.",
+      "judgment": "Upload a traverse at the pinned sample rate and require the effort's offset from the activity start to be off the sample grid.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R9",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Moving time and elapsed time are two separate figures on every summary, and average speed divides by moving time.",
+      "judgment": "Read the reference activity's summary, require the pinned elapsed and moving figures with their pinned difference, and require the average speed to match distance over moving time rather than over elapsed time.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R10",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Distance is measured on a spheroid, so a due-east track at a high latitude reports its true length.",
+      "judgment": "Upload a synthesised due-east track of the pinned length at the pinned latitude and require the measured distance within a small tolerance of that length rather than near its cosine.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R11",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Elevation gain comes from a smoothed altitude series above a threshold, so a flat route reports near nothing.",
+      "judgment": "Upload a track whose altitude never changes and require the reported gain at or below the pinned ceiling.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R12",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Average pace is computed by averaging speed and inverting rather than by averaging the pace values.",
+      "judgment": "Upload a run of one kilometre at each of the two pinned paces and require the reported average to be the pinned one rather than the arithmetic mean of the two.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R13",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "api-response",
+      "criterion": "A best effort over a distance class is found by scanning the distance stream rather than by splitting from the start.",
+      "judgment": "Upload a run whose fastest five kilometres begins at the pinned offset and require the reported window to begin near that offset rather than at zero.",
+      "evidence": [
+        "api-response"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R14",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Changing an activity's type clears every effort and achievement derived under the old type.",
+      "judgment": "Upload a ride that matches a riding segment, change its type to a run, and require the riding efforts gone and no achievement from the old type surviving.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R15",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "api-response",
+      "criterion": "No read path returns a privacy zone, including to the athlete who drew it.",
+      "judgment": "Read the zone list, the owner's profile and the data export, and require the stored centre to appear in none of them while the radius is still reported.",
+      "evidence": [
+        "api-response",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R16",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "api-response",
+      "criterion": "An activity truncated by a privacy zone reports the full distance and time and says on the page that the map is partial.",
+      "judgment": "Upload a track beginning inside the seeded zone, require the activity marked truncated, require a positive distance, and require the public read to say the map is partial.",
+      "evidence": [
+        "api-response",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R17",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "api-response",
+      "criterion": "The feed pages by cursor, so an activity uploaded between two page reads is neither skipped nor repeated.",
+      "judgment": "Read one page, have a followed athlete upload, read the next page by the returned cursor and require no row to appear in both.",
+      "evidence": [
+        "api-response"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R18",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "api-response",
+      "criterion": "A feed page carries no time-series, reading summaries and the coarsest route line instead.",
+      "judgment": "Read a feed page and require no heart-rate, cadence, power or gradient series anywhere in the response.",
+      "evidence": [
+        "api-response"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R19",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "Repeated kudos on one activity inside the configured window collect into a single notification carrying a count.",
+      "judgment": "Have three athletes give kudos on one activity inside the window and require exactly one notification row for the owner, carrying an actor count of at least three.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R20",
+      "dimension": "functionality",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A sign-in for an unregistered address is indistinguishable from a sign-in with a wrong password.",
+      "judgment": "Post both and require the same status and the same body.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R21",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A gift purchase completes with no session at all and issues a redemption code.",
+      "judgment": "Post a gift with no bearer token and require a created purchase carrying a redemption code that exists in storage.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R22",
+      "dimension": "functionality",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "An achievement stores the day it was earned and survives the athlete being beaten.",
+      "judgment": "Read the achievements minted from the seeded segment's efforts and require each to carry a kind from the closed set and an earned date.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    }
+  ]
+}

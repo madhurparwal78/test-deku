@@ -1,0 +1,644 @@
+- id: visitor_finishes_first_lesson_and_extends_streak
+  purpose: A visitor tries a subject from the picker, signs up, finishes a twelve-exercise lesson and sees the streak cover today
+  substeps:
+    - kind: browser
+      do: Open `/` and read the hero, the two actions and the four claim sections in their strict alternation
+      cov: C-FE-01
+    - kind: browser
+      do: Scroll the subject picker with the pointer, by drag and with the arrow keys, then press the `Chess` row
+      cov: C-CF-71
+    - kind: browser
+      do: Answer a sample exercise and watch the result appear without a page load
+      cov: C-CF-72
+    - kind: browser
+      do: Press `GET STARTED`, sign up, and land on `/learn`
+      cov: C-UF-03
+    - kind: browser
+      do: Walk the path to the next unit, answer twelve exercises, and read the summary
+      cov: C-UF-04
+    - kind: browser
+      do: Read the path chrome: the streak flame, the points gem, the hearts and the league trophy
+      cov: C-FE-02
+    - kind: pytest
+      test: test_output.py::test_lesson_session_is_assembled_with_twelve_exercises
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-10
+    - kind: pytest
+      test: test_output.py::test_session_exercise_list_is_fixed_after_assembly
+      category: business_rule
+      weight: 3
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_session_assembly_respects_type_and_concept_runs
+      category: business_rule
+      weight: 3
+      cov: C-CF-12
+    - kind: pytest
+      test: test_output.py::test_attempt_states_are_the_four_pinned_values
+      category: business_rule
+      weight: 3
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_reconcile_recomputes_awards_from_stored_attempts
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_points_awarded_match_the_pinned_table
+      category: business_rule
+      weight: 3
+      cov: C-CF-39
+    - kind: pytest
+      test: test_output.py::test_streak_is_recomputed_from_history_on_read
+      category: data_integrity
+      weight: 5
+      cov: C-CF-34,C-DM-07
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_ok
+      category: presentation
+      weight: 1
+      cov: C-DC-01,C-DC-06,C-DC-07,C-DC-08,C-DC-09,C-DC-10
+    - kind: pytest
+      test: test_output.py::test_seeded_learner_can_sign_in_with_pinned_password
+      category: security
+      weight: 5
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_user_readme_carries_every_seeded_login
+      category: presentation
+      weight: 1
+      cov: C-DC-02
+    - kind: pytest
+      test: test_output.py::test_learner_routes_resolve_at_their_pinned_addresses
+      category: presentation
+      weight: 1
+      cov: C-DC-05,C-TR-04,C-UF-02
+    - kind: pytest
+      test: test_output.py::test_subject_picker_lists_forty_two_subjects_in_promoted_order
+      category: business_rule
+      weight: 3
+      cov: C-CF-03,C-DM-10
+    - kind: pytest
+      test: test_output.py::test_feed_route_serves_the_same_page_as_the_root
+      category: presentation
+      weight: 1
+      cov: C-CF-62
+- id: duplicate_session_report_does_not_double_count
+  purpose: Reporting one finished session twice leaves every stored total exactly as the first report left it
+  substeps:
+    - kind: browser
+      do: Sign in as `learner@example.com`, finish a lesson, then read the points and the streak on the session summary
+      cov: C-UF-05
+    - kind: browser
+      do: Reload the session summary and read the same points and the same streak
+      cov: C-UF-06
+    - kind: browser
+      do: Open `/history` and read exactly one entry for that lesson
+      cov: C-FE-03
+    - kind: pytest
+      test: test_output.py::test_session_reconcile_is_idempotent_and_does_not_double_count
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-17,C-DM-06
+    - kind: pytest
+      test: test_output.py::test_attempt_rows_persist_and_survive_a_reread
+      category: data_integrity
+      weight: 5
+      cov: C-DM-01,C-DM-04
+    - kind: pytest
+      test: test_output.py::test_enrolment_is_idempotent_for_one_subject
+      category: data_integrity
+      weight: 5
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_across_a_restart
+      category: data_integrity
+      weight: 5
+      cov: C-DM-03
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+      cov: C-DC-03
+- id: concurrent_session_reports_resolve_to_one
+  purpose: Two reports of one session arriving together produce exactly one accepted result with no partial state
+  substeps:
+    - kind: browser
+      do: Sign in as `learner@example.com` and open `/profile` to read the weekly total before the session
+      cov: C-UF-07
+    - kind: browser
+      do: Finish a lesson, reopen `/profile`, and read a total that moved by one award rather than two
+      cov: C-UF-08
+    - kind: pytest
+      test: test_output.py::test_concurrent_session_reports_produce_one_accepted_result
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-18
+    - kind: pytest
+      test: test_output.py::test_out_of_order_attempt_report_is_refused_and_stores_nothing
+      category: validation
+      weight: 3
+      cov: C-CF-20
+    - kind: pytest
+      test: test_output.py::test_attempt_faster_than_the_human_floor_earns_nothing
+      category: business_rule
+      weight: 3
+      cov: C-CF-21
+    - kind: pytest
+      test: test_output.py::test_browser_clock_offset_never_moves_an_award
+      category: data_integrity
+      weight: 5
+      cov: C-CF-22
+- id: cross_account_progress_read_is_denied
+  purpose: A learner reaching for another account's progress, hearts, streak or attempts is denied by the server with nothing changed
+  substeps:
+    - kind: browser
+      do: Sign in as `learner2@example.com` and confirm `/learn` shows only that account's own path
+      cov: C-UF-09
+    - kind: browser
+      do: Sign in as `learner3@example.com`, run the hearts to nothing, and read routes offering practice or waiting with no price anywhere
+      cov: C-FE-04
+    - kind: pytest
+      test: test_output.py::test_cross_account_progress_read_is_denied_at_the_api
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-02
+    - kind: pytest
+      test: test_output.py::test_learner_cannot_write_a_derived_total_directly
+      category: security
+      weight: 5
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_password_hash_is_never_returned_by_any_endpoint
+      category: security
+      weight: 5
+      cov: C-CF-50,C-TR-03
+    - kind: pytest
+      test: test_output.py::test_restricted_account_is_offered_no_purchase_route
+      category: business_rule
+      weight: 3
+      cov: C-RL-05
+- id: unauthenticated_learner_route_is_denied
+  purpose: A request with no token, or with an expired token, is denied on every protected route
+  substeps:
+    - kind: browser
+      do: Open `/learn` while signed out and land on `/login` with the destination remembered
+      cov: C-UF-10
+    - kind: browser
+      do: Sign in and land on the remembered destination rather than on the default path
+      cov: C-UF-11
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_to_a_learner_route_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-03
+    - kind: pytest
+      test: test_output.py::test_expired_token_is_denied_on_every_protected_route
+      category: security
+      weight: 5
+      cov: C-CF-49
+    - kind: pytest
+      test: test_output.py::test_signup_with_existing_email_is_refused_and_writes_no_row
+      category: validation
+      weight: 3
+      cov: C-CF-01
+    - kind: pytest
+      test: test_output.py::test_invalid_call_is_a_client_error_naming_the_reason
+      category: validation
+      weight: 3
+      cov: C-DC-04
+- id: hearts_regenerate_on_read_with_carry
+  purpose: Hearts are recomputed on read from the stored refill mark, with the partial interval carried forward
+  substeps:
+    - kind: browser
+      do: Sign in as `learner@example.com`, open `/learn` with no hearts left, and read the time to the next heart
+      cov: C-FE-05
+    - kind: browser
+      do: Read the hearts readout beside the path and confirm the count matches the exercise player
+      cov: C-FE-06
+    - kind: browser
+      do: Finish a practice session and read the heart count move by one
+      cov: C-FE-07
+    - kind: pytest
+      test: test_output.py::test_hearts_regenerate_on_read_and_carry_the_partial_interval
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-29,C-DM-08
+    - kind: pytest
+      test: test_output.py::test_practice_restores_one_heart_at_most_once_per_interval
+      category: business_rule
+      weight: 3
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_lesson_progress_survives_running_out_of_hearts
+      category: business_rule
+      weight: 3
+      cov: C-CF-32
+- id: wrong_answer_in_lesson_costs_a_heart
+  purpose: A wrong answer costs a heart in a lesson and costs nothing in a review
+  substeps:
+    - kind: browser
+      do: Answer a lesson exercise wrongly and read the incorrect state carried by a cross shape with a word beside it
+      cov: C-UX-04
+    - kind: browser
+      do: Read the canonical answer shown under the wrong answer
+      cov: C-FE-08
+    - kind: browser
+      do: Close the tab mid-session, return to `/learn`, and read the offer to resume rather than a silent resume
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_wrong_answer_in_a_lesson_costs_one_heart
+      category: business_rule
+      weight: 3
+      cov: C-CF-30
+    - kind: pytest
+      test: test_output.py::test_wrong_answer_in_a_review_costs_no_heart
+      category: business_rule
+      weight: 3
+      cov: C-CF-31
+    - kind: pytest
+      test: test_output.py::test_wrong_answer_is_requeued_once_as_a_different_exercise
+      category: business_rule
+      weight: 3
+      cov: C-CF-14
+    - kind: pytest
+      test: test_output.py::test_frustration_guard_ends_a_concept_after_three_wrong
+      category: business_rule
+      weight: 3
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_interrupted_session_is_resumable_and_offered
+      category: business_rule
+      weight: 3
+      cov: C-CF-16
+- id: streak_survives_a_timezone_change
+  purpose: Changing timezone, crossing a daylight transition or repairing a lapse never shortens a completed streak
+  substeps:
+    - kind: browser
+      do: Open `/settings` as `learner@example.com` and read the timezone, the day shift and the daily goal
+      cov: C-UF-13
+    - kind: browser
+      do: Change the timezone to `Pacific/Auckland` and read the streak count unchanged on `/profile`
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_timezone_change_does_not_shorten_the_streak
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-35
+    - kind: pytest
+      test: test_output.py::test_day_boundary_survives_both_daylight_transitions
+      category: data_integrity
+      weight: 5
+      cov: C-CF-36
+    - kind: pytest
+      test: test_output.py::test_streak_repair_restores_the_exact_previous_length
+      category: business_rule
+      weight: 3
+      cov: C-CF-38
+- id: freeze_is_consumed_at_most_once_per_local_date
+  purpose: A repeated day-boundary pass consumes no second freeze for one missed day
+  substeps:
+    - kind: browser
+      do: Sign in as `learner@example.com` after a missed day and read the freeze message on the path
+      cov: C-FE-09
+    - kind: browser
+      do: Open `/history` and read the missed day marked as a freeze rather than as a gap
+      cov: C-FE-10
+    - kind: pytest
+      test: test_output.py::test_streak_freeze_is_consumed_once_per_local_date
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-37
+- id: league_promotion_line_breaks_a_tie
+  purpose: The weekly board partitions into promotion and demotion zones and breaks a tie by the earlier last earning time
+  substeps:
+    - kind: browser
+      do: Sign in as `learner2@example.com`, open `/league`, and read twelve rows with the promotion zone across the top seven
+      cov: C-FE-11
+    - kind: browser
+      do: Read the demotion zone across the bottom five rows
+      cov: C-FE-12
+    - kind: browser
+      do: Read the deadline shown converted into `Africa/Nairobi`
+      cov: C-FE-13
+    - kind: pytest
+      test: test_output.py::test_cohort_standings_order_breaks_ties_by_earlier_earner
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-41
+    - kind: pytest
+      test: test_output.py::test_cohort_holds_twelve_seeded_members_at_bronze
+      category: business_rule
+      weight: 3
+      cov: C-DM-02
+    - kind: pytest
+      test: test_output.py::test_promotion_and_demotion_zones_partition_the_board
+      category: business_rule
+      weight: 3
+      cov: C-CF-40
+    - kind: pytest
+      test: test_output.py::test_cohort_week_closes_at_one_instant_and_freezes
+      category: business_rule
+      weight: 3
+      cov: C-CF-42
+    - kind: pytest
+      test: test_output.py::test_own_standings_row_is_current_after_earning
+      category: business_rule
+      weight: 3
+      cov: C-CF-43
+- id: answer_matching_accepts_a_typo_with_a_note
+  purpose: A near miss inside the distance threshold is accepted with a note, and a near miss that is another taught word is not
+  substeps:
+    - kind: browser
+      do: Answer a translation exercise with one letter transposed and read the typo note beside the accepted answer
+      cov: C-UX-05
+    - kind: browser
+      do: Answer a translation exercise with an accent missing and read the accent note
+      cov: C-UX-06
+    - kind: browser
+      do: Tap a placed word back out of the answer and watch it return to its original place in the bank
+      cov: C-FE-14
+    - kind: pytest
+      test: test_output.py::test_typo_within_threshold_is_accepted_with_a_note
+      category: business_rule
+      weight: 3
+      cov: C-CF-54
+    - kind: pytest
+      test: test_output.py::test_missing_accent_is_accepted_with_a_note
+      category: business_rule
+      weight: 3
+      cov: C-CF-55
+    - kind: pytest
+      test: test_output.py::test_near_miss_that_is_a_taught_word_is_marked_incorrect
+      category: business_rule
+      weight: 3
+      cov: C-CF-56
+    - kind: pytest
+      test: test_output.py::test_normalization_order_is_applied_before_comparison
+      category: business_rule
+      weight: 3
+      cov: C-CF-53
+    - kind: pytest
+      test: test_output.py::test_accepted_answer_set_expands_from_the_declared_grammar
+      category: business_rule
+      weight: 3
+      cov: C-CF-52
+    - kind: pytest
+      test: test_output.py::test_free_word_order_answer_is_matched_as_a_multiset
+      category: business_rule
+      weight: 3
+      cov: C-CF-57
+    - kind: pytest
+      test: test_output.py::test_free_text_answer_is_never_filtered_by_character
+      category: business_rule
+      weight: 3
+      cov: C-CF-60
+    - kind: pytest
+      test: test_output.py::test_word_bank_holds_no_valid_alternative_answer
+      category: business_rule
+      weight: 3
+      cov: C-CF-58
+    - kind: pytest
+      test: test_output.py::test_word_bank_shuffle_is_stable_across_a_reload
+      category: business_rule
+      weight: 3
+      cov: C-CF-59
+    - kind: pytest
+      test: test_output.py::test_regrade_refunds_hearts_without_touching_standings
+      category: business_rule
+      weight: 3
+      cov: C-CF-61
+- id: session_in_a_closed_subject_is_invalid
+  purpose: Starting a session in a subject that is not open is refused as invalid and writes nothing
+  substeps:
+    - kind: browser
+      do: Open the subject page for a subject that is not open and read that it is not open yet, with the picker offered underneath
+      cov: C-CF-73
+    - kind: browser
+      do: Confirm no start control is offered on a subject that is not open
+      cov: C-CF-74
+    - kind: pytest
+      test: test_output.py::test_session_start_in_a_closed_subject_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-51
+    - kind: pytest
+      test: test_output.py::test_only_three_subjects_are_open
+      category: business_rule
+      weight: 3
+      cov: C-CF-04
+    - kind: pytest
+      test: test_output.py::test_subject_content_safety_checks_refuse_a_bad_subject
+      category: validation
+      weight: 3
+      cov: C-CF-47
+    - kind: pytest
+      test: test_output.py::test_subject_graph_is_validated_at_load
+      category: business_rule
+      weight: 3
+      cov: C-CF-46
+    - kind: pytest
+      test: test_output.py::test_audio_exercise_types_are_suppressed_and_subjects_stay_completable
+      category: business_rule
+      weight: 3
+      cov: C-CN-02,C-CN-04
+- id: unknown_address_renders_the_not_found_page
+  purpose: An unknown address answers not found with the product's own page and an honest title
+  substeps:
+    - kind: browser
+      do: Open an address that exists nowhere and read the product's own not-found page with its character
+      cov: C-FE-15
+    - kind: browser
+      do: Read the failed address printed on the page beside a link back to the subject index
+      cov: C-CF-75
+    - kind: browser
+      do: Open an address that looks like a mistyped subject and read the distinct page carrying the picker
+      cov: C-CF-76
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_with_the_pinned_title
+      category: presentation
+      weight: 1
+      cov: C-CF-66
+    - kind: pytest
+      test: test_output.py::test_mistyped_subject_address_renders_the_picker_page
+      category: presentation
+      weight: 1
+      cov: C-CF-67
+    - kind: pytest
+      test: test_output.py::test_empty_history_renders_its_own_empty_state
+      category: presentation
+      weight: 1
+      cov: C-UF-01
+    - kind: pytest
+      test: test_output.py::test_long_form_pages_carry_contents_and_a_dated_summary
+      category: presentation
+      weight: 1
+      cov: C-CF-69
+- id: public_pages_have_no_broken_internal_link
+  purpose: Every internal link on every public route resolves, and every public route carries its own preview and its terms link
+  substeps:
+    - kind: browser
+      do: Open `/`, walk the footer's six groups, and follow every entry that is a link
+      cov: C-FE-16
+    - kind: browser
+      do: Read the site-language list under the footer and confirm each language is written in its own name
+      cov: C-CF-77
+    - kind: browser
+      do: Open the do-not-sell control, refuse one category, reload, and read the recorded decision
+      cov: C-CF-78
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_a_public_route_resolves
+      category: presentation
+      weight: 1
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_unique_preview_titles
+      category: presentation
+      weight: 1
+      cov: C-TR-01
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_linked_from_the_signup_form
+      category: presentation
+      weight: 1
+      cov: C-CF-65
+    - kind: pytest
+      test: test_output.py::test_no_learner_count_or_efficacy_claim_appears
+      category: presentation
+      weight: 1
+      cov: C-CF-63
+    - kind: pytest
+      test: test_output.py::test_no_address_outside_the_application_is_referenced
+      category: security
+      weight: 5
+      cov: C-CN-01,C-CN-05,C-TR-02
+    - kind: pytest
+      test: test_output.py::test_first_view_of_the_marketing_page_ships_no_binary
+      category: presentation
+      weight: 1
+      cov: C-CF-70
+    - kind: pytest
+      test: test_output.py::test_body_text_meets_the_contrast_bar
+      category: presentation
+      weight: 1
+      cov: C-UX-01
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+      cov: C-UX-02
+    - kind: pytest
+      test: test_output.py::test_pinned_session_copy_appears_verbatim
+      category: presentation
+      weight: 1
+      cov: C-UX-03
+    - kind: pytest
+      test: test_output.py::test_page_views_are_recorded_and_readable_by_their_owner
+      category: business_rule
+      weight: 3
+      cov: C-CF-68
+- id: subject_sample_is_playable_without_an_account
+  purpose: A visitor answers a real exercise on a subject page with no account, and that attempt is carried into the account they create
+  substeps:
+    - kind: browser
+      do: Open the English subject page signed out and read the Spanish prompt beside the English answer field
+      cov: C-CF-79
+    - kind: browser
+      do: Answer both sample exercises, then sign up from the same browser
+      cov: C-CF-80
+    - kind: browser
+      do: Open `/history` on the new account and read the sample attempts already recorded
+      cov: C-UF-15
+    - kind: pytest
+      test: test_output.py::test_subject_page_exposes_two_playable_samples
+      category: business_rule
+      weight: 3
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_sample_attempt_is_stored_without_an_account
+      category: data_integrity
+      weight: 5
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_anonymous_sample_progress_moves_to_the_new_account
+      category: data_integrity
+      weight: 5
+      cov: C-CF-02
+    - kind: pytest
+      test: test_output.py::test_english_subject_is_taught_from_spanish
+      category: business_rule
+      weight: 3
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_two_language_runs_declare_their_own_language
+      category: presentation
+      weight: 1
+      cov: C-CF-08
+- id: memory_model_schedules_by_concept
+  purpose: The scheduler holds a per-concept trace whose half-life, due time and backlog behaviour follow the pinned rules
+  substeps:
+    - kind: browser
+      do: Open `/profile` and read the strong skills, the skills needing practice and what is due today
+      cov: C-FE-17
+    - kind: browser
+      do: Confirm no percentage, no mastery score and no draining bar appears on `/profile`
+      cov: C-CF-81
+    - kind: browser
+      do: Open `/learn` after a long absence and read a path offering a normal-length session rather than a backlog count
+      cov: C-CF-82
+    - kind: pytest
+      test: test_output.py::test_recall_probability_matches_the_pinned_formula
+      category: business_rule
+      weight: 3
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_due_time_matches_the_pinned_formula
+      category: business_rule
+      weight: 3
+      cov: C-CF-25
+    - kind: pytest
+      test: test_output.py::test_traces_are_rebuildable_from_the_attempt_log
+      category: data_integrity
+      weight: 5
+      cov: C-CF-23,C-DM-05
+    - kind: pytest
+      test: test_output.py::test_trace_evaluation_is_deterministic
+      category: business_rule
+      weight: 3
+      cov: C-CF-26
+    - kind: pytest
+      test: test_output.py::test_returning_learner_is_not_buried_by_the_backlog
+      category: business_rule
+      weight: 3
+      cov: C-CF-27
+    - kind: pytest
+      test: test_output.py::test_ability_estimate_moves_without_loosening_grading
+      category: business_rule
+      weight: 3
+      cov: C-CF-28
+    - kind: pytest
+      test: test_output.py::test_unit_progress_is_never_reduced_by_a_write
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-44,C-DM-09
+    - kind: pytest
+      test: test_output.py::test_session_is_pinned_to_a_subject_version_at_assembly
+      category: business_rule
+      weight: 3
+      cov: C-CF-45
+    - kind: pytest
+      test: test_output.py::test_untranslated_guidebook_falls_back_with_a_marker
+      category: presentation
+      weight: 1
+      cov: C-CF-48

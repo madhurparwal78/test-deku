@@ -1,0 +1,366 @@
+- id: visitor_leaves_with_a_graphic
+  purpose: A signed-out visitor picks a tool, changes a control and leaves with the graphic
+  substeps:
+    - kind: browser
+      do: Open the tile index and verify the seeded tools appear as a grid of cards with their names set in lower case
+      cov: C-CF-137, C-CF-138, C-CF-139, C-CF-141, C-CF-146, C-DM-18, C-UF-01, C-UF-54, C-UX-69, C-UX-70, C-UX-71, C-UX-74, C-UX-89
+    - kind: browser
+      do: Verify the retired tool vvvanish is absent from the tile grid
+    - kind: browser
+      do: Open the tool bbblob and verify a preview is already drawn before any control is touched
+      cov: C-UF-30, C-UX-75
+    - kind: browser
+      do: Change one control and verify the preview redraws without a full page load
+      cov: C-CF-157, C-OV-04, C-OV-05, C-RL-01, C-TR-03, C-UF-31, C-UX-34, C-UX-43
+    - kind: browser
+      do: Use the copy action and verify the action confirms in place by changing its own label
+      cov: C-UF-32, C-UX-46, C-UX-76
+    - kind: browser
+      do: Verify the full tile grid repeats beneath the tool's own content
+      cov: C-UF-33, C-UX-68, C-UX-78
+    - kind: pytest
+      test: test_output.py::test_seeded_tiles_are_listed_in_stored_order
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_retired_generator_keeps_its_route_and_leaves_the_grid
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_data_model_tables_and_columns_exist
+      category: data_integrity
+      weight: 5
+      critical: true
+
+- id: derived_address_reproduces_the_worked_example
+  purpose: The published derivation reproduces the identifier the brief pins
+  substeps:
+    - kind: browser
+      do: Signed in as an author, open the save surface for a tool and verify the derived address is shown before anything is saved
+      cov: C-UF-03, C-UF-18, C-UF-34, C-UX-79, C-UX-80
+    - kind: browser
+      do: Verify the derived address is labelled as derived from the settings rather than as assigned
+      cov: C-UX-08, C-UX-38, C-UX-54
+    - kind: pytest
+      test: test_output.py::test_worked_example_canonical_string_derives_its_pinned_identifier
+      category: core_outcome
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_saved_preset_identifier_matches_the_recomputed_derivation
+      category: core_outcome
+      weight: 5
+      critical: true
+
+- id: identical_settings_save_once
+  purpose: Saving one set of settings twice yields one row and one identifier
+  substeps:
+    - kind: browser
+      do: Signed in as an author, save a set of settings, return to the same tool, reproduce the settings and save again
+    - kind: browser
+      do: Verify the author's own preset list shows one entry for those settings rather than two
+      cov: C-TR-28, C-UX-63
+    - kind: pytest
+      test: test_output.py::test_second_save_of_identical_settings_returns_one_identifier
+      category: business_rule
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_second_save_of_identical_settings_leaves_one_row
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_a_supplied_identifier_on_a_save_is_ignored
+      category: security
+      weight: 5
+
+- id: concurrent_identical_saves_keep_one_row
+  purpose: Two authors saving identical settings at once do not both create a row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_identical_saves_leave_exactly_one_row
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_concurrent_identical_saves_return_one_identifier_to_both
+      category: business_rule
+      weight: 5
+      critical: true
+
+- id: private_preset_is_refused_to_the_public
+  purpose: A private preset is unreachable from a listing and from its own address
+  substeps:
+    - kind: browser
+      do: Signed out, open the gallery and verify the private seeded preset title is absent
+      cov: C-CF-119, C-UX-85
+    - kind: browser
+      do: Signed out, open the private preset's own address and verify the product's own not-found page renders
+      cov: C-UF-55
+    - kind: pytest
+      test: test_output.py::test_private_preset_is_absent_from_the_gallery
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_private_preset_address_is_refused_to_every_caller_but_its_owner
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_private_refusal_is_indistinguishable_from_an_unknown_identifier
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_owner_reads_their_own_private_preset
+      category: core_outcome
+      weight: 5
+
+- id: private_export_is_refused
+  purpose: The rendered export of a private preset is refused with the preset
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_private_preset_export_is_refused_to_every_caller_but_its_owner
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_published_preset_export_is_served_to_anyone
+      category: core_outcome
+      weight: 5
+
+- id: render_object_exists_at_its_content_key
+  purpose: A render writes real bytes into the bucket at a key derived from those bytes
+  substeps:
+    - kind: browser
+      do: Signed in as an author, use the export action on an owned preset and verify a file is offered
+      cov: C-UX-77
+    - kind: pytest
+      test: test_output.py::test_render_object_exists_in_the_bucket_at_its_content_key
+      category: core_outcome
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_render_object_key_is_the_digest_of_the_stored_bytes
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_render_bytes_are_not_stored_in_the_database
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_two_identical_renders_store_one_object
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_declared_stack_and_environment_are_in_use
+      category: data_integrity
+      weight: 5
+      critical: true
+
+- id: rejected_renders_write_no_object
+  purpose: An oversized or wrong-format render is refused and leaves the store untouched
+  substeps:
+    - kind: browser
+      do: Ask for an export in a format the product does not offer and verify the refusal names the format rather than failing silently
+    - kind: pytest
+      test: test_output.py::test_oversized_render_is_refused_and_writes_no_object
+      category: validation
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_unsupported_render_format_is_refused_and_writes_no_object
+      category: validation
+      weight: 5
+      critical: true
+
+- id: unlisted_resolves_and_stays_out_of_the_gallery
+  purpose: An unlisted preset is reachable by address and absent from every feed
+  substeps:
+    - kind: browser
+      do: Open the save surface signed in and verify the unlisted option is described as shareable rather than as secret
+      cov: C-UX-81
+    - kind: pytest
+      test: test_output.py::test_unlisted_preset_resolves_for_any_caller_holding_the_address
+      category: business_rule
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_unlisted_preset_is_absent_from_the_gallery
+      category: security
+      weight: 5
+      critical: true
+
+- id: publication_creates_one_entry
+  purpose: Publishing requires an account and a title and creates one gallery entry
+  substeps:
+    - kind: browser
+      do: Signed in as an author, publish an owned preset and verify the surface is replaced by a full-page confirmation naming the entry address
+      cov: C-CF-120, C-UF-22, C-UF-42, C-UX-91, C-UX-92, C-UX-95
+    - kind: browser
+      do: Verify the confirmation states that publication is attributable and one-way
+      cov: C-UX-93, C-UX-94
+    - kind: pytest
+      test: test_output.py::test_publication_creates_one_live_gallery_entry
+      category: core_outcome
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_publication_without_an_account_is_refused
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_publication_without_a_title_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_entry_tags_are_read_back_in_stored_order
+      category: data_integrity
+      weight: 5
+
+- id: republishing_returns_the_existing_entry
+  purpose: Publishing the same content twice does not create a second entry
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_publishing_an_already_published_preset_returns_the_existing_entry
+      category: business_rule
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_publishing_twice_leaves_one_gallery_entry
+      category: data_integrity
+      weight: 5
+      critical: true
+
+- id: fork_records_its_parent
+  purpose: A fork names its parent and raises the parent's stored fork count by one
+  substeps:
+    - kind: browser
+      do: Open a gallery entry signed in as a second author and verify the entry shows its fork count
+      cov: C-CF-122, C-UF-51, C-UX-84, C-UX-87
+    - kind: browser
+      do: Fork the entry, change one control, save, and verify the new preset names the original as its parent
+      cov: C-CF-80, C-UF-44, C-UX-88
+    - kind: pytest
+      test: test_output.py::test_fork_records_exactly_one_parent
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_fork_raises_the_parent_stored_fork_count_by_one
+      category: business_rule
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_forking_without_changing_a_setting_returns_the_parent
+      category: business_rule
+      weight: 3
+
+- id: tombstone_keeps_lineage_resolvable
+  purpose: Deleting a forked preset keeps its children's ancestry resolvable
+  substeps:
+    - kind: browser
+      do: Open the address of a deleted preset that has forks and verify a withdrawn page renders rather than a not-found page
+      cov: C-CF-100, C-UF-58
+    - kind: pytest
+      test: test_output.py::test_deleting_a_forked_preset_tombstones_it_rather_than_removing_it
+      category: business_rule
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_child_resolves_its_ancestry_through_a_tombstoned_parent
+      category: data_integrity
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_tombstoned_preset_is_absent_from_the_gallery
+      category: security
+      weight: 5
+
+- id: reader_write_is_denied
+  purpose: A reader session is refused at every author-only endpoint
+  substeps:
+    - kind: browser
+      do: Sign in as the reader account and verify the studio surface reports that saving belongs to accounts that can save
+      cov: C-TR-35, C-UF-17, C-UF-21, C-UF-25, C-UX-64
+    - kind: browser
+      do: Verify the reader is not sent back to the sign-in surface after that refusal
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_save_render_publish_or_fork
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_denied_reader_write_creates_no_row
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_carry_their_handles_and_roles
+      category: data_integrity
+      weight: 5
+
+- id: cross_author_write_is_forbidden
+  purpose: An author cannot write to a preset another account owns
+  substeps:
+    - kind: browser
+      do: Signed in as a second author, open the publish surface for a preset the first author owns and verify the refusal names the owner rather than reporting not found
+    - kind: pytest
+      test: test_output.py::test_cross_author_edit_publish_delete_and_render_are_forbidden
+      category: security
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_forbidden_cross_author_write_leaves_the_row_unchanged
+      category: security
+      weight: 5
+      critical: true
+
+- id: the_public_surface_holds
+  purpose: The terms page, the links, the cookie choice and form validation all hold
+  substeps:
+    - kind: browser
+      do: Verify a terms page is reachable from the footer of the tile index and is linked from the publish surface
+      cov: C-CF-177, C-CF-178, C-CF-182
+    - kind: browser
+      do: Verify a first-time visitor is asked once about non-essential cookies and is not asked again after a reload
+      cov: C-CF-183, C-CF-184, C-CF-185
+    - kind: browser
+      do: Submit the report form with an empty reason and verify the field is named inline
+      cov: C-CF-190, C-CF-191
+    - kind: browser
+      do: At a narrow viewport verify no surface scrolls sideways and every tile stays reachable
+      cov: C-UX-106, C-UX-107, C-UX-108, C-UX-109, C-UX-110, C-UX-66
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_every_public_route_resolves
+      category: presentation
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_invalid_form_input_is_rejected_and_writes_nothing
+      category: validation
+      weight: 5
+      critical: true
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_deployment_contract_holds
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_scope_out_surfaces_are_absent
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_route_in_the_brief_resolves
+      category: presentation
+      weight: 1

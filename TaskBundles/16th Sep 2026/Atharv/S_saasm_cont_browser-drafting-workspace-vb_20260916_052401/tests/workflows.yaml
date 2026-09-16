@@ -1,0 +1,419 @@
+- id: app_is_reachable_and_titled
+  purpose: The deployed app answers its health route and every page carries the pinned product title
+  substeps:
+    - kind: browser
+      do: Open the app at APP_PUBLIC_URL in a browser with no install step, read the tab title, and confirm the production build serves on the container-internal port bound to every address. Confirm the entry address resolves to the drawing library for a signed-in account and to sign-in otherwise. Confirm the app started from the environment image with no manual step, runs detached so the server outlives the build session, declares no edge function, no persistent volume, no fixed container name and no custom network, and carries no third party brand name, no proprietary font binary and no sample drawing file
+      cov: C-CN-10, C-DC-01, C-DC-04, C-DC-07, C-DC-08, C-OV-01, C-TR-01, C-TR-05, C-UF-01
+    - kind: browser
+      do: Watch the entry screen and confirm the near-black field carries the badge centred inside a ring that sweeps until the workspace is ready, driven by real progress. Confirm the badge is drawn as a softened square in the product red carrying a near-white monogram, that no logo binary ships, and that the seeded drawings geometry is generated in code
+      cov: C-FE-02, C-FE-18, C-TR-14, C-UF-10
+    - kind: browser
+      do: Set the browser to prefer reduced motion, reload, and confirm the sweeping ring holds still while the badge and every other element stay present
+      cov: C-UX-22
+    - kind: pytest
+      test: test_output.py::test_health_route_returns_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_document_title_matches_pinned_copy
+      category: presentation
+      weight: 1
+
+- id: visitor_signs_up_and_signs_in
+  purpose: Open signup creates a drafter and a login returns a working bearer token
+  substeps:
+    - kind: browser
+      do: Open the signup form, create an account with no organisation to choose and no payment to charge, then sign in and land on the drawing library. Confirm the app sends no email at any point and makes no external network call at runtime
+      cov: C-CN-01, C-CN-08
+    - kind: browser
+      do: Request a protected drawing address while signed out, confirm the app sends the visitor to sign-in, then sign in and confirm the app continues to the remembered destination
+      cov: C-UF-05
+    - kind: browser
+      do: Sign out, then use the browser back navigation and confirm the workspace that was open is unreachable
+      cov: C-UF-06
+    - kind: browser
+      do: Let the session token expire during an edit, confirm the canvas work is kept and the workspace continues the interrupted edit after a fresh sign-in
+      cov: C-UF-07
+    - kind: pytest
+      test: test_output.py::test_signup_persists_drafter_account_row
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reseeding_does_not_duplicate_seeded_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_dense_drawing_is_seeded_at_the_stated_bar
+      category: data_integrity
+      weight: 5
+
+- id: unauthenticated_caller_is_denied
+  purpose: A request with no token or an expired token reaches nothing behind the sign-in boundary
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_expired_token_is_denied
+      category: security
+      weight: 5
+
+- id: drafter_opens_the_library_and_creates_a_drawing
+  purpose: The library lists reachable drawings newest first and the three creation steps produce a drawing with its template layers
+  substeps:
+    - kind: browser
+      do: Sign in as drafter@example.com, then create a drawing across the three creation addresses, choosing a template from blank, architectural and mechanical and units from millimeters, meters, inches and feet
+    - kind: browser
+      do: Read the library card grid under its persistent left sidebar and confirm each card carries the drawing name, units, current version number, owner and a small preview of the drawing extents, reflowing by width without cutting a card off
+      cov: C-FE-13, C-FE-14
+    - kind: browser
+      do: Jump straight to the naming address with no template chosen and confirm the app returns the visitor to the first unanswered creation step
+      cov: C-CF-15
+    - kind: browser
+      do: Open the newly created drawing and confirm the empty canvas carries a message naming the command input
+      cov: C-UF-09
+    - kind: pytest
+      test: test_output.py::test_library_lists_reachable_drawings_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_created_drawing_row_carries_template_layers
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: drafter_draws_geometry_on_a_named_layer
+  purpose: An entity created on a named layer is persisted with its coordinates intact and inherits its layer colour
+  substeps:
+    - kind: browser
+      do: Open Harbour Pavilion on its near-black model background and confirm the app draws the drawing at true real-world scale on an infinite canvas, with the seeded closed rectangle ten metres along its long side, the circle, the linear dimension and the multi-line note all present. Pan, zoom about the cursor, zoom to a window, zoom to extents, zoom to previous and regenerate, then snap a line to the rectangle corner and place its far point by typing an absolute, relative, polar and direct-distance coordinate
+      cov: C-CF-27, C-DM-25, C-OV-02, C-UX-07
+    - kind: browser
+      do: Open the seeded Site Survey Grid, pan and zoom across its forty layers and twenty thousand entities, and confirm the canvas keeps tracking the pointer with detail simplified at far zoom rather than stalling, then turn one layer off and watch that layer share of the drawing leave the canvas
+    - kind: browser
+      do: Toggle grid, snap, orthogonal mode, polar tracking, object snap and lineweight display from the status bar, confirm each reads on or off, and confirm lineweight renders at a uniform hairline while display is off
+      cov: C-FE-09
+    - kind: browser
+      do: Open the layer manager, create, rename, reorder and delete a layer, colour one at the drawing index from a mid vivid red at 1 through a deep soft green at 3 and a mid vivid violet at 6 to a near-white neutral at 7, then toggle a layer off, frozen and locked and confirm its entities leave the canvas with every entity row intact and its linetype, lineweight and draw order unchanged
+      cov: C-CF-19, C-CF-41, C-CF-43, C-CF-49, C-UX-06
+    - kind: browser
+      do: Save a named layer state and restore it, isolate the layer of a picked entity, then attempt to rename and to delete the layer named Base and confirm both are refused
+      cov: C-CF-46, C-CF-47
+    - kind: browser
+      do: Dock, pop out, move, close and reopen the layers panel, confirm the dock glyph is a filled quadrant square carrying a cut-out and the close glyph a diagonal cross with squared ends, and confirm the workspace moves between these surfaces without loading a new page
+      cov: C-FE-05, C-FE-07, C-OV-06
+    - kind: browser
+      do: Select an entity and edit its full property set from the properties panel, confirm the panel shows whether a property is set directly, follows the layer or follows the block, and confirm a full layer list fits beside a full property set without scrolling
+      cov: C-CF-48, C-UX-14
+    - kind: browser
+      do: Open the docked Draft Assistant panel, ask a question about a command, read the answer in context, then dock, resize and close the panel
+      cov: C-CF-86
+    - kind: browser
+      do: Switch to the paper space layout tab in the status bar, confirm a viewport onto the model at a chosen scale, and confirm no plot to a printer and no export to a page based document is offered
+      cov: C-CF-23, C-CN-06
+    - kind: browser
+      do: Hover the cursor over seeded geometry and confirm the app marks the nearest meaningful point for endpoint, midpoint, centre, node, quadrant, intersection, extension, insertion, perpendicular, tangent, nearest, apparent intersection and parallel snaps, each drawn as its own distinct marker shape
+      cov: C-CF-25, C-FE-11
+    - kind: browser
+      do: Turn on orthogonal mode, polar tracking and object snap tracking, confirm the pointer is constrained by each, and confirm a tracking guide line is removed the moment the alignment stops holding
+      cov: C-CF-26, C-FE-12
+    - kind: browser
+      do: Type every command by its full name and again by its alias at the command input, confirm the echoed prompt and the recalled earlier input, and reach one whole command by keyboard navigation alone
+      cov: C-CF-30, C-UX-28
+    - kind: browser
+      do: Ask for an entity colour by its name from the standard named colour table and confirm the app reaches the same colour a colour index reaches
+      cov: C-UX-08
+    - kind: browser
+      do: Read the interface typography and confirm one named font family with a fallback stack and no font binary, a panel heading distinguished from body by size alone with the only heavier type on emphasised labels, stacked measurements aligned digit under digit, and body text meeting WCAG AA contrast against its background
+      cov: C-UX-09, C-UX-10, C-UX-11, C-UX-27
+    - kind: browser
+      do: Tab through the workspace and confirm every icon button shows resting, pointed-at, pressed, focused and unavailable states with a visible focus ring, unavailable signalled by more than colour, Escape closing an open surface and a destructive action confirming first
+      cov: C-UX-15, C-UX-18, C-UX-29
+    - kind: browser
+      do: Open the workspace on a touch screen and confirm two-finger pan, two-finger zoom, tap to select and long press for a context menu, with every touch target sized comfortably for a fingertip
+      cov: C-UX-25, C-UX-32
+    - kind: pytest
+      test: test_output.py::test_entity_created_on_layer_is_persisted
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_layer_row_stores_colour_index
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_entity_colour_follows_layer_when_unset
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_coordinates_round_trip_without_rounding
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Drag the dimensioned wall of Harbour Pavilion and watch the dimension value change with it
+    - kind: pytest
+      test: test_output.py::test_dimension_measurement_follows_moved_geometry
+      category: business_rule
+      weight: 3
+
+- id: drafter_uses_the_creation_toolset
+  purpose: Every creation tool the brief lists draws its entity, from the toolbar and by command name
+  substeps:
+    - kind: browser
+      do: Draw lines, polylines, construction lines, rays, circles by each method, arcs, ellipses, rectangles, polygons, splines, points and donuts, each from the toolbar and again by typing its command name
+      cov: C-CF-31
+    - kind: browser
+      do: Create hatches with predefined and custom patterns, gradient fills, regions by boundary extraction, revision clouds and wipeouts
+      cov: C-CF-32
+    - kind: browser
+      do: Reshape the boundary of a hatch and confirm the hatch fill reshapes with it rather than needing to be drawn again
+      cov: C-CF-33
+    - kind: browser
+      do: Read the left tool group and confirm the buttons are grouped by purpose rather than alphabetically, every icon is inline vector geometry on one small square grid rather than an image file, and no tool attaches an external drawing reference or a raster image underlay
+      cov: C-CN-05, C-FE-04, C-FE-06
+
+- id: drafter_uses_the_modification_toolset
+  purpose: Every modification tool the brief lists changes existing geometry
+  substeps:
+    - kind: browser
+      do: Move, copy, rotate, scale, mirror, offset and array existing geometry rectangularly, polarly and along a path
+      cov: C-CF-34
+    - kind: browser
+      do: Trim, extend, fillet, chamfer, blend, stretch, lengthen, break, join and explode existing geometry
+      cov: C-CF-35
+    - kind: browser
+      do: Select an entity, confirm grips appear on its vertices, and drag one grip to move that vertex alone
+    - kind: browser
+      do: Select geometry by window, crossing, fence, window polygon, crossing polygon, last, previous and all
+      cov: C-CF-37
+    - kind: browser
+      do: Click repeatedly at one point to cycle overlapping entities, then filter a selection by property in one operation
+      cov: C-CF-38
+    - kind: browser
+      do: Paint one source entity properties onto other entities with the match properties tool
+      cov: C-CF-39
+    - kind: browser
+      do: Confirm no tool performs a boolean operation on a three-dimensional solid and no view renders a shaded three-dimensional model
+      cov: C-CN-03
+    - kind: browser
+      do: Undo an edit that rippled into a dependent entity, then redo it and confirm the app replays the same step forward
+      cov: C-DM-18
+    - kind: pytest
+      test: test_output.py::test_undo_restores_every_dependent_entity
+      category: data_integrity
+      weight: 5
+
+- id: drafter_annotates_the_drawing
+  purpose: Text, dimensions, blocks and attributes reach the drawing
+  substeps:
+    - kind: browser
+      do: Create single-line and multi-line text under a named text style with bold, italic, underline, stacked fractions, bullets, numbering, columns and a background mask
+      cov: C-CF-50
+    - kind: browser
+      do: Create linear, aligned, angular, radius, diameter, arc length, ordinate, baseline and continued dimensions, plus multileaders, centre marks and centrelines
+      cov: C-CF-51
+    - kind: browser
+      do: Save selected geometry as a named block definition with a base point, then insert the block with a preview before placing
+      cov: C-CF-53
+    - kind: browser
+      do: Edit an attribute carried inside a block instance, extract the attributes of every instance into a table, and confirm no table carries a formula and no text is an auto updating field
+      cov: C-CF-54, C-CN-07
+    - kind: browser
+      do: Switch a block instance between its stored visibility states and confirm no interface authors a new dynamic block parameter
+      cov: C-CF-55, C-CN-04
+    - kind: browser
+      do: Attempt to delete a block definition that still carries instances and confirm the deletion is refused with the count of dependent instances
+      cov: C-CF-77
+
+- id: drafter_saves_a_version_file_to_the_store
+  purpose: A save writes the drawing exchange document into the minio bucket at the key scheme and the download returns those exact bytes
+  substeps:
+    - kind: browser
+      do: Save Harbour Pavilion with a label, open the version history and confirm it lists versions newest first with number, author, time and label, still responsive at two hundred versions, with the reserved screenshot and download directories present at the app root
+      cov: C-CF-66, C-DC-06, C-TR-13
+    - kind: browser
+      do: Confirm the save states its outcome in a dismissible confirmation near the screen edge that never covers the status bar or the command input
+      cov: C-FE-17
+    - kind: browser
+      do: Edit without saving, close the tab, reopen the drawing and confirm the app offers the captured autosave back for recovery
+      cov: C-CF-65
+    - kind: pytest
+      test: test_output.py::test_saved_version_file_stored_at_key_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_version_download_bytes_match_recorded_digest
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_version_numbers_are_contiguous_from_one
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Open the version history, restore an earlier version, then read the version list again
+    - kind: browser
+      do: Compare two versions of the drawing and confirm geometry added, removed and changed is each marked apart from the others
+      cov: C-CF-68
+    - kind: pytest
+      test: test_output.py::test_restore_writes_new_highest_version
+      category: business_rule
+      weight: 3
+
+- id: concurrent_saves_conflict_to_one_winner
+  purpose: Two saves naming the same starting version resolve to exactly one accepted version with nothing half-written
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_saves_from_one_base_produce_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_save_leaves_no_row_and_no_stored_file
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: owner_shares_a_drawing_and_a_colleague_comments
+  purpose: An invitation puts the drawing in the invitee library, presence names who is in, and a comment is pinned to a point
+  substeps:
+    - kind: browser
+      do: Invite reviewer@example.com at comment from the share page, sign in as the reviewer, open Rail Shed Section and pin a comment to a wall
+    - kind: browser
+      do: Confirm the presence strip gives each present account a distinct colour and names both people in the drawing
+      cov: C-CF-74
+    - kind: browser
+      do: Have a second editor save a change and confirm it appears in the first editor open workspace within a few seconds without a reload, preserving that editor pan, zoom, current layer and selection
+      cov: C-CF-75, C-CF-76, C-TR-12
+    - kind: browser
+      do: Open a drawing carrying no comment thread and confirm the comment list says so in its own words
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_share_invitation_reaches_invitee_library
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_comment_thread_persisted_with_anchor_point
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_presence_lists_accounts_in_the_drawing
+      category: business_rule
+      weight: 3
+
+- id: reviewer_measures_and_marks_up
+  purpose: A reviewer measures the drawing and marks it up without changing a line of geometry
+  substeps:
+    - kind: browser
+      do: Measure a distance, a radius, an angle, an area and a perimeter in the drawing units, then hover for a quick measure that places nothing
+      cov: C-CF-84
+    - kind: browser
+      do: Draw freehand strokes, shapes, callouts and text notes as markup, hide the markup as one group, and confirm no entity changed
+      cov: C-CF-85
+
+- id: reviewer_cannot_write_geometry
+  purpose: A reviewer is denied every entity write and every drawing creation on the server, whatever the share access says
+  substeps:
+    - kind: browser
+      do: Sign in as reviewer@example.com, open Rail Shed Section and attempt to drag a line
+    - kind: browser
+      do: Reach a creation step and then the share page as the reviewer and confirm the app returns the reviewer to the library
+      cov: C-UF-08
+    - kind: pytest
+      test: test_output.py::test_reviewer_entity_write_is_denied_row_unchanged
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reviewer_drawing_create_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: unshared_drawing_is_denied_to_everyone_else
+  purpose: An unshared drawing and its stored version file stay unreadable to every account other than the owner
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unshared_drawing_is_denied_to_other_account
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unshared_drawing_file_is_denied_to_other_account
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_non_owner_share_write_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_input_is_refused_and_nothing_is_written
+  purpose: A duplicate layer name, an empty comment, a duplicate signup email, a layer still holding entities and an unknown invitee are each refused with no row written
+  substeps:
+    - kind: browser
+      do: Add a layer named walls beside the existing Walls, read the inline message beside the failing field, and confirm every other field entry the visitor typed is preserved
+      cov: C-CF-91
+    - kind: pytest
+      test: test_output.py::test_duplicate_layer_name_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_comment_body_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_email_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_layer_delete_holding_entities_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invite_to_unknown_email_is_refused
+      category: validation
+      weight: 3
+
+- id: the_public_edge_is_finished
+  purpose: The privacy and terms pages are linked, the sitemap and robots file agree, and every public route declares its own social preview
+  substeps:
+    - kind: browser
+      do: Open the sign-in page, follow the footer link to the privacy page, return, then open the signup form and follow its terms link
+    - kind: browser
+      do: Walk every public address and an unknown one, and confirm no route shows a blank screen or an unhandled error
+      cov: C-UF-12
+    - kind: browser
+      do: Narrow a public page to a phone width and confirm it reflows to one readable column
+      cov: C-UX-26
+    - kind: pytest
+      test: test_output.py::test_privacy_page_linked_from_public_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_linked_from_signup_form
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_every_public_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_robots_file_references_the_sitemap
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_distinct_social_previews
+      category: presentation
+      weight: 1

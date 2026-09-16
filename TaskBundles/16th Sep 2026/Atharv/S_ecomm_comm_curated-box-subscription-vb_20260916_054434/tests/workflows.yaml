@@ -1,0 +1,483 @@
+- id: member_builds_and_places_a_box
+  purpose: A member builds a box of three titles from the current reveal and places it, and the order carries the computed total
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com with deku-demo-pw-2026, open /box, add The Orrery Thief, Salt and Static and A Quiet Inventory from their own rows, and place the box
+    - kind: browser
+      do: Confirm the box builder shows the catalogue on one side and the box on the other, both visible at once, that the running total changes as each title is added, and that the builder spaces its pages generously rather than densely
+      cov: C-UX-18
+    - kind: browser
+      do: Confirm placing the box lands on its own confirmation route rather than a panel over the builder, and that the route names the order, the three titles and the total
+    - kind: browser
+      do: Open the box builder and the account page as a signed-in member and confirm each is served
+      cov: C-UF-06, C-UF-07
+    - kind: browser
+      do: Open the box builder while signed out, confirm arrival at the sign-in page, sign in, and confirm arrival at the destination that was preserved
+      cov: C-UF-09, C-UF-10
+    - kind: browser
+      do: Sign in with no destination and confirm the landing is the box builder, then sign out and confirm the return to the home page
+      cov: C-UF-11, C-UF-12
+    - kind: browser
+      do: Open another member's confirmation route and confirm the request is denied rather than redirected to your own order
+      cov: C-UF-13
+    - kind: browser
+      do: Press a primary button and confirm it squashes more than it narrows, then move between two pages and confirm the arriving content rises from below while the leaving content rises away above
+      cov: C-UX-24, C-UX-27
+    - kind: pytest
+      test: test_output.py::test_box_of_three_places_and_totals_correctly
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_placed_box_is_persisted_with_its_pricing_snapshot
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_subscriptions_survive_a_failed_payment
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cancelled_membership_ends_at_the_close_of_the_paid_cycle
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_health_returns_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+
+- id: monthly_reveal_is_atomic_and_editions_are_records
+  purpose: The current cycle carries its whole selection, a reprint is a separate record sharing one work, and a cover hue is derived once
+  substeps:
+    - kind: browser
+      do: Open / as a signed-out visitor, read the reveal carousel, then compare /books/salt-and-static with /books/salt-and-static-reprint
+    - kind: browser
+      do: Confirm the marketing pages and the box builder are served from one origin, that one membership tier is offered rather than a table of plans, and that the product ships no native mobile application of its own
+      cov: C-CN-01, C-CN-03, C-CN-04
+    - kind: browser
+      do: Confirm the app integrates no carrier and offers no parcel tracking, and that no refund flow is offered to a member anywhere in the account
+      cov: C-CN-08, C-CN-09
+    - kind: browser
+      do: Confirm the book titles, the authors and the press outlets shown are the invented ones this brief names rather than real published works
+      cov: C-CN-10
+    - kind: browser
+      do: Confirm the app seeds six FAQ entries that appear one per hue in their seeded order, and that the four press mentions are listed under the mentions heading
+      cov: C-DM-45, C-DM-46
+    - kind: browser
+      do: Confirm the reveal carousel is operable by pointer drag, by its arrow controls and by the keyboard, that the arrows disable at the ends rather than vanishing, and that the position in the row is announced
+    - kind: browser
+      do: Confirm each carousel card sits on a background colour drawn from its own cover and at a slightly different vertical offset from its neighbours
+    - kind: pytest
+      test: test_output.py::test_current_cycle_reveals_the_seeded_selection
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_editions_are_stored_exactly_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reprint_and_original_are_separate_rows
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cover_hue_is_stored_and_does_not_move_between_reads
+      category: data_integrity
+      weight: 5
+
+- id: catalogue_browses_by_genre_and_flat_tags
+  purpose: The catalogue lists every orderable edition, filters by genre, and shows the flat tag vocabulary on an edition page
+  substeps:
+    - kind: browser
+      do: Open /allbooks, filter to Horror, then open /books/the-orrery-thief and read its tag pills
+    - kind: browser
+      do: Confirm an edition marked as a special edition shows a ribbon over the corner of its card, and that the club-published anthology names the club itself as its publisher
+      cov: C-CF-24, C-CF-114
+    - kind: browser
+      do: Confirm no edition page offers a comment control, a review, a rating, a member profile or a recommendation engine row
+      cov: C-CN-05, C-CN-06, C-CN-07, C-CN-11
+    - kind: browser
+      do: Confirm an edition card shows the cover inset at the top, the tags as coloured pills, the name in the display face, the description truncated with an ellipsis, then Read more, and that the interface labels on that card hold at a fixed size while the content type scales fluidly between a minimum and a maximum as the window widens
+      cov: C-UX-14, C-UX-15
+    - kind: browser
+      do: Confirm a tag's colour carries no meaning, so that Fantasy and Includes a Dog render identically in treatment, and the text on the pale pills meets the contrast bar
+    - kind: pytest
+      test: test_output.py::test_editions_list_returns_every_orderable_slug
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_catalogue_filters_by_genre
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_edition_detail_carries_the_flat_tag_vocabulary
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_catalogue_copy_states_the_open_genre_list
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_page_arrives_as_complete_html
+      category: presentation
+      weight: 1
+
+- id: box_missing_a_current_title_is_invalid
+  purpose: A box holding nothing from the current cycle cannot be placed, says which rule it breaks, and every edition stays addable
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, add only The Glass Cartographer to the box, and read the reason the box cannot be placed
+    - kind: browser
+      do: Confirm no control is disabled, greyed out or hidden while the box is not yet valid, and that the stated reason changes as titles are added and removed
+    - kind: pytest
+      test: test_output.py::test_box_without_a_current_title_is_refused
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_every_edition_stays_addable_while_the_box_is_invalid
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reprint_alone_does_not_satisfy_the_composition_rule
+      category: business_rule
+      weight: 3
+
+- id: fourth_book_hits_the_box_limit
+  purpose: A fourth addition is refused, the box still holds three, and one edition never appears twice
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, fill the box with three titles, then try to add a fourth and read the message
+    - kind: pytest
+      test: test_output.py::test_fourth_edition_is_refused_at_the_limit
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_edition_in_one_box_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_member_keeps_at_most_one_building_box_per_cycle
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_fourth_addition_is_refused_twice
+      category: data_integrity
+      weight: 5
+
+- id: preseeded_link_is_rebuilt_by_the_server
+  purpose: A box link carrying four ids, or an id naming no orderable edition, is rebuilt rather than accepted
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com and open /box?ids=the-orrery-thief,salt-and-static,every-third-tuesday,a-quiet-inventory
+    - kind: pytest
+      test: test_output.py::test_preseeded_link_keeps_only_the_first_three_ids
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_preseeded_link_drops_an_unknown_id
+      category: validation
+      weight: 3
+
+- id: pricing_is_a_formula_per_country
+  purpose: Totals are computed from a stored base and extra charge per country rather than from a stored matrix
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com and watch the box total change as titles are added and removed
+    - kind: pytest
+      test: test_output.py::test_two_book_total_matches_the_worked_example
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_canada_totals_match_the_worked_examples
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_country_pricing_is_stored_once_per_country
+      category: data_integrity
+      weight: 5
+
+- id: summer_code_is_invalid_outside_the_usa
+  purpose: The promotional code replaces the base charge for a first USA order and is refused everywhere else
+  substeps:
+    - kind: browser
+      do: Sign in as member2@example.com, enter the code SUMMER on the box, and read the message
+    - kind: pytest
+      test: test_output.py::test_promotion_replaces_the_base_charge
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_promotion_is_refused_for_a_canada_member
+      category: validation
+      weight: 3
+
+- id: credits_spend_before_money_in_a_fixed_order
+  purpose: A credit removes the base charge first, writes a ledger row, is never combined with a promotional code, and an unchosen paid cycle banks exactly one
+  substeps:
+    - kind: browser
+      do: Sign in as member2@example.com, apply a credit on the box, and read the balance that remains on /account
+    - kind: browser
+      do: Confirm the page states One free credit applied. You have followed by the balance that remains
+      cov: C-CF-70
+    - kind: pytest
+      test: test_output.py::test_credit_is_applied_to_the_base_charge_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_credit_ledger_row_is_stored_for_a_spend
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credit_and_promotion_are_never_combined
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_postcard_credit_is_seeded_for_the_canada_member
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unchosen_cycle_credit_is_seeded_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credit_spend_beyond_the_balance_is_refused
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_failed_placement_leaves_no_order_and_no_credit_row
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_and_concurrent_placement_create_one_invoice
+  purpose: One box submitted twice, or twice at once, produces exactly one order and exactly one invoice in the billing platform
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, place a box, then submit the same box again from the confirmation route
+    - kind: pytest
+      test: test_output.py::test_repeat_placement_stores_no_second_order_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_placed_order_timestamp_is_recorded_in_utc
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeat_checkout_creates_no_second_billing_charge
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_placement_yields_exactly_one_order_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_placed_box_creates_a_billing_charge_for_the_total
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_member_has_exactly_one_billing_account
+      category: data_integrity
+      weight: 5
+
+- id: confirmation_email_reaches_the_placing_member
+  purpose: Placing a box sends one confirmation to the member alone, and a refused placement sends nothing
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, place a box, and confirm the page states the order was confirmed
+    - kind: pytest
+      test: test_output.py::test_placed_box_delivers_a_confirmation_email
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_placement_delivers_no_confirmation_email
+      category: notification
+      weight: 3
+
+- id: gift_buyer_cannot_read_what_the_recipient_chose
+  purpose: A gift code is emailed to the buyer, creates a membership on redemption, cannot be redeemed twice, and the buyer is denied the recipient's box
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com, buy a gift on /gifting, sign out, sign up as the recipient and redeem the code at /redeem
+    - kind: browser
+      do: Sign up as reader@example.com, redeem the gift code, and confirm the membership begins only at that moment
+      cov: C-DM-44
+    - kind: pytest
+      test: test_output.py::test_gift_purchase_delivers_an_e_gift_card_email
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_gift_code_is_redeemed_at_most_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_gift_buyer_cannot_read_the_recipients_box
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_gift_purchaser_cannot_redeem_their_own_code
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_gift_redeemed_by_a_member_creates_no_second_subscription
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_gift_redemptions_succeed_at_most_once
+      category: data_integrity
+      weight: 5
+
+- id: member_or_anonymous_caller_cannot_read_another_members_rows
+  purpose: One member's session and an anonymous caller are both denied another member's rows at the API, and nothing is written
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_member_cannot_read_another_members_orders
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_member_cannot_read_another_members_credit_ledger
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_box_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_placement_is_denied_and_writes_nothing
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_or_empty_input_is_refused_and_writes_nothing
+  purpose: A bad signup, an empty box, an unknown edition address and an unservable postal address are each refused and leave nothing behind
+  substeps:
+    - kind: browser
+      do: Open /signup, submit an address with no at sign, read the message beside the field, then empty the box and read its empty state
+    - kind: browser
+      do: Confirm the message on a refused form names the offending field, appears beside it, and leaves the page standing rather than crashing
+      cov: C-CF-130, C-UF-18
+    - kind: browser
+      do: Confirm the app serves the signup page, serves the login sign-in page, and serves the redeem redemption page to a signed-out visitor
+      cov: C-UF-03, C-UF-04, C-UF-05
+    - kind: browser
+      do: Filter the catalogue to a genre holding no editions and confirm an empty state naming that filter
+      cov: C-UF-14
+    - kind: browser
+      do: Sign in as a member with no orders, open the account page, and confirm an empty state rather than a blank list
+      cov: C-UF-16
+    - kind: browser
+      do: Confirm every route shows a loading state while it is fetching rather than rendering as a bare white page
+      cov: C-UF-17
+    - kind: browser
+      do: Enter a Puerto Rico address at address entry, then an APO or FPO address, and confirm the app recognises each as one the ordinary flow cannot serve before payment is reached
+      cov: C-CF-109, C-CF-110, C-CF-113
+    - kind: pytest
+      test: test_output.py::test_signup_with_an_unsupported_country_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_with_a_malformed_email_writes_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_box_placement_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_edition_slug_is_not_found
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_address_check_names_a_po_box_as_unservable
+      category: validation
+      weight: 3
+
+- id: launch_surfaces_are_present_on_every_public_route
+  purpose: The privacy page, the terms page and a distinct social preview are served on the public routes
+  substeps:
+    - kind: browser
+      do: Open /, /allbooks, /gifting and /faq, follow the footer links, and answer the cookie question once then reload
+    - kind: browser
+      do: Open the home reveal and confirm the brand marks appear in a light, vivid violet and a mid, vivid teal against a white ground
+      cov: C-RL-01, C-UX-02, C-UX-03
+    - kind: browser
+      do: Confirm the primary action on a page is filled with a light, soft amber worn by nothing else on that page, and the alternate action is filled with a mid, vivid magenta
+      cov: C-UX-04, C-UX-05, C-UX-06
+    - kind: browser
+      do: Open the FAQ page and confirm the app serves every question there, then confirm the home page surfaces three of them above a link to the rest
+      cov: C-CF-115, C-CF-116
+    - kind: browser
+      do: Open the gifting page and confirm the copy No spying on shelves needed. is present
+      cov: C-CF-117
+    - kind: browser
+      do: Open the privacy page and confirm it states what the club records about a member and how long each record is kept
+      cov: C-CF-120
+    - kind: browser
+      do: As a first-time visitor answer the cookie question once, reload the page, and confirm the question is not asked a second time in the same browser
+      cov: C-CF-126, C-CF-127, C-CF-128
+    - kind: browser
+      do: Confirm body text meets the WCAG AA contrast bar, every keyboard-reachable control shows a visible focus ring, every icon-only control carries a label, and no meaning is carried by colour alone
+      cov: C-UX-37, C-UX-38, C-UX-39, C-UX-40
+    - kind: browser
+      do: Confirm the transitions on a page are declared per property rather than as one blanket rule animating everything
+      cov: C-UX-28
+    - kind: browser
+      do: Confirm the social preview image declared on each public route resolves to real bytes rather than a broken reference
+      cov: C-TR-09
+    - kind: browser
+      do: Confirm the header is a floating pill group of four navigation items plus the sign-in control, and that it collapses to the mark and a Menu control at the narrowest width
+      cov: C-UX-19
+    - kind: browser
+      do: Confirm nothing overflows sideways at a narrow viewport, every navigation target stays reachable, and the carousel card offsets align at the narrowest width rather than staying staggered
+      cov: C-UX-34
+    - kind: browser
+      do: Confirm each FAQ panel keeps its hue and lightens from its solid variant to its soft twin when it opens
+    - kind: browser
+      do: Confirm that under a reduced-motion preference the mascot ears hold still, page transitions become a plain cross-fade, and the scroll sequence holds one frame
+      cov: C-UX-45
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_served_and_linked_from_the_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_served_and_linked_from_the_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_distinct_social_preview_titles
+      category: presentation
+      weight: 1
+
+- id: second_ballot_is_a_duplicate_and_is_refused
+  purpose: A member casts one ballot per round and a second is refused with the first left standing
+  substeps:
+    - kind: browser
+      do: Sign in as member3@example.com, open /vote, cast a ballot, then try to cast a second
+    - kind: browser
+      do: Confirm the app serves the vote ballot page to a member, that the copy Voting closes appears there with the closing date, and that the forthcoming round is shown as a placeholder beside the past winners
+      cov: C-UF-08, C-CF-105, C-CF-108
+    - kind: browser
+      do: Confirm each past winner is an orderable edition of its own carrying an author portrait, which no other edition shows, and that exactly one winner is named per closed round
+      cov: C-CF-102, C-CF-106, C-CF-107, C-DM-14
+    - kind: pytest
+      test: test_output.py::test_ballot_is_recorded_for_a_member
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_second_ballot_in_one_round_is_refused
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_concurrent_ballots_record_exactly_one
+      category: data_integrity
+      weight: 5

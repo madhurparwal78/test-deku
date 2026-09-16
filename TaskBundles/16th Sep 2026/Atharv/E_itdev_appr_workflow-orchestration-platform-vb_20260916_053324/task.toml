@@ -1,0 +1,91 @@
+schema_version = "1.4"
+
+[task]
+name = "deku/workflow-orchestration-platform-vb"
+version = "1.0.0"
+description = "Workflow orchestration platform with a dark marketing site, a queued execution engine and a human approval step"
+authors = [
+  "abhishek.shaw@ethara.ai",
+  "atharv.mahalwar@ethara.ai"
+]
+uuid_v5 = "18c2052d-2a3e-56f1-aed0-8c92b3e6ca35"
+keywords = ["greenfield", "enterprise", "python", "postgres", "keycloak", "approval-workflow"]
+
+[metadata]
+category     = "Greenfield"
+sub_category = "enterprise"
+
+domain          = "it-devtools"
+pattern         = "approval-workflow"
+service_profile = "P3-db-auth"
+variant_axes    = ["critical_depth", "spec_sections"]
+capability_flags = ""
+task_code       = "E_itdev_appr_workflow-orchestration-platform-vb_20260916_053324"
+naming_scheme   = "task-code-v1"
+design_direction = "companion"
+launch_surface = "favicon,form_validation,meta_tags,single_cta,spam_protection"
+grader_version  = "0.22.0"
+
+language     = "python"
+archetype    = "workflow-orchestration-platform"
+variant      = "b"
+spec_sections_given = ["overview", "roles", "features", "flow", "uiux", "frontend", "techrequirements", "datamodel", "constraints", "contract"]
+turns_expected  = 210
+tokens_expected = 7500000
+contributor_id  = "atharv.mahalwar@ethara.ai"
+created_at      = "2026-09-16"
+canary_present  = true
+difficulty           = ""
+reference_model_used = ""
+pass_rate            = 0.0
+pass_rate_ci         = [0.0, 0.0]
+calibration_trials   = 0
+harbor_version       = "0.20.0"
+
+[metadata.services]
+backend = "postgres"
+auth    = "keycloak"
+
+[agent]
+timeout_sec = 18000.0
+
+[environment]
+os                = "linux"
+cpus              = 4
+memory_mb         = 8192
+storage_mb        = 20480
+build_timeout_sec = 900.0
+network_mode  = "public"
+allowed_hosts = []
+env = { APP_PUBLIC_PORT = "4173", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://main:4173}", DB_URL = "${DB_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/deku}", DATABASE_URL = "${DATABASE_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/deku}", AUTH_ISSUER_URL = "${AUTH_ISSUER_URL:-http://keycloak:8080/realms/flowmark}", AUTH_CLIENT_ID = "${AUTH_CLIENT_ID:-flowmark-app}", AUTH_CLIENT_SECRET = "${AUTH_CLIENT_SECRET:-flowmark-client-9f14c73e}", APPROVAL_DEADLINE_SEC = "${APPROVAL_DEADLINE_SEC:-86400}", RUN_OUTPUT_MAX_BYTES = "${RUN_OUTPUT_MAX_BYTES:-8388608}" }
+
+[environment.healthcheck]
+command            = "pg_isready -h postgres -p 5432 -q"
+interval_sec       = 5.0
+timeout_sec        = 5.0
+start_period_sec   = 60.0
+start_interval_sec = 2.0
+retries            = 60
+
+[verifier]
+environment_mode = "separate"
+timeout_sec      = 3600.0
+env = { ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY}", ANTHROPIC_BASE_URL = "${ANTHROPIC_BASE_URL}", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://localhost:4173}", DB_ADMIN_URL = "${DB_ADMIN_URL:-postgresql://deku_admin:deku-local-dev@postgres:5432/deku}", AUTH_ADMIN_TOKEN = "${AUTH_ADMIN_TOKEN:-deku_admin:deku-local-dev}", APPROVAL_DEADLINE_SEC = "${APPROVAL_DEADLINE_SEC:-6}", RUN_OUTPUT_MAX_BYTES = "${RUN_OUTPUT_MAX_BYTES:-8388608}", DEKU_SERVICE_BACKEND = "postgres", DEKU_SERVICE_AUTH = "keycloak" }
+
+[delivery]
+format = "harbor"
+schema_version = "1.4"
+reward_path = "/logs/verifier/reward.json"
+reward_key = "reward"
+reward_range = [0.0, 1.0]
+reward_full = 1.0
+network_policy = "public"
+
+[delivery.images]
+main = "python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254"
+postgres = "postgres:16.4-bookworm@sha256:e62fbf9d3e2b49816a32c400ed2dba83e3b361e6833e624024309c35d334b412"
+keycloak = "quay.io/keycloak/keycloak:26.0.7@sha256:4388e2379b7e870a447adbe7b80bd61f5fbf04e925832b19669fda4957f05a81"
+
+[[artifacts]]
+source      = "/app"
+destination = "app"
