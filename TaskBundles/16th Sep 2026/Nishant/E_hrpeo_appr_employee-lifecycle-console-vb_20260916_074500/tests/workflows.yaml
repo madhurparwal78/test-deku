@@ -1,0 +1,618 @@
+- id: employee_signs_in_and_reads_own_surface
+  purpose: A seeded employee signs in and reads their own balances, requests and payslips
+  substeps:
+    - kind: browser
+      do: Open /login signed out and sign in as employee@example.com with the seeded password deku-demo-pw-2026, and verify the console opens on /me with no registration control anywhere on the sign-in page
+      cov: C-UF-01, C-UF-02 (earned: the walk signs in and lands on the employee's own surface, which is what the route table grants any role, and it looks for a registration control on the way), C-UF-15 (earned: the walk signs in and lands on the employee's own surface, which is what the route table grants any role, and it looks for a registration control on the way), C-RL-02, C-RL-32, C-RL-33 (earned: the walk signs in and lands on the employee's own surface, which is what the route table grants any role, and it looks for a registration control on the way), C-RL-34, C-DM-02, C-DM-03, C-DC-08 (earned: the walk signs in and lands on the employee's own surface, which is what the route table grants any role, and it looks for a registration control on the way)
+    - kind: browser
+      do: Verify /me carries the balance per policy, the employee's own requests and their own payslips, at comfortable density, with exactly one h1, with every amount and every balance set in tabular figures, and with an empty state naming the next action on any list holding nothing
+      cov: C-CF-172, C-CF-173, C-CF-174, C-UX-24, C-UX-39, C-UF-32, C-FE-03 (earned: the walk reads the whole of the employee's own surface, so the rail, the tile grounds and the states on it are in front of the reader), C-FE-04 (earned: the walk reads the whole of the employee's own surface, so the rail, the tile grounds and the states on it are in front of the reader)
+    - kind: browser
+      do: Expand the annual balance on /me into its ledger entries and verify the entries sum to the figure shown, and that the figure is presented as a derived total rather than as an editable number
+      cov: C-CF-63, C-CF-65, C-CF-66, C-CF-67, C-OV-02 (earned: the walk opens a leave balance, which reads from the one employee record)
+    - kind: browser
+      do: Verify the left rail carries the modules in a fixed order with the account control at its foot, that signing out returns to /login, and that a signed-out request for /me returns to /login and then back to /me after signing in again
+      cov: C-FE-01 (earned: the walk uses the rail and the account control, then signs out and back in, so the shell and the redirect behaviour are both exercised), C-FE-02 (earned: the walk uses the rail and the account control, then signs out and back in, so the shell and the redirect behaviour are both exercised), C-FE-05 (earned: the walk uses the rail and the account control, then signs out and back in, so the shell and the redirect behaviour are both exercised), C-FE-06 (earned: the walk uses the rail and the account control, then signs out and back in, so the shell and the redirect behaviour are both exercised), C-UF-13, C-UF-14 (earned: the walk uses the rail and the account control, then signs out and back in, so the shell and the redirect behaviour are both exercised), C-UF-16
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_requires_no_credential
+      category: presentation
+      weight: 1
+      cov: C-DC-06 (earned: the check calls the health route with no credential and reads its status once seeding has finished), C-TR-08, C-TR-09
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token_for_seeded_manager
+      category: security
+      weight: 5
+      cov: C-DC-19 (earned: the check signs in with the seeded address and the corpus password and reads the token field the response returns), C-DC-49 (earned: the check signs in with the seeded address and the corpus password and reads the token field the response returns), C-RL-37
+    - kind: pytest
+      test: test_output.py::test_me_reports_the_callers_own_employee_number
+      category: security
+      weight: 5
+      cov: C-DC-20 (earned: the check reads the caller identity route and compares the employee number it resolves against the seeded reporting line), C-TR-21 (earned: the check reads the caller identity route and compares the employee number it resolves against the seeded reporting line)
+
+- id: employee_applies_for_leave_in_a_new_row
+  purpose: An employee applies for leave in a new row and sees the cost before submitting
+  substeps:
+    - kind: browser
+      do: Open /me/leave as employee@example.com, open a new row at the top of the request list rather than a separate page, pick 2026-08-17 to 2026-08-21, and verify the row states eight halves before anything is submitted
+      cov: C-CF-40 (earned: the walk opens the application row and reads the figure it computes before anything is submitted), C-CF-43, C-UF-03 (earned: the walk opens the application row and reads the figure it computes before anything is submitted), C-UF-23, C-FE-07
+    - kind: browser
+      do: Verify the same row states the remaining balance, the notice rule and the consecutive-day rule before submission, and names by full name each teammate already away on those dates
+      cov: C-CF-44, C-CF-45, C-CF-46, C-CF-49
+    - kind: browser
+      do: Submit the request and verify the row updates in place the moment the action is taken rather than after the response lands, that the state reads pending as a word beside its colour, and that the balance on /me moves into pending
+      cov: C-CF-50, C-CF-51, C-UF-24, C-UF-36 (earned: the walk submits and watches the row and the balance move, which is the feedback the interaction shape owes), C-FE-08
+    - kind: pytest
+      test: test_output.py::test_leave_request_days_exclude_holiday_and_weekend
+      category: business_rule
+      weight: 3
+      cov: C-CF-41, C-CF-42, C-CF-34 (earned: the check submits a window spanning a seeded calendar holiday and a weekend and reads the half days the response charges), C-CF-35 (earned: the check submits a window spanning a seeded calendar holiday and a weekend and reads the half days the response charges), C-CF-36 (earned: the check submits a window spanning a seeded calendar holiday and a weekend and reads the half days the response charges), C-DM-17, C-DC-24, C-DM-01 (earned: the check submits a window spanning a seeded calendar holiday and a weekend and reads the half days the response charges)
+    - kind: pytest
+      test: test_output.py::test_request_breaching_minimum_notice_writes_no_row
+      category: validation
+      weight: 3
+      cov: C-CF-47, C-CF-48
+    - kind: pytest
+      test: test_output.py::test_overlapping_leave_request_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-55, C-CF-56, C-DM-21 (earned: the check submits a window overlapping an approved date and re-counts the request rows)
+
+- id: manager_approves_direct_report_leave_request
+  purpose: A manager clears the queue for a direct report and the booked day reaches the open run
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com, open /approvals and verify one queue holds leave requests, regularisations and claims together with a filter by kind, each row carrying the requester, the kind, a one-line summary, an age in days and the two actions
+      cov: C-CF-108, C-UF-07, C-OV-11, C-DM-85, C-DM-88
+    - kind: browser
+      do: Open the pending annual request raised by Nadia Fernandes and verify the deciding context opens in place, showing her balance and the one teammate already away that week
+      cov: C-UF-08, C-UF-21, C-FE-05 (earned: the walk opens one queue row in place, which is the deciding surface the shell puts the context on), C-FE-06
+    - kind: browser
+      do: Approve the request and verify the row leaves the queue before the response lands, that the approval is recorded against manager@example.com, and that the queue then shows its empty state naming the next action when nothing is left
+      cov: C-UF-22, C-UF-32, C-FE-08 (earned: the walk approves and watches the row leave the queue, then reads the empty state the queue falls back to), C-FE-53 (earned: the walk approves and watches the row leave the queue, then reads the empty state the queue falls back to), C-FE-71, C-CF-52 (earned: the walk approves and watches the row leave the queue, then reads the empty state the queue falls back to)
+    - kind: browser
+      do: Open a claim row and verify it shows the receipt reference beside the category limit, then open a regularisation row and verify it shows the original punches
+      cov: C-CF-110, C-CF-111
+    - kind: pytest
+      test: test_output.py::test_approved_leave_day_reaches_the_open_payroll_run
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-58 (earned: the check approves a request and polls the computed attendance day the approval produces), C-CF-59, C-OV-01 (earned: the check approves a request and polls the computed attendance day the approval produces), C-DM-23 (earned: the check approves a request and polls the computed attendance day the approval produces)
+    - kind: pytest
+      test: test_output.py::test_approval_persists_an_availed_ledger_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-52, C-DM-19 (earned: the check approves a request and polls the availed ledger rows the approval writes)
+    - kind: pytest
+      test: test_output.py::test_rejection_removes_the_pending_ledger_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-53, C-CF-54 (earned: the check rejects a request and polls the balance the rejection restores)
+
+- id: peer_manager_decision_denied
+  purpose: A manager from another reporting line cannot decide the request and the row is untouched
+  substeps:
+    - kind: browser
+      do: Sign in as manager2@example.com, open the pending request raised by Nadia Fernandes by its address, attempt both actions and verify the refusal is an inline banner above the surface that raised it reading Not your report, with the route never becoming an error page
+      cov: C-UF-25, C-UF-34, C-UF-35, C-UF-37 (earned: the walk attempts a decision the reporting line forbids and reads the refusal banner the console raises), C-FE-56 (earned: the walk attempts a decision the reporting line forbids and reads the refusal banner the console raises), C-FE-73, C-FE-72
+    - kind: browser
+      do: Verify the request is still pending with no decider after the refusal, and that the queue for manager2@example.com never listed it
+      cov: C-UF-26, C-OV-10 (earned: the walk re-reads the request after the refusal and finds it as it was), C-CF-112
+    - kind: pytest
+      test: test_output.py::test_peer_manager_decision_denied_leaves_request_row_unchanged
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-113, C-CF-114, C-CF-115, C-RL-17, C-TR-25 (earned: the check decides from the peer manager's session and compares the approval row before and after), C-TR-27, C-TR-29 (earned: the check decides from the peer manager's session and compares the approval row before and after), C-OV-09 (earned: the check decides from the peer manager's session and compares the approval row before and after), C-DC-26 (earned: the check decides from the peer manager's session and compares the approval row before and after)
+    - kind: pytest
+      test: test_output.py::test_manager_queue_carries_only_their_own_direct_reports
+      category: security
+      weight: 5
+      cov: C-RL-14, C-TR-26 (earned: the check reads the queue as one manager and resolves the reporting line of every requester it names), C-DC-25 (earned: the check reads the queue as one manager and resolves the reporting line of every requester it names), C-DM-86 (earned: the check reads the peer manager's queue, whose one pending row is the seeded request from E-1003)
+
+- id: manager_self_decision_denied
+  purpose: Nobody decides their own request, including a manager over their own reporting line
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com, apply for leave on /me/leave, then open the resulting request in /approvals and verify both actions are refused with an inline banner reading You cannot decide your own request
+      cov: C-FE-74 (earned: the walk raises a request from the manager's own session and attempts to decide it, reading the refusal copy), C-CF-116
+    - kind: pytest
+      test: test_output.py::test_manager_cannot_decide_their_own_request
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-117 (earned: the check raises a request from the manager's own session and decides it from that same session, re-reading the row), C-RL-18, C-OV-09 (earned: the check raises a request from the manager's own session and decides it from that same session, re-reading the row)
+
+- id: concurrent_and_repeat_decisions_conflict
+  purpose: A request is decided once, whether the second decision arrives later or at the same moment
+  substeps:
+    - kind: browser
+      do: As manager@example.com decide a pending request, reopen the same request by its address and verify the second attempt is refused with an inline banner reading Already decided that names the deciding account beside the decision time
+      cov: C-CF-119, C-FE-75 (earned: the walk decides once, returns to the same request and reads the refusal copy the second attempt raises)
+    - kind: pytest
+      test: test_output.py::test_second_decision_on_a_decided_request_is_refused
+      category: business_rule
+      weight: 3
+      cov: C-CF-118, C-DM-27
+    - kind: pytest
+      test: test_output.py::test_concurrent_decisions_record_exactly_one_decider
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-120, C-CF-121 (earned: the check submits two decisions on one approval at the same moment and counts the acceptances)
+    - kind: pytest
+      test: test_output.py::test_concurrent_decisions_move_the_ledger_once
+      category: data_integrity
+      weight: 5
+      cov: C-CF-122
+
+- id: leave_balance_equals_its_ledger
+  purpose: Every balance the product shows is the signed sum of its ledger and never a stored column
+  substeps:
+    - kind: browser
+      do: On /me verify each policy balance can be expanded into the entries producing it, that the entries carry their kind as a word, and that no control anywhere edits a balance directly
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_leave_balance_equals_the_sum_of_its_ledger_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-20, C-TR-30, C-TR-33 (earned: the check reads the balance route, the ledger route and the stored ledger rows and compares all three), C-DC-22, C-DC-23
+    - kind: pytest
+      test: test_output.py::test_seeded_annual_balance_matches_the_pinned_figure
+      category: data_integrity
+      weight: 5
+      cov: C-CF-37 (earned: the check sums the seeded ledger entries in half days and compares the total against the pinned seed), C-CF-38 (earned: the check sums the seeded ledger entries in half days and compares the total against the pinned seed), C-CF-67
+
+- id: duplicate_punch_raw_ref_writes_no_second_row
+  purpose: A replayed source reference writes no second punch and leaves the computed day alone
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_duplicate_punch_raw_ref_writes_no_second_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-71 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference), C-CF-74, C-CF-75 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference), C-CF-76 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference), C-DM-22 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference), C-DM-37 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference), C-DM-38 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference), C-DC-27, C-DC-50 (earned: the check posts a punch, replays its source reference and counts the punch rows carrying that reference)
+    - kind: pytest
+      test: test_output.py::test_punch_rows_are_never_updated_or_deleted
+      category: data_integrity
+      weight: 5
+      cov: C-CF-72, C-CF-73, C-CF-68 (earned: the check fingerprints every punch row of a seeded employee and compares the fingerprints after a correction is raised), C-CF-69 (earned: the check fingerprints every punch row of a seeded employee and compares the fingerprints after a correction is raised), C-CF-70 (earned: the check fingerprints every punch row of a seeded employee and compares the fingerprints after a correction is raised)
+
+- id: unpaired_punch_surfaced_not_dropped
+  purpose: A punch with no partner is shown as a defect on the month grid rather than dropped
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com, open /attendance and verify the month grid shows employees down the side with days across the top, one cell per day carrying its state as a letter beside a colour, with the per-employee counts on the right
+      cov: C-CF-90, C-CF-91, C-UF-09, C-UF-38
+    - kind: browser
+      do: Verify the four unpaired July days are visible as their own state on the grid, that the grid declares its dimensions and announces the state of the focused cell as text, and that every cell is reachable by keyboard navigation with a visible focus ring
+      cov: C-CF-82, C-UX-44, C-UX-45, C-UX-41
+    - kind: pytest
+      test: test_output.py::test_unpaired_punch_surfaces_as_its_own_status
+      category: business_rule
+      weight: 3
+      cov: C-CF-77 (earned: the check reads the computed attendance days for a seeded employee and inspects the status, the worked minutes and the day fields each one carries), C-CF-78 (earned: the check reads the computed attendance days for a seeded employee and inspects the status, the worked minutes and the day fields each one carries), C-CF-79 (earned: the check reads the computed attendance days for a seeded employee and inspects the status, the worked minutes and the day fields each one carries), C-CF-80 (earned: the check reads the computed attendance days for a seeded employee and inspects the status, the worked minutes and the day fields each one carries), C-CF-81, C-CF-83, C-CF-84, C-DC-28 (earned: the check reads the computed attendance days for a seeded employee and inspects the status, the worked minutes and the day fields each one carries), C-TR-31 (earned: the check reads the computed attendance days for a seeded employee and inspects the status, the worked minutes and the day fields each one carries)
+    - kind: browser
+      do: As employee3@example.com request a regularisation for a July day with a reason, and verify the request appears in the queue of manager2@example.com rather than in any other manager's queue
+      cov: C-CF-85, C-CF-86, C-DM-26 (earned: the walk raises a correction from the employee's own session and finds it in the right manager's queue)
+    - kind: pytest
+      test: test_output.py::test_regularisation_leaves_the_original_punches_stored
+      category: data_integrity
+      weight: 5
+      cov: C-CF-87, C-CF-88 (earned: the check raises a correction and compares the punch count beside the correction count)
+
+- id: claim_escalates_or_is_refused_as_invalid
+  purpose: A claim above the manager limit escalates, and one with no receipt is refused as invalid
+  substeps:
+    - kind: browser
+      do: As employee@example.com open /me/claims, open a new row at the top of the list, enter a travel claim, and verify the row states the category, the amount in minor units, the date spent on and which role will decide it at the moment of submission
+      cov: C-CF-92, C-CF-93, C-CF-94, C-CF-99, C-CF-100, C-UF-04
+    - kind: pytest
+      test: test_output.py::test_claim_above_manager_limit_escalates_to_payroll
+      category: business_rule
+      weight: 3
+      cov: C-CF-97, C-CF-98, C-CF-123 (earned: the check submits above the manager limit and reads the deciding role the submission response names), C-CF-124 (earned: the check submits above the manager limit and reads the deciding role the submission response names), C-DC-29
+    - kind: pytest
+      test: test_output.py::test_claim_is_never_paid_through_both_routes
+      category: data_integrity
+      weight: 5
+      cov: C-CF-101, C-CF-102, C-CF-103, C-CF-104, C-CF-105
+    - kind: pytest
+      test: test_output.py::test_claim_without_receipt_above_threshold_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-95, C-CF-96
+
+- id: payroll_run_locks_and_computes_the_group
+  purpose: A payroll account takes the open run from locked through computed to review
+  substeps:
+    - kind: browser
+      do: Sign in as payroll@example.com, open /payroll and verify the runs list carries each run with its state as a word beside its colour, then open /payroll/2026-07
+      cov: C-UF-10, C-UF-11 (earned: the walk opens the runs list and reads each run with its state), C-UF-39, C-CF-134
+    - kind: browser
+      do: Lock the run and verify the interface states plainly, at the moment of locking, that anything arriving afterwards belongs to the next period
+      cov: C-CF-136, C-CF-137, C-CF-138, C-CF-139 (earned: the walk takes the lock and reads the boundary message the console states at that moment), C-CF-140, C-CF-141
+    - kind: browser
+      do: Compute the run and verify a progress indicator runs per employee through the computation, that the indicator keeps running under a reduced-motion preference, and that the run never rests in a half-computed state
+      cov: C-CF-143 (earned: the walk computes the run and watches the per-employee progress through to completion), C-CF-144, C-CF-145 (earned: the walk computes the run and watches the per-employee progress through to completion), C-CF-146, C-UX-31, C-UX-34
+    - kind: browser
+      do: Open /payroll/2026-07/register and verify one row per employee, one column per component, totals per column, subtotals per department and a grand total, all in compact density with tabular figures
+      cov: C-CF-155, C-UF-12, C-UX-23
+    - kind: browser
+      do: Filter the register to one department and verify the totals shown are that department's, labelled as filtered rather than presented as the whole
+      cov: C-CF-157
+    - kind: pytest
+      test: test_output.py::test_computed_payslip_matches_the_pinned_worked_example
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-40 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-41 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-42 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-43 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-44 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-45 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-46 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-47 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-48 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-49 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-50 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-51 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-52 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-DM-53 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model), C-TR-32 (earned: the check computes the run and compares each pinned payslip figure against the worked example in the data model)
+    - kind: pytest
+      test: test_output.py::test_run_totals_reconcile_with_its_payslip_rows
+      category: data_integrity
+      weight: 5
+      cov: C-DM-30, C-DM-78 (earned: the check sums the payslip gross, deduction and net figures and compares them against the run row totals), C-DM-79 (earned: the check sums the payslip gross, deduction and net figures and compares them against the run row totals), C-DM-80 (earned: the check sums the payslip gross, deduction and net figures and compares them against the run row totals), C-DM-81 (earned: the check sums the payslip gross, deduction and net figures and compares them against the run row totals)
+    - kind: pytest
+      test: test_output.py::test_statutory_lines_record_the_rule_set_version
+      category: data_integrity
+      weight: 5
+      cov: C-CF-154, C-DM-31, C-DM-34
+    - kind: pytest
+      test: test_output.py::test_seeded_statutory_rule_set_is_data_not_code
+      category: data_integrity
+      weight: 5
+      cov: C-CF-149, C-CF-150, C-CF-151, C-CF-152, C-CF-153 (earned: the check reads the seeded rule set row and every statutory rule row beneath it), C-DM-33
+    - kind: pytest
+      test: test_output.py::test_seeded_open_run_is_locked_with_four_employees
+      category: data_integrity
+      weight: 5
+      cov: C-DM-66 (earned: the check reads the seeded open run, counts its group members and counts the attendance days behind it), C-DM-74 (earned: the check reads the seeded open run, counts its group members and counts the attendance days behind it), C-DM-83 (earned: the check reads the seeded open run, counts its group members and counts the attendance days behind it), C-CF-132 (earned: the check reads the seeded open run, counts its group members and counts the attendance days behind it)
+    - kind: pytest
+      test: test_output.py::test_register_paging_reports_totals_and_a_cursor
+      category: presentation
+      weight: 1
+      cov: C-TR-39 (earned: the check reads the register and inspects its rows, its totals and its page size), C-TR-40 (earned: the check reads the register and inspects its rows, its totals and its page size), C-TR-41 (earned: the check reads the register and inspects its rows, its totals and its page size), C-DC-34 (earned: the check reads the register and inspects its rows, its totals and its page size), C-TR-44
+
+- id: same_actor_signoff_denied_and_wrong_total_refused
+  purpose: The preparer is refused at sign-off, and so is a sign-off carrying the wrong total
+  substeps:
+    - kind: browser
+      do: As payroll@example.com take the 2026-08 run through lock, compute and review, attempt to sign it off, and verify the refusal is an inline banner reading Sign-off needs a second pair of eyes
+      cov: C-FE-76 (earned: the walk drives the run to review and attempts sign-off from the same account, reading the refusal copy), C-CF-158
+    - kind: browser
+      do: Verify the sign-off dialog presents the total gross, the total deductions, the total net and the headcount paid, that it asks for the total net to be typed back, and that the escape key does not dismiss it
+      cov: C-CF-163, C-UX-36 (earned: the walk opens the sign-off dialog and reads the four figures it presents before the confirmation), C-UX-46 (earned: the walk opens the sign-off dialog and reads the four figures it presents before the confirmation)
+    - kind: pytest
+      test: test_output.py::test_same_actor_signoff_denied_leaves_run_in_review
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-159 (earned: the check reviews and then signs off from one payroll account and compares the run row before and after), C-CF-160, C-CF-161, C-RL-27, C-DM-29 (earned: the check reviews and then signs off from one payroll account and compares the run row before and after)
+    - kind: browser
+      do: As payroll2@example.com type a total net that does not match the run and verify the refusal is an inline banner reading That total does not match the run
+      cov: C-FE-77 (earned: the walk types a total that does not match and reads the refusal copy)
+    - kind: pytest
+      test: test_output.py::test_signoff_total_mismatch_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-164, C-CF-165 (earned: the check signs off with a total that does not match and re-reads the run state)
+
+- id: payroll_run_is_signed_off_by_a_second_account
+  purpose: A run reviewed by one payroll account is signed off by the other and its figures freeze
+  substeps:
+    - kind: browser
+      do: Sign in as payroll2@example.com, open /payroll/2026-07/register, read the grand total net 13075000, type it back into the sign-off dialog and complete the sign-off
+      cov: C-UF-29, C-UF-30, C-CF-170 (earned: the walk completes the sign-off, which is what publishes the payslips to the employee surface)
+    - kind: pytest
+      test: test_output.py::test_second_payroll_account_signs_off_the_reviewed_run
+      category: core_outcome
+      weight: 5
+      cov: C-CF-158, C-RL-25, C-DM-84 (earned: the check drives the run through lock, compute and review and then signs it off from the second payroll account, reading the run row at the end), C-DC-30 (earned: the check drives the run through lock, compute and review and then signs it off from the second payroll account, reading the run row at the end), C-DC-31 (earned: the check drives the run through lock, compute and review and then signs it off from the second payroll account, reading the run row at the end), C-DC-32, C-DC-33 (earned: the check drives the run through lock, compute and review and then signs it off from the second payroll account, reading the run row at the end)
+    - kind: pytest
+      test: test_output.py::test_signed_off_run_payslip_figures_do_not_change
+      category: data_integrity
+      weight: 5
+      cov: C-CF-166, C-CF-167 (earned: the check recomputes a closed run and compares its payslip figures before and after), C-CF-168 (earned: the check recomputes a closed run and compares its payslip figures before and after), C-CF-169 (earned: the check recomputes a closed run and compares its payslip figures before and after), C-DM-32
+    - kind: pytest
+      test: test_output.py::test_review_before_compute_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-135 (earned: the check moves an open run to review before it is computed and re-reads the run state), C-CF-147 (earned: the check moves an open run to review before it is computed and re-reads the run state), C-CF-148
+    - kind: pytest
+      test: test_output.py::test_run_transitions_advance_only_in_order
+      category: business_rule
+      weight: 3
+      cov: C-DM-28 (earned: the check signs off a run that has not reached review and re-reads its state)
+    - kind: pytest
+      test: test_output.py::test_opening_a_second_run_for_a_covered_period_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-133
+
+- id: unauthenticated_and_employee_requests_denied
+  purpose: An anonymous caller and an employee reach nobody else's record, salary or payslip
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_employee_cannot_read_another_employees_record
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-10, C-CF-10
+    - kind: pytest
+      test: test_output.py::test_employee_cannot_read_any_salary_figure
+      category: security
+      weight: 5
+      cov: C-RL-11, C-RL-24 (earned: the check reads the register from an employee session and inspects the status), C-CF-171, C-CF-175 (earned: the check reads the register from an employee session and inspects the status)
+    - kind: pytest
+      test: test_output.py::test_employee_denied_access_to_another_employees_payslip
+      category: security
+      weight: 5
+      cov: C-RL-06, C-DC-35
+    - kind: pytest
+      test: test_output.py::test_payroll_account_cannot_decide_a_leave_request
+      category: security
+      weight: 5
+      cov: C-RL-26, C-RL-28 (earned: the check decides a leave approval from a payroll session and re-reads the approval row), C-CF-60 (earned: the check decides a leave approval from a payroll session and re-reads the approval row), C-CF-61
+    - kind: pytest
+      test: test_output.py::test_manager_denied_access_to_payroll_register
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-19 (earned: the check reads the register and locks the run from a manager session and re-reads the run state), C-RL-20, C-CF-158 (earned: the check reads the register and locks the run from a manager session and re-reads the run state)
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_decision_request_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-29 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-RL-30 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-RL-31 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-DC-39 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-DC-40 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-DC-41 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-DC-42 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-DC-43 (earned: the check calls the decision route with no bearer credential and re-reads the approval row), C-DC-38 (earned: the check calls the decision route with no bearer credential and re-reads the approval row)
+    - kind: pytest
+      test: test_output.py::test_no_frontend_asset_carries_a_credential
+      category: security
+      weight: 5
+      cov: C-TR-34, C-TR-35 (earned: the check downloads the sign-in page and searches it for every credential marker the environment holds), C-TR-36 (earned: the check downloads the sign-in page and searches it for every credential marker the environment holds), C-TR-37 (earned: the check downloads the sign-in page and searches it for every credential marker the environment holds)
+
+- id: launch_surface_not_found_and_favicon
+  purpose: An unknown address lands on the product's own not-found page and every page declares its icon
+  substeps:
+    - kind: browser
+      do: Open /payroll/2026-99 and verify the product's own not-found page renders, carrying the copy That page does not exist above a way back into the console rather than a framework error page, and that the page declares the console icon in its document head exactly as every other page does
+      cov: C-CF-176, C-CF-177, C-CF-180, C-UF-31, C-FE-78
+    - kind: browser
+      do: Walk every link on /me, /approvals and /attendance as manager@example.com and verify each internal link resolves to a real route rather than to the not-found page
+      cov: C-CF-181
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+      cov: C-CF-178
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared
+      category: presentation
+      weight: 1
+      cov: C-CF-179 (earned: the check downloads the sign-in page, looks for the icon declaration in its head and fetches the icon itself)
+
+- id: restricted_field_edit_is_refused
+  purpose: A restricted field never changes in place and a bank proposal waits for a second pair of eyes
+  substeps:
+    - kind: browser
+      do: As employee@example.com open the Profile tab of the own record, change the contact number directly, and verify the change lands without anybody approving it
+      cov: C-CF-11, C-CF-04
+    - kind: browser
+      do: Propose a change to the Bank tab and verify the proposal is held rather than applied, that the previous value is kept beside the proposed one, and that the saved account is never displayed in full
+      cov: C-CF-12 (earned: the walk proposes a bank change and reads both the held proposal and the value it replaces), C-CF-13 (earned: the walk proposes a bank change and reads both the held proposal and the value it replaces), C-CF-20, C-CF-08
+    - kind: pytest
+      test: test_output.py::test_bank_field_change_without_confirmation_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-19, C-DM-35 (earned: the check proposes a bank change from the employee's own session and inspects the approver on the change record)
+    - kind: pytest
+      test: test_output.py::test_restricted_field_direct_edit_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-14, C-CF-15, C-CF-16 (earned: the check writes a restricted field from an employee session and inspects the refusal), C-CF-17 (earned: the check writes a restricted field from an employee session and inspects the refusal), C-CF-18, C-DM-10 (earned: the check writes a restricted field from an employee session and inspects the refusal), C-DM-11 (earned: the check writes a restricted field from an employee session and inspects the refusal)
+    - kind: pytest
+      test: test_output.py::test_seeded_schema_carries_the_pinned_columns
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-07, C-DM-08 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-DM-09 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-41 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-42 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-43 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-44 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-45 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-46 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-47 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-48 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-49 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-50 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-RL-51 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-CF-01 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries), C-CF-02 (earned: the check reads the seeded employee row and inspects every pinned column, name and reporting line it carries)
+    - kind: pytest
+      test: test_output.py::test_seeded_tables_carry_their_pinned_columns
+      category: data_integrity
+      weight: 5
+      cov: C-CF-21 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-22 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-23 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-24 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-25 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-26 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-27 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-28 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-29 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-30 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-31 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-32 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-CF-33 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-12 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-13 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-14 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-15 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-16 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-17 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-18 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-24 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries), C-DM-25 (earned: the check reads the policy, calendar, punch, day, run and statutory rows and inspects every pinned column each one carries)
+    - kind: pytest
+      test: test_output.py::test_seeded_organisation_carries_the_pinned_row_counts
+      category: data_integrity
+      weight: 5
+      cov: C-DM-54 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-55, C-DM-56 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-57 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-58, C-DM-59 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-60 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-61 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-62 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-63 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-64 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-65 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-67 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-68 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-69 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-70 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-DM-71, C-DM-72, C-DM-73, C-CF-34 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-CF-35 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code), C-CF-36 (earned: the check counts the seeded employees and reads the seeded calendars and payroll groups by code)
+    - kind: pytest
+      test: test_output.py::test_escalation_never_decides_a_request
+      category: business_rule
+      weight: 3
+      cov: C-CF-125 (earned: the check reads every escalated approval and inspects the decider each one carries), C-CF-126
+
+- id: deployment_contract_holds_at_the_public_address
+  purpose: The console answers at the address the environment names, from a production build
+  substeps:
+    - kind: browser
+      do: Open the console at its public address and take a screenshot of /me, which the reserved .browser_screenshots/ directory at the app root receives, and verify the console rendered rather than an error page
+      cov: C-DC-09, C-DC-10
+    - kind: browser
+      do: Verify every asset and every request the console makes stays on its own origin, that no request leaves for a third party, and that no control anywhere initiates a payment or offers a bank file
+      cov: C-CN-02 (earned: the walk follows every request the console makes and looks for one leaving its own origin, and for any control that would move money), C-CN-03, C-CN-04 (earned: the walk follows every request the console makes and looks for one leaving its own origin, and for any control that would move money), C-CN-01 (earned: the walk follows every request the console makes and looks for one leaving its own origin, and for any control that would move money)
+    - kind: pytest
+      test: test_output.py::test_app_is_reachable_at_its_public_address
+      category: presentation
+      weight: 1
+      cov: C-DC-01, C-DC-02 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-03 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-04 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-05 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-07 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-11 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-12 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-13 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-14 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-15 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-DC-16 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-TR-14, C-TR-15 (earned: the check opens the console at the address the environment names, on the published port, from outside the container), C-TR-16 (earned: the check opens the console at the address the environment names, on the published port, from outside the container)
+    - kind: pytest
+      test: test_output.py::test_issued_token_is_minted_by_the_declared_identity_provider
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-07 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-TR-11 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-TR-12 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-TR-13 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-TR-18 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-TR-22 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-TR-23 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-DC-18 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-DC-44 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares), C-RL-01 (earned: the check decodes the issued token and compares its issuer claim against the realm the environment declares)
+    - kind: pytest
+      test: test_output.py::test_tampered_token_is_rejected
+      category: security
+      weight: 5
+      cov: C-TR-19 (earned: the check alters the signature of a valid token and calls the identity route with it)
+    - kind: pytest
+      test: test_output.py::test_role_in_the_request_body_is_never_authority
+      category: security
+      weight: 5
+      cov: C-TR-20, C-TR-24, C-RL-12 (earned: the check sends a privileged role in the request body from an employee session and re-reads the run state)
+    - kind: pytest
+      test: test_output.py::test_written_row_is_visible_in_the_declared_database
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-06 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-TR-10 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-TR-17 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DC-17 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DC-45 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DC-46 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DC-47 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DC-48 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DM-04 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DM-05 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database), C-DM-06 (earned: the check submits a row over the API and reads it back through an independent connection to the declared database)
+    - kind: pytest
+      test: test_output.py::test_refused_request_carries_a_reason_body
+      category: validation
+      weight: 3
+      cov: C-DM-39, C-DC-37 (earned: the check submits an unknown policy and inspects the shape of the error body)
+    - kind: pytest
+      test: test_output.py::test_seeded_runs_and_claims_match_their_pinned_states
+      category: data_integrity
+      weight: 5
+      cov: C-DM-75, C-DM-76, C-DM-77 (earned: the check reads every seeded run with its payslips and reads the claim approvals waiting on a payroll account), C-DM-82, C-DM-87 (earned: the check reads the claim approvals waiting on a payroll account, which is the escalated seeded claim)
+
+- id: console_renders_without_scripting
+  purpose: Every console route delivers its rows in the first response
+  substeps:
+    - kind: browser
+      do: Disable scripting and open /approvals, /attendance and /payroll/2026-07/register as the roles that hold them, and verify each route's HTML is produced on the server, arrives complete on first paint, and still lists its rows with every link followable
+      cov: C-TR-01, C-TR-02, C-TR-03, C-TR-04 (earned: the walk disables scripting and reads the delivered HTML of each route, which is the observable half of where the markup is produced), C-TR-05 (earned: the walk disables scripting and reads the delivered HTML of each route, which is the observable half of where the markup is produced)
+    - kind: browser
+      do: Re-enable scripting and verify the queue, the month grid and the register gain their interactive behaviour on top of HTML that already rendered, with a loading state on each route while it resolves
+      cov: C-UF-33, C-FE-52 (earned: the walk re-enables scripting and watches each surface pass through its loading and populated states), C-FE-55 (earned: the walk re-enables scripting and watches each surface pass through its loading and populated states)
+    - kind: browser
+      do: Let a session token expire mid-action on /me/leave and verify the typed values stay on the page while a fresh sign-in is offered, and that a role reaching a route it does not hold is refused with a reason that changes nothing
+      cov: C-UF-17, C-UF-18, C-UF-19, C-UF-20
+
+- id: design_system_holds_across_the_console
+  purpose: The console wears one design system: colour by role, one type scale, four motion moments
+  substeps:
+    - kind: browser
+      do: Open /approvals and verify the page ground is a near-white neutral, headings take a near-black neutral, body copy takes a deep neutral and captions take a mid neutral, with the brand violet reserved for the wordmark, emphasis words and links, and that the console is designed for light with any dark mode offered as an option rather than as the default
+      cov: C-UX-05, C-UX-06, C-UX-07, C-UX-08, C-UX-09, C-FE-09, C-FE-10, C-FE-11, C-FE-12 (earned: the walk reads the grounds, the rules and the separators of the queue surface), C-UX-55, C-UX-56
+    - kind: browser
+      do: Verify each screen leads with exactly one primary action on a deep, soft indigo ground that lightens to a vivid violet under a pointer, that no secondary or quiet control wears that ground, and that the button set is a primary, a secondary and a quiet variant
+      cov: C-UX-10, C-UX-11, C-UX-12, C-FE-50, C-FE-13
+    - kind: browser
+      do: Verify every state pill carries its state word beside its colour: green for approved, present and paid, orange for pending, red for rejected and absent, blue for informational and a cool neutral for draft, each on its own pale ground
+      cov: C-UX-14, C-UX-15, C-UX-16, C-UX-17, C-UX-18, C-UX-19 (earned: the walk reads every state pill on the queue and finds the word beside the colour), C-FE-22, C-FE-23, C-FE-24, C-FE-25
+    - kind: browser
+      do: Verify the interface is set in one variable sans family at the nine sizes the brief pins, from display through page title, section heading, card title, body, secondary, label and micro to the tabular figure
+      cov: C-UX-21, C-FE-26 (earned: the walk reads the rendered type at each role in the scale), C-FE-27, C-FE-28, C-FE-29, C-FE-30 (earned: the walk reads the rendered type at each role in the scale), C-FE-31 (earned: the walk reads the rendered type at each role in the scale), C-FE-32, C-FE-33 (earned: the walk reads the rendered type at each role in the scale), C-FE-34
+    - kind: browser
+      do: Verify pills and buttons are fully rounded, cards less so, panels and inputs less again and swatches barely, that borders are a single hairline, and that elevation appears only on a menu, a dialog or a transient message
+      cov: C-UX-25, C-UX-26, C-FE-35, C-FE-36, C-FE-37
+    - kind: browser
+      do: Verify motion is confined to four moments: a panel opening on a long decelerate, a row changing state on the house ease, a skeleton holding during a list load and the payroll progress indicator, with the announcement pill the one thing that overshoots and settles
+      cov: C-UX-28, C-UX-29, C-UX-30, C-FE-62
+    - kind: browser
+      do: Set a reduced-motion preference and verify panels appear without travel while a skeleton holds its first frame
+      cov: C-UX-32, C-UX-33
+    - kind: browser
+      do: Verify a control carries resting, pointed-at, pressed, focused and unavailable states, that unavailable is never signalled by colour alone, and that a destructive action confirms before acting
+      cov: C-UX-35, C-UX-37, C-UX-38
+    - kind: browser
+      do: Verify the console meets its accessibility floor: WCAG AA contrast on body text, real tables with header associations, a label on every icon-only control, every amount announced with its currency and every date announced in full
+      cov: C-UX-40, C-UX-42, C-UX-43, C-UX-47, C-UX-48
+    - kind: browser
+      do: Verify the header carries the wordmark, the primary navigation and the account control, that the wordmark is a lowercase word in the brand violet with a raised dot and a small two-letter suffix below the baseline, and that the announcement bar above it can be dismissed for the session
+      cov: C-FE-38, C-FE-39, C-FE-48, C-FE-49, C-FE-14, C-FE-15, C-FE-16 (earned: the walk reads the header, the wordmark and the announcement bar above it)
+    - kind: browser
+      do: Verify every interface glyph shares one stroke weighting, that every illustration is drawn from the palette rather than sourced, that no photograph of a person and no third-party mark appears, and that no certification badge is downloaded
+      cov: C-FE-40, C-FE-41, C-FE-42, C-FE-43, C-FE-46
+    - kind: browser
+      do: Verify every content image carries alternative text while a decorative one declares itself decorative, and that the console renders identically with the network away, so no font service is called at run time
+      cov: C-FE-44, C-FE-45, C-FE-47
+    - kind: browser
+      do: Open the home screen and verify four pastel summary tiles in a fixed order: a mint ground, a cool ground, a warm ground and a violet-cast ground
+      cov: C-FE-17, C-FE-18, C-FE-19, C-FE-20, C-FE-21
+    - kind: browser
+      do: Use the one search field over people, requests and runs, and verify the result is reflected in the address so the result can be linked and restored on back
+      cov: C-FE-57, C-FE-58
+    - kind: browser
+      do: Open the mega-menu on the header with a pointer and again with a click, and verify it translates up as it fades in and waits a beat before closing
+      cov: C-FE-59, C-FE-60, C-FE-61
+
+- id: responsive_matrix_holds_at_three_widths
+  purpose: The console holds at every width and the register refuses the narrowest one
+  substeps:
+    - kind: browser
+      do: At the narrowest width verify the rail becomes a sheet, the directory becomes cards carrying name, designation and status, and the month grid shows one employee with the days down
+      cov: C-FE-63, C-FE-64, C-FE-65, C-FE-51
+    - kind: browser
+      do: At the middle width verify the month grid shows seven days across with paging and the register scrolls horizontally with a frozen first column
+      cov: C-FE-66, C-FE-69
+    - kind: browser
+      do: At the narrowest width open the register and verify it is refused with the copy The register needs a wider window above an export offered instead
+      cov: C-FE-68
+    - kind: browser
+      do: Verify the layout holds at every width between the named tiers, floors on the smallest viewport, and that the employee surface and the approval queue read as built for the narrow width first
+      cov: C-UX-49, C-UX-50
+    - kind: browser
+      do: Open the empty directory and verify the copy reads No people yet above Add your first employee or import a list.
+      cov: C-FE-70, C-FE-54 (earned: the walk empties the directory filter and reads the copy the surface falls back to)
+
+- id: scope_boundary_holds_across_the_console
+  purpose: The console offers nothing the brief holds out of scope
+  substeps:
+    - kind: browser
+      do: Walk every route and every menu as manager@example.com and payroll@example.com and verify no control offers onboarding, exit, clearance or a final settlement, and none offers a typed assistant
+      cov: C-CN-05, C-CN-06
+    - kind: browser
+      do: Verify no control offers a report builder, report scheduling or export delivery, no control delegates an approval to a colleague, and no control impersonates another account
+      cov: C-CN-07, C-CN-08 (earned: the walk visits every route and every menu and looks for the named controls), C-CN-09 (earned: the walk visits every route and every menu and looks for the named controls)
+    - kind: browser
+      do: Verify no billing, plan, invoice or metering surface exists, no integration, webhook or public key surface exists, and no letter, certificate or generated document is offered
+      cov: C-CN-10, C-CN-11, C-CN-12
+    - kind: browser
+      do: Verify no action sends an email, a message or a push notification, that the queue is the only place a decision is announced, and that no second factor, password reset or self-service signup is offered anywhere
+      cov: C-CN-13, C-CN-14, C-OV-11
+    - kind: browser
+      do: Verify no route serves a marketing page, a pricing page or a public website, and that no download or install of a native application is offered
+      cov: C-CN-15, C-CN-16
+
+- id: bulk_decisions_undo_within_the_window
+  purpose: A filtered selection is decided in bulk and the action can be taken back
+  substeps:
+    - kind: browser
+      do: As manager@example.com filter /approvals to leave, select several rows, approve them in bulk with no reason asked for, and verify each row updates the moment the action is taken
+      cov: C-CF-127, C-CF-131
+    - kind: browser
+      do: Reject a filtered selection in bulk and verify a reason is required before the action is accepted, then take the action back inside the undo period of ten seconds and verify the rows return to pending
+      cov: C-CF-128, C-CF-129, C-CF-130
+    - kind: browser
+      do: Verify a leave request carries its state as one of the eight named words through its life, and that a late cancellation made by a payroll account writes a correction entry carrying a reason
+      cov: C-CF-57, C-CF-62
+
+- id: each_role_reaches_only_its_own_surfaces
+  purpose: Each of the three roles reaches what the capability matrix grants and nothing else
+  substeps:
+    - kind: browser
+      do: Sign in as employee2@example.com and employee3@example.com in turn and verify each reads their own balances, their own ledger, their own attendance days, applies for leave, requests a regularisation and submits a claim, with no queue and no decision control anywhere
+      cov: C-RL-03, C-RL-04, C-RL-05, C-RL-07, C-RL-08, C-RL-09, C-RL-35, C-RL-36, C-OV-06, C-OV-03, C-OV-04
+    - kind: browser
+      do: Sign in as manager@example.com and verify the directory and the record of their own direct reports are readable, that a request from a direct report can be approved and rejected, and that no salary figure appears on any surface
+      cov: C-RL-13, C-RL-15, C-RL-16, C-OV-07
+    - kind: browser
+      do: Sign in as manager2@example.com and verify the same surfaces are scoped to that manager's own reporting line
+      cov: C-RL-38
+    - kind: browser
+      do: Sign in as payroll@example.com and then as payroll2@example.com and verify each reads every employee in the groups they own, reads the salary structures and the register, and works the run through its lifecycle
+      cov: C-RL-21, C-RL-22, C-RL-23, C-RL-39, C-RL-40, C-OV-08, C-OV-05, C-UF-27 (earned: the walk signs in as each payroll account and exercises every capability the matrix grants that role), C-UF-28 (earned: the walk signs in as each payroll account and exercises every capability the matrix grants that role)
+    - kind: browser
+      do: Open /people as payroll@example.com, verify the directory is a compact table that pages to its end, then open /people/E-1001 and verify the record opens as tabs reading from one row
+      cov: C-UF-05, C-UF-06, C-CF-03, C-CF-04 (earned: the walk opens the directory and then one employee record, reading the tabs the record presents), C-CF-05 (earned: the walk opens the directory and then one employee record, reading the tabs the record presents), C-CF-06 (earned: the walk opens the directory and then one employee record, reading the tabs the record presents), C-CF-07 (earned: the walk opens the directory and then one employee record, reading the tabs the record presents), C-CF-08 (earned: the walk opens the directory and then one employee record, reading the tabs the record presents), C-CF-09
+    - kind: pytest
+      test: test_output.py::test_directory_cursor_paging_repeats_no_row
+      category: data_integrity
+      weight: 5
+      cov: C-TR-38 (earned: the check pages the directory to its end with the cursor header and looks for a repeated employee number), C-TR-42 (earned: the check pages the directory to its end with the cursor header and looks for a repeated employee number), C-TR-43, C-DM-36 (earned: the check pages the directory to its end with the cursor header and looks for a repeated employee number), C-TR-28 (earned: the check pages the directory to its end with the cursor header and looks for a repeated employee number), C-DC-21 (earned: the check pages the directory to its end with the cursor header and looks for a repeated employee number), C-DC-36 (earned: the check pages the directory to its end with the cursor header and looks for a repeated employee number)

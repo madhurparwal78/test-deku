@@ -1,0 +1,284 @@
+{
+  "_schema": "code-quality-findings-v1",
+  "generated_for": {
+    "bundle": "63376906-d58e-5ef4-a179-0ee63775b5c0",
+    "task": "E_suppl_inve_mass-balance-attestation_20260904_085738",
+    "run": "run_1",
+    "trial_id": "E_suppl_inve_mass-balance-attest__yEKbyth",
+    "model": "anthropic-claude-opus-5",
+    "reward": 0.1304,
+    "source_rubric": "tests/code_rubric.json (code-rubric-v1, judge_pin claude-sonnet-4-6)",
+    "assessed_by": "human evaluation; the code rubric was never executed in this run and no code-rubric output exists in run_1/logs/"
+  },
+  "summary": {
+    "declared_criteria": 11,
+    "declared_failed": 4,
+    "declared_passed": 7,
+    "declared_dimensions": 7,
+    "dimensions_with_criteria": 2,
+    "dimensions_with_no_criteria": 5,
+    "additional_failures_found_in_uncovered_dimensions": 7,
+    "dimensions_not_declared_at_all": 0,
+    "total_code_quality_failures": 11
+  },
+  "declared_criteria_failed": [
+    {
+      "id": "Q2",
+      "dimension": "scope_discipline",
+      "importance": "important",
+      "statement": "No table, column or seeded row exists beyond the entities the data model enumerates.",
+      "verdict": "FAIL",
+      "confidence": "high",
+      "evidence": [
+        "The brief's Data model section enumerates 36 entities; server/schema.sql creates 52 tables.",
+        "16 tables exist beyond the enumerated list: account, annotation, certificate_sequence, certification_period, change_notice_ack, counter, custody_link, customer, export, finding, idempotency_key, notification, party, recipe_version, specification_issue, weighing_device.",
+        "6 of those appear nowhere in instruction.md at all: annotation, certificate_sequence, certification_period, change_notice_ack, counter, specification_issue.",
+        "No enumerated entity is missing a table, so this is pure addition rather than substitution."
+      ],
+      "note": "Ten of the sixteen are defensible - idempotency_key, custody_link, export, finding, customer, party, notification, recipe_version, weighing_device and account are each named elsewhere in the brief. The six unmentioned tables are the unambiguous part of the finding."
+    },
+    {
+      "id": "Q6",
+      "dimension": "internal_consistency",
+      "importance": "critically_important",
+      "statement": "The ledger invariant is expressed once and every write path reaches it there, rather than each route restating the same check.",
+      "verdict": "FAIL",
+      "confidence": "high",
+      "evidence": [
+        "server/engine.js:768 expresses it as CATEGORIES.every((c) => figures[c].credits_available_g >= 0).",
+        "server/routes/ledger.js:287 restates the same rule inverted as figures[cat].credits_available_g < 0.",
+        "The route therefore carries its own copy of the invariant instead of reaching the engine's."
+      ]
+    },
+    {
+      "id": "Q7",
+      "dimension": "internal_consistency",
+      "importance": "critically_important",
+      "statement": "One shared helper floors every derived integer, so no module rounds a figure another module floors.",
+      "verdict": "FAIL",
+      "confidence": "high",
+      "evidence": [
+        "server/lib/num.js defines floorDiv and opens with the comment 'Every derived integer in this product is floored, never rounded.'",
+        "floorDiv is used at 18 sites, but six derived integers bypass it with raw Math.floor.",
+        "server/routes/certificates.js:122,123,197,198 inline exactly what shareBp() computes: Math.floor(split * 10000 / mass_g).",
+        "server/routes/runs.js:429 inlines exactly what creditGranted() computes: Math.floor((blendedBp * massG) / 10000).",
+        "server/routes/public.js:543 floors a kg conversion inline.",
+        "server/seed.js:807 and server/engine.js:889 are the identical bp-to-whole conversion duplicated across two modules.",
+        "No Math.round or toFixed appears anywhere, so the arithmetic is not wrong - the single-helper discipline is what breaks."
+      ]
+    },
+    {
+      "id": "Q9",
+      "dimension": "internal_consistency",
+      "importance": "important",
+      "statement": "Unit suffixes are carried consistently in identifiers across every layer, so a mass always ends in _g, a proportion in _bp and a carbon figure in _mg_per_kg.",
+      "verdict": "FAIL",
+      "confidence": "moderate",
+      "evidence": [
+        "The API surface is disciplined - credits_in_g, content_bp, value_mg_per_kg are correct throughout.",
+        "Internal identifiers routinely drop the suffix: server/seed.js:398 const credit (grams), server/api.js:508 const delivered (grams), server/engine.js:481 const attached (grams), server/engine.js:499 const content (basis points), server/engine.js:586 const share (basis points), server/engine.js:663-664 const retired / const metered (kWh), server/routes/public.js:546 let mass (grams).",
+        "Where a suffix is carried internally it switches convention, e.g. massG rather than mass_g."
+      ],
+      "note": "The weakest of the four failures. The criterion says 'across every layer', which the internal layer does not satisfy, but a grader reading it as an API-surface rule could defensibly pass this."
+    }
+  ],
+  "declared_criteria_passed": [
+    {
+      "id": "Q1",
+      "dimension": "scope_discipline",
+      "importance": "important",
+      "statement": "No dependency appears in the package manifest that no checklist obligation required; the client framework, the API framework, the database driver and the mail client are the whole tree.",
+      "verdict": "PASS",
+      "confidence": "high",
+      "evidence": [
+        "dependencies are exactly preact (client), hono + @hono/node-server (API), pg (driver), nodemailer (mail).",
+        "devDependencies are vite and @preact/preset-vite, the build toolchain for the declared client framework."
+      ]
+    },
+    {
+      "id": "Q3",
+      "dimension": "scope_discipline",
+      "importance": "important",
+      "statement": "No scheduler, message queue, cache or background worker was introduced for work no obligation asked for.",
+      "verdict": "PASS",
+      "confidence": "high",
+      "evidence": [
+        "No cron, queue, redis, worker_threads, amqp or kafka anywhere in the tree.",
+        "Two setTimeout calls exist and neither is a scheduler: server/db.js:48 is connection retry backoff, src/components/ui.jsx:26 is a reveal-animation failsafe."
+      ]
+    },
+    {
+      "id": "Q4",
+      "dimension": "scope_discipline",
+      "importance": "critically_important",
+      "statement": "The source holds no outbound client for the weighbridge, the control system, the laboratory or the customer reporting system, since all four only send inward.",
+      "verdict": "PASS",
+      "confidence": "high",
+      "evidence": [
+        "The four systems appear only as inbound source name literals in server/seed.js:651-655 and server/routes/public.js:190,263.",
+        "No outbound HTTP client targets any of them."
+      ]
+    },
+    {
+      "id": "Q5",
+      "dimension": "scope_discipline",
+      "importance": "critically_important",
+      "statement": "No in-memory substitute for a table, no fixture file standing in for a seeded row and no log sink standing in for the mail service exists anywhere in the tree.",
+      "verdict": "PASS",
+      "confidence": "high",
+      "evidence": [
+        "Mail uses a real SMTP transport - server/lib/mail.js:13 nodemailer.createTransport, :21 sendMail. No console.log sink.",
+        "The Map and Set instances found are local computation inside graph and flag building, not table substitutes.",
+        "Every entity is read from postgres; no fixture file backs a seeded row."
+      ]
+    },
+    {
+      "id": "Q8",
+      "dimension": "internal_consistency",
+      "importance": "important",
+      "statement": "One naming convention runs across the source for the same idea, so a consumption is not a consumption in one module and a usage in another.",
+      "verdict": "PASS",
+      "confidence": "high",
+      "evidence": [
+        "consumption appears 41 times, usage 0. allocation 58, attachment 2 (distinct meaning). lot 539, batch_output 0.",
+        "reject/rejected (35) is a batch disposition state, semantically distinct from refuse (303), an API refusal."
+      ]
+    },
+    {
+      "id": "Q10",
+      "dimension": "internal_consistency",
+      "importance": "critically_important",
+      "statement": "The arithmetic that derives every claim lives in its own module that the operational-record layer never imports, so the one-way dependency direction the brief states is visible in the tree itself.",
+      "verdict": "PASS",
+      "confidence": "high",
+      "evidence": [
+        "server/lib/record.js imports only node:crypto.",
+        "server/engine.js imports the arithmetic (lib/num.js); record.js never imports engine.js or lib/num.js.",
+        "The one-way direction is visible in the import graph."
+      ]
+    },
+    {
+      "id": "Q11",
+      "dimension": "internal_consistency",
+      "importance": "somewhat_important",
+      "statement": "The pinned seed values are read from one seed definition wherever they are needed rather than duplicated as literals across modules.",
+      "verdict": "PASS",
+      "confidence": "moderate",
+      "evidence": [
+        "Pinned values 360000, 336000, 2000 and 12345 appear only in server/seed.js.",
+        "The literal 5000 also appears in server/engine.js and server/routes/quality.js, but as a threshold constant rather than a restated seed row."
+      ]
+    }
+  ],
+  "uncovered_dimensions": {
+    "explanation": "code_rubric.json declares 7 dimensions but writes criteria for only 2 (scope_discipline, internal_consistency). The 5 dimensions below carry no criteria, so nothing in the rubric can score them. Each entry proposes the criterion the dimension implies and records how run_1 would fare against it.",
+    "findings": [
+      {
+        "dimension": "abstraction",
+        "criterion_status": "NOT PRESENT IN code_rubric.json",
+        "proposed_statement": "A rule or literal set that governs more than one route is defined once and referenced, rather than restated at each site.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "The inbound SOURCES list ['weighbridge','control_system','laboratory','customer_reporting'] is declared twice, at server/routes/public.js:190 and :263.",
+          "The bp-to-whole conversion const whole = Math.floor(Number(bp) / 100) is duplicated verbatim in server/seed.js:807 and server/engine.js:889.",
+          "The share-in-basis-points computation is inlined four times in server/routes/certificates.js instead of calling the existing shareBp helper.",
+          "This overlaps Q7 but is broader: Q7 covers flooring only, while the duplication here extends to literal sets and domain rules."
+        ]
+      },
+      {
+        "dimension": "dead_code",
+        "criterion_status": "NOT PRESENT IN code_rubric.json",
+        "proposed_statement": "No exported symbol is unreferenced, and no symbol is exported that is only used inside its own module.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "2 symbols are never referenced anywhere: setSession (src/api.js) and Figures (src/components/ui.jsx).",
+          "12 functions are exported but consumed only inside their defining module: partyNameOn, approvalInForce, lastApprovalBefore, resolveBatch, creditAttachedToLot, periodForLot (server/engine.js); accountFor (server/lib/auth.js); bodyDigest (server/lib/http.js); isInteger (server/lib/num.js); normaliseMoment, computeDigest (server/lib/record.js); idempotencyKey (src/api.js).",
+          "The exported-but-internal group widens the module's public surface without a consumer."
+        ]
+      },
+      {
+        "dimension": "naming",
+        "criterion_status": "NOT PRESENT IN code_rubric.json",
+        "proposed_statement": "One mechanism for one idea carries one name; two tables do not implement the same concept under different names.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "server/schema.sql defines both counter and certificate_sequence, two tables for sequence generation.",
+          "Neither name appears anywhere in instruction.md, so the duplication is invented rather than required.",
+          "This is distinct from Q8, which tests naming of domain terms in code; this is naming of persistence mechanisms."
+        ]
+      },
+      {
+        "dimension": "readability",
+        "criterion_status": "NOT PRESENT IN code_rubric.json",
+        "proposed_statement": "No module grows past the point where its responsibilities can be read as a unit.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "server/engine.js is 903 lines and mixes genealogy traversal, ledger summarisation, carbon derivation and certificate condition evaluation.",
+          "server/seed.js is 826 lines, server/routes/public.js 664, server/routes/certificates.js 581, server/routes/ledger.js 552.",
+          "6038 lines of server source across 15 modules, with the largest four holding roughly half of it."
+        ],
+        "note": "The most subjective of the five. Recorded because the concentration in engine.js is what allowed the Q6 invariant to be restated in a route without it being obvious."
+      },
+      {
+        "dimension": "idiomaticity",
+        "criterion_status": "NOT PRESENT IN code_rubric.json",
+        "proposed_statement": "Values crossing the database boundary are converted at one point rather than re-coerced at each use.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "Number(...) coercion is applied repeatedly at call sites on values already read from postgres, for example server/engine.js:663-664 Number(i.quantity_kwh) and Number(energy.metered_kwh || 0), server/routes/public.js:543 Number(x.mass_g), server/api.js:508 Number(batch.net_g).",
+          "server/lib/num.js re-coerces its own arguments with Number() on every helper even though every caller passes numeric input.",
+          "The pg driver returns bigint columns as strings; that conversion belongs at the data-access boundary in server/db.js, not scattered across engine and route modules."
+        ]
+      },
+      {
+        "dimension": "abstraction",
+        "criterion_status": "NOT PRESENT IN code_rubric.json (second finding for this dimension)",
+        "proposed_statement": "No single function grows to a size where its branches can no longer be held in view.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "server/seed.js:18 seed() is 704 lines in one function body.",
+          "server/engine.js:714 evaluateConditions() is 132 lines; server/engine.js:74 resolveBatch() is 101; server/engine.js:196 genealogy() is 97.",
+          "server/seed.js:724 renderDocument() is 81; server/routes/ledger.js:12 periodPayload() is 71.",
+          "The 704-line seed function is where the pinned seed rows live, which is also why Q11 passes only narrowly: the values are in one place because that place is one enormous function."
+        ]
+      },
+      {
+        "dimension": "internal_consistency",
+        "criterion_status": "NOT PRESENT IN code_rubric.json (the declared criteria cover invariants, flooring, naming, layering and seed literals, but not pinned user-facing copy)",
+        "proposed_statement": "A refusal message the brief pins is defined once and referenced, so two sites cannot drift to different wording.",
+        "predicted_verdict": "FAIL",
+        "evidence": [
+          "Five pinned refusal strings are duplicated across call sites rather than defined once:",
+          "'This period is closed. Corrections require a restatement.' appears 3 times.",
+          "'A closed period refuses every further write and refuses to reopen.' appears twice.",
+          "'No such specification version.' appears twice.",
+          "'No carbon figure exists for this lot.' appears twice.",
+          "'No bookkeeping period covers this lot.' appears twice.",
+          "The brief pins this copy exactly, and the graded journeys assert on it, so any future edit to one copy silently diverges the other."
+        ]
+      }
+    ]
+  },
+  "cross_reference": {
+    "note": "These code-quality findings are independent of the functional grading recorded in judge.json, workflows.json and pytest_ctrf.json. run_1's reward of 0.1304 was driven by contract-shape mismatches, not by the defects above.",
+    "related": [
+      "run_1/logs/judge.json",
+      "run_1/workflows.json",
+      "run_1/logs/pytest_ctrf.json"
+    ]
+  },
+  "checks_performed_that_found_no_defect": [
+    "Concurrency control: run_1 takes pg_advisory_xact_lock inside the transaction and BEFORE reading available credit (server/routes/ledger.js:123,190), plus a global record lock (server/lib/record.js:46) and a per-site certificate-sequence lock (server/routes/certificates.js:214). The three failing concurrency tests fail in their SETUP line with KeyError: 'credits_available_g' - the balance-period response shape bug - and never reach the race they were written to test. Locking is correct; the tests are blocked upstream of it.",
+    "SQL construction: server/api.js:453 builds a dynamic UPDATE, but column names come from a hardcoded allowed list ('moisture_method','contamination') and all values are parameterised. No injection surface.",
+    "Rounding: no Math.round or toFixed anywhere in the server tree; the flooring failure in Q7 is about bypassing the shared helper, not about incorrect arithmetic.",
+    "Transaction discipline itself: tx() is used at 49 call sites with correct BEGIN/COMMIT/ROLLBACK and client release.",
+    "Layering: the record module never imports the claim arithmetic, so the one-way dependency the brief requires holds (Q10)."
+  ],
+  "corrections": [
+    {
+      "retracted": "concurrency_control FAIL (asserted zero row locks)",
+      "reason": "The search pattern 'advisory_lock' does not match 'pg_advisory_xact_lock', and 'FOR UPDATE' was matched case-sensitively. run_1 has four advisory locks and they are correctly placed.",
+      "corrected_to": "no defect; recorded under checks_performed_that_found_no_defect"
+    }
+  ]
+}

@@ -1,0 +1,301 @@
+- id: visitor_files_a_build_request_from_the_composer
+  purpose: A visitor reads the pitch on the home route, describes the app they want in the composer, and the request is filed with an identifier returned
+  substeps:
+    - kind: browser
+      do: Open the home route and confirm the hero, the trust marquee, the connected-apps section, the card carousel, the three-step disclosure, the device composition, the integration chip field, the dark security band, the app tile grid, the testimonial carousel and the founder quote are present in that order, that the primary navigation carries five items, and that the site presents seven public reading surfaces
+      cov: C-OV-01, C-UF-01, C-FE-01, C-FE-03
+    - kind: browser
+      do: Confirm the prompt composer is present in the hero with the placeholder text and the attachment label, that it carries a circular submit button, and that the composer card blurs whatever ground passes behind it
+      cov: C-FE-10, C-FE-11, C-FE-12
+    - kind: pytest
+      test: test_output.py::test_build_request_is_durable_and_returns_its_identifier
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: Sign in with the login credentials the app writes into its readme at the app root and confirm they work, then confirm the reserved screenshot and download directories exist and start empty
+      cov: C-DC-04, C-DC-05, C-DC-06
+    - kind: browser
+      do: Type a sentence into the hero composer, scroll past the hero, and confirm the composer is pinned to the bottom of the viewport with the typed text still present and no layout jump
+      cov: C-CF-26
+    - kind: browser
+      do: Confirm the composer is present on the agent route, the answers route and the careers route, pinned to the bottom of the viewport
+
+- id: author_publishes_an_article_with_a_cover
+  purpose: An author writes an article in the studio, uploads its cover, and publishes it onto the editorial index
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com and confirm the studio opens with a fixed rail of the four collections and a card grid of records beside it
+      cov: C-UF-06, C-RL-01
+    - kind: browser
+      do: Open the create slide-over, fill an article, save it as a draft, confirm the row appears in the grid before the server answers, then publish it and confirm an author publishes only their own records
+      cov: C-RL-02
+    - kind: pytest
+      test: test_output.py::test_article_cover_upload_is_stored_in_the_object_store
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_articles_listed_newest_first
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cover_bytes_are_not_persisted_in_a_database_column
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: draft_article_denied_to_every_reader_but_its_author
+  purpose: An unpublished article is unreachable by a reader, by the other author and by an anonymous visitor
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_draft_article_absent_from_public_list
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_article_denied_to_reader_and_other_author
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_missing_draft_and_absent_slug_are_denied_alike
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_cover_denied_to_everyone_but_its_author
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_cover_answers_any_requester
+      critical: true
+      category: business_rule
+      weight: 5
+
+- id: reader_cannot_reach_the_studio
+  purpose: A signed-up reader account has no path into the studio and no authoring endpoint answers it
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reader_denied_every_authoring_endpoint
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_reach_the_studio_collection
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_studio_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Request the studio route while signed out and confirm the browser lands on the sign-in route, then confirm signing in returns to the requested route
+      cov: C-UF-04
+    - kind: pytest
+      test: test_output.py::test_expired_token_is_rejected_and_record_unchanged
+      category: security
+      weight: 5
+
+- id: cross_author_edit_is_denied_and_the_row_is_unchanged
+  purpose: One author cannot edit or publish a record owned by the other, and the attempt leaves the record untouched
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_cross_author_edit_denied_and_row_unchanged
+      critical: true
+      category: security
+      weight: 5
+
+- id: concurrent_feature_requests_leave_one_featured_row
+  purpose: Two simultaneous requests featuring different articles resolve to exactly one featured row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_featured_article_is_unique_across_the_table
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_featuring_a_second_article_clears_the_first
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_feature_requests_leave_one_featured_row
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: visitor_browses_the_editorial_index
+  purpose: A visitor reads the editorial index, sees one featured article above a list of rows, and hands over an email address
+  substeps:
+    - kind: browser
+      do: Open the editorial index and confirm its title, a one-line standfirst, the inline subscribe form with its placeholder and inset button, one featured media card, and a list of article rows with thumbnails and hairlines between them, and that the one accent colour carries only progress, documentation links and one large mark
+      cov: C-UX-06
+    - kind: pytest
+      test: test_output.py::test_subscription_response_reveals_no_membership
+      critical: true
+      category: security
+      weight: 5
+
+- id: visitor_reads_the_press_digest
+  purpose: A visitor pages through the press digest, which is paged by the server and writes each date out in full
+  substeps:
+    - kind: browser
+      do: Open the press digest and confirm the dark hero, the strip of five further headlines, the item list with a category pill and a date carrying the weekday spelled out, and pagination whose ellipsis expands the range rather than jumping
+      cov: C-FE-15, C-FE-16
+    - kind: pytest
+      test: test_output.py::test_press_digest_pagination_is_server_driven
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_press_item_holds_three_to_five_summary_entries
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: closed_role_is_absent_from_the_list_but_its_route_resolves
+  purpose: A job opening that is no longer open disappears from the careers list while its own route keeps working
+  substeps:
+    - kind: browser
+      do: Open the careers route and confirm the pale acid ground behind the header, the parallax field of eight photographs at their measured sizes, the three values tabs swapping a paragraph, the four statistics, and the dark open-roles block grouped by department
+    - kind: pytest
+      test: test_output.py::test_closed_job_absent_from_the_careers_list
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_closed_job_route_still_resolves
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_job_department_grouping_is_computed_on_read
+      critical: true
+      category: business_rule
+      weight: 5
+
+- id: documentation_portal_serves_a_machine_readable_index
+  purpose: The documentation portal carries its own design system and exposes every page as plain text at a derived path
+  substeps:
+    - kind: browser
+      do: Open the documentation portal and confirm it carries its own header, its own grey and accent ramps, its own type, and a sidebar tree that fades at top and bottom, none of which appear on any other route
+      cov: C-FE-04
+    - kind: pytest
+      test: test_output.py::test_documentation_page_served_as_plain_text
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: browser
+      do: Open the answers route and confirm the question and answer pairs are grouped under headings in their stated order, and that the one large mark on the route is filled with the site's accent teal
+      cov: C-FE-06
+    - kind: pytest
+      test: test_output.py::test_question_set_served_as_structured_data
+      critical: true
+      category: business_rule
+      weight: 5
+
+- id: oversized_or_mistyped_attachment_is_refused
+  purpose: An attachment beyond the size limit, or whose content does not match its name, does not reach the bucket
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_attachment_upload_grant_is_presigned_and_short_lived
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_oversized_attachment_is_refused
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_attachment_type_is_decided_by_content_not_extension
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_overlong_prompt_is_refused
+      category: validation
+      weight: 3
+
+- id: signup_creates_a_reader_and_seeded_accounts_persist
+  purpose: Open signup produces a reader account, and the three seeded accounts are present exactly once each
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_signup_creates_a_reader_account
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_are_persisted_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: stored_records_hold_their_shape
+  purpose: Slugs stay unique, publication stamps follow status, and a restart adds no rows
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_article_slug_is_unique
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_at_is_set_only_on_published_articles
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seed_row_counts_are_stable
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_request_is_a_client_error_not_a_server_error
+      category: validation
+      weight: 3
+
+- id: every_surface_carries_its_empty_and_loading_states
+  purpose: Each collection surface names what would appear when it holds nothing, and a failed request leaves the page usable
+  substeps:
+    - kind: browser
+      do: Confirm the signed-in studio presents the site's own authors with all four collections, open each studio collection with no records and confirm an empty state naming what would appear there, then confirm each route shows a loading state before its content arrives
+      cov: C-UF-10, C-OV-03
+    - kind: browser
+      do: Trigger a failed request and confirm a message appears without the page breaking
+      cov: C-UF-11
+    - kind: browser
+      do: Request an unknown path and confirm the shared not-found surface renders with the reading-route header cluster and the footer pinned to the bottom of the viewport
+      cov: C-OV-02, C-UF-08, C-UF-12
+    - kind: browser
+      do: Request the share, invite, embed and verification prefixes with no trailing identifier and confirm each renders the same not-found surface
+      cov: C-FE-02
+
+- id: the_interface_holds_at_every_width_and_without_motion
+  purpose: The layout holds between the named tiers, every control is reachable by keyboard, and nothing animates under reduced motion
+  substeps:
+    - kind: browser
+      do: Resize between and across the three captured widths and confirm the layout holds at every width, that the home hero substitutes a single static composition on the narrow width, and that no horizontal scrolling appears
+    - kind: browser
+      do: Traverse each route by keyboard alone and confirm every control is reachable with a visible focus ring, that text meets the stated contrast, and that no meaning is carried by colour alone
+      cov: C-UX-09
+    - kind: browser
+      do: Enable reduced motion and confirm every scroll-driven value, every parallax offset and every keyframe resolves to its end state immediately
+      cov: C-FE-17
+    - kind: browser
+      do: Confirm buttons, tags and switches are fully rounded at their ends, that every other surface carries a gentle corner, and that no sharp corner appears anywhere
+    - kind: browser
+      do: Confirm body text is set at the stated colour, that the display family sets its normal face a step heavier than a static family would, that the hairline value draws every rule and every outlined pill, and that the route progress bar is the only place the accent appears at full strength on a light ground
+      cov: C-FE-05, C-FE-08, C-FE-09, C-FE-13
+    - kind: browser
+      do: Confirm the studio sets its type in monospace, that the agent terminal does the same, that the editorial reading measure keeps a proportional face, and that the product excludes a visual editor
+      cov: C-UX-02, C-OV-05

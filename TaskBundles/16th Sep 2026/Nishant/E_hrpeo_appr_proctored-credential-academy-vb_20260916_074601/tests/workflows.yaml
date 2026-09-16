@@ -1,0 +1,459 @@
+- id: public_catalogue_and_proof_surface_are_open
+  purpose: A signed-out visitor reads the public catalogue, the privacy page and a credential proof address
+  substeps:
+    - kind: browser
+      do: Open / signed out and verify the public catalogue lists the seeded chains as faction badges and the enrolable courses, that the deprecated course intro-javascript is absent, that the page leads with Where devs learn web3, earn rewards, land a job. over one primary action reading Start Learning, and that the footer carries Terms of Service, Privacy Policy, Cookie Policy and Manage Cookies
+      cov: C-CF-164, C-FE-53, C-FE-54, C-FE-61, C-UF-1
+    - kind: browser
+      do: Verify the public catalogue route carries its own document title and its own meta description, that the site serves a favicon declared in the document head, and that every internal link on the route resolves
+      cov: C-CF-177, C-TR-24, C-TR-26, C-UF-41
+    - kind: browser
+      do: Open /privacy signed out and verify the page states what Proofworks records about an Artisan, the retention schedule for each kind of record, and that a credential written to the ledger is permanent
+      cov: C-CF-108, C-CF-144, C-CF-165, C-CF-166
+    - kind: browser
+      do: Verify a first-time visitor is asked once about non-essential cookies, accept the choice, reload the route, and verify the question is not asked a second time
+      cov: C-CF-167, C-CF-169
+    - kind: browser
+      do: Open an address that exists on no route and verify the product's own not-found page renders with a way back into the catalogue rather than a bare error page
+      cov: C-CF-174, C-CF-175
+    - kind: browser
+      do: Verify the browser receives an application shell on first paint from one origin, with every record arriving afterwards from the JSON API under /api on that same origin, and no second identity provider, cache, queue or object store reached at run time
+      cov: C-TR-7
+    - kind: browser
+      do: Verify nothing the browser downloads carries a credential, a key or a token, that no database client or field enumeration ships inside a bundle, and that the transferred script for the route stays inside its pinned budget
+      cov: C-TR-19, C-TR-22
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_requires_no_credential
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_catalogue_is_public_and_hides_the_deprecated_course
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_catalogue_paging_uses_a_cursor_and_never_an_offset
+      category: business_rule
+      weight: 3
+
+- id: learner_signs_in_and_reads_the_dashboard
+  purpose: A seeded Artisan signs in and finds the dashboard, the sidebar and the course in flight
+  substeps:
+    - kind: browser
+      do: Open /login, sign in as learner@example.com with the seeded password deku-demo-pw-2026 that the app writes to /app/USER_README.md, and verify a sign-in with no stored destination lands on /home
+      cov: C-RL-30, C-UF-23
+    - kind: browser
+      do: Verify /home carries the salutation Welcome, ARTISAN., a persistent left sidebar of Courses, Bounties, Houses and AI Creations, a breadcrumb above it, and a header with the brand mark, a chain switcher, an announcements bell and the account control
+      cov: C-FE-1, C-FE-2, C-FE-4, C-FE-5
+    - kind: browser
+      do: Verify the dashboard leads with the course already in flight, then with a recommended next course chosen from the recorded proficiency, and that a course with an unmet prerequisite names the unmet prerequisite rather than hiding it
+      cov: C-FE-43, C-FE-44, C-FE-45
+    - kind: browser
+      do: Open /courses/solana and then /content/solana-intern and verify the course overview shows the observed start or purchase confirmation question, the reward-window countdown copy with an absolute date, and an empty reward list reading its own copy
+      cov: C-CF-121, C-CF-122, C-FE-57, C-FE-58, C-FE-60
+    - kind: browser
+      do: Verify the app reads PostgreSQL at DATABASE_URL and Keycloak at AUTH_URL with realm deku and client proofworks from the environment rather than from a hardcoded host, and that neither backing service is downloaded, installed or started by the app
+    - kind: browser
+      do: Verify the application log on standard output carries one line per request with the method, the path, the outcome and the elapsed milliseconds, and never a password, a token, an email address or an answer key
+      cov: C-TR-17
+    - kind: pytest
+      test: test_output.py::test_login_returns_access_token_for_seeded_learner
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_me_reports_role_and_program_from_the_stored_account_row
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_catalogue_rows_match_the_pinned_counts
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_programs_carry_the_pinned_treasury_shape
+      category: data_integrity
+      weight: 5
+
+- id: unauthenticated_request_is_denied
+  purpose: A request carrying no bearer token cannot enrol
+  substeps:
+    - kind: browser
+      do: Sign out, verify the visitor is returned to /, then open /home signed out and verify the route goes to /login and afterwards on to the route that was asked for
+      cov: C-UF-21, C-UF-22
+    - kind: browser
+      do: Verify a token that expires part way through an enrolment keeps the typed values on the page and asks for a fresh sign-in rather than discarding the work
+      cov: C-UF-25
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_enrolment_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_a_wrong_password_is_denied
+      category: security
+      weight: 5
+    - kind: browser
+      do: Verify the product carries no course authoring surface, no second identity provider, no federated sign-in, no directory provisioning and no second factor anywhere in the signed-in interface
+      cov: C-OV-11
+    - kind: browser
+      do: Verify the product sends no outbound email, hosts no video, runs no learner-supplied code, offers no chat community, no wallet and no token swap, and stores no camera frame
+    - kind: browser
+      do: Verify the product ships no background job queue, no cache, no search index and no native mobile application, and that the interface stays responsive at the pinned content, enrolment and ledger volumes
+    - kind: pytest
+      test: test_output.py::test_probe_account_cannot_sign_in_because_signup_is_closed
+      category: security
+      weight: 5
+
+- id: learner_enrols_against_a_partner_treasury
+  purpose: An Artisan enrols in a funded course and the program treasury is reserved
+  substeps:
+    - kind: browser
+      do: On /content/solana-intern enrol against Northgate Cohort 2026 and verify the confirmation reads Successfully registered for course!, the funded seat count moves, and the treasury burn is visible to the registrar
+      cov: C-CF-34, C-FE-59, C-UF-29, C-UF-30
+    - kind: pytest
+      test: test_output.py::test_free_enrolment_records_the_free_entitlement_source
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_funded_enrolment_reserves_treasury_and_counts_the_seat
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enrolment_records_the_program_that_funded_it
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Verify money moves only as a partner treasury balance in integer minor units of usd, with no card payment, no invoice and no refund surface anywhere in the product
+      cov: C-CN-3
+    - kind: pytest
+      test: test_output.py::test_reward_window_is_stored_thirty_days_from_the_enrolment
+      category: business_rule
+      weight: 3
+
+- id: concurrent_enrolment_for_the_last_funded_seat_at_most_one_wins
+  purpose: Two Artisans claim the last funded seat of one treasury at the same moment
+  substeps:
+    - kind: browser
+      do: Verify the enrolment control on /content/solana-intern reverts its optimistic row in place, with the reason written beside it, when the treasury is exhausted rather than opening a layer that has to be dismissed
+      cov: C-CF-35, C-UF-42, C-UF-43
+    - kind: pytest
+      test: test_output.py::test_concurrent_funded_enrolment_leaves_exactly_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_treasury_burn_reconciles_with_the_stored_funded_enrolments
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_enrolment_creates_no_second_row
+  purpose: Enrolling twice in one course reactivates the row rather than adding one
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_duplicate_enrolment_reactivates_the_same_stored_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_idempotent_replay_of_an_enrolment_stores_one_row
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Verify the course overview warns an Artisan with an unfinished course using the observed course-in-flight recommendation copy, and that the Artisan may continue enrolling anyway
+      cov: C-CF-42
+
+- id: learner_reads_a_module_and_progress_is_recorded
+  purpose: An Artisan reads a module to the end and the assessment gate opens
+  substeps:
+    - kind: browser
+      do: Open a reader page at /content/solana-intern/solana-intern-basics/<lesson>/<page> and verify a single content column between a lesson rail carrying every lesson and page with its completion mark and a context rail naming what the page teaches
+    - kind: browser
+      do: Verify the reader renders a skeleton matching the final layout metrics while loading, an empty state that names the next action where a list is empty, and its own not-found panel that keeps the rails and the place when a page address resolves to nothing
+      cov: C-FE-36, C-FE-39, C-UF-40
+    - kind: browser
+      do: Mark the last page of a lesson complete and verify navigation advances to the first page of the next lesson, that the last page of the last lesson advances to the assessment gate, and that neither ever lands on the site root
+      cov: C-FE-40, C-FE-41, C-FE-42, C-UF-31
+    - kind: pytest
+      test: test_output.py::test_reader_page_carries_its_position_counters
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_progress_is_stored_once_for_a_repeated_completion
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_stored_page_progress_never_regresses_to_in_progress
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_assessment_opens_in_preassessment_when_the_module_completes
+      category: core_outcome
+      weight: 5
+
+- id: paywalled_module_body_cannot_be_read_without_entitlement
+  purpose: An Artisan with no entitlement cannot read a paid module body
+  substeps:
+    - kind: browser
+      do: Verify a paywalled module reads as present and unavailable rather than absent: the teaser and the lesson rail with locked markers stay visible, the body text is absent rather than blurred, and locked content dims progressively
+      cov: C-FE-29, C-FE-37, C-FE-38
+    - kind: pytest
+      test: test_output.py::test_paywalled_page_body_is_denied_without_entitlement
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enrolment_in_the_deprecated_course_is_refused
+      category: validation
+      weight: 3
+
+- id: program_restricted_course_is_forbidden_outside_its_program
+  purpose: A course restricted to one cohort is unreadable from another
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_restricted_course_is_denied_to_a_learner_outside_its_program
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_restricted_course_is_readable_inside_its_own_program
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Verify the chain switcher and the catalogue show a program-restricted course only to an Artisan inside that program, with the chain badge drawn as a lettermark tile in the display face on that chain's own accent
+
+- id: assessment_gate_requires_every_consent
+  purpose: The assessment gate refuses to start an exam until all three consents are recorded
+  substeps:
+    - kind: browser
+      do: Open /content/solana-intern/solana-intern-basics/assessment and verify the gate presents each consent as a separate control that is never pre-ticked, with a plain-language disclosure of what the camera detects appearing before the camera activates
+      cov: C-CF-137, C-CF-140, C-UF-9
+    - kind: browser
+      do: Verify the assessment controls read Start Assessment, Continue Assessment, Review Assessment, Continue Course and Continue Learning as the state requires, and that the flow is completable end to end using the keyboard alone
+      cov: C-FE-69
+    - kind: pytest
+      test: test_output.py::test_exam_start_without_every_consent_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_disallowed_assessment_transition_is_refused_and_stores_nothing
+      category: validation
+      weight: 3
+
+- id: timed_exam_is_server_authoritative
+  purpose: The exam clock belongs to the server and a client value cannot move it
+  substeps:
+    - kind: browser
+      do: Open the exam route while the assessment is not in the exam state and verify the Artisan is returned to the gate rather than being shown the paper
+    - kind: pytest
+      test: test_output.py::test_exam_start_stores_a_server_end_time_and_ignores_the_client_value
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_exam_submission_stores_a_result_and_advances_the_assessment
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: Verify a failed attempt returns the Artisan to the gate, that a retake of the same module is refused for the pinned cooldown, and that a story-node module carrying disable_project reaches Completed without a project stage
+      cov: C-CF-62
+    - kind: pytest
+      test: test_output.py::test_exam_result_at_the_pass_mark_advances_and_below_it_returns
+      category: business_rule
+      weight: 3
+
+- id: answer_key_is_never_served_to_a_learner
+  purpose: The answer key exists only in the column and in the grading path
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_exam_questions_never_expose_the_stored_answer_key
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Verify a MultipleChoiceCode question renders its code in the monospace stack at no smaller than the pinned code size, inside the ornamental frame, with numerals aligning in columns wherever results stack
+
+- id: proctor_signals_raise_suspicious_for_human_review
+  purpose: Face signals raise an attempt for a person rather than failing it
+  substeps:
+    - kind: browser
+      do: Verify the Artisan is told which proctoring mode the attempt runs in before it starts, and that withdrawing camera consent during an attempt ends the attempt at once and offers a retake
+      cov: C-CF-81, C-CF-84
+    - kind: pytest
+      test: test_output.py::test_proctor_events_are_stored_with_their_pinned_kind
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_three_face_signals_mark_the_stored_exam_suspicious
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_issuance_against_an_unfinished_assessment_is_refused
+      category: validation
+      weight: 3
+
+- id: reviewer_approves_a_project_and_the_assessment_completes
+  purpose: A reviewer who is not the learner approves the work and the module completes
+  substeps:
+    - kind: browser
+      do: Open /review as reviewer@example.com and verify the board carries one column per state, that a card shows the Artisan, the module, how long it has been waiting and the program that funded it, and that a card moves between columns from the keyboard alone
+      cov: C-FE-11
+    - kind: browser
+      do: Open /review/<project_id> and verify the detail route shows the submitted repository address and demo address beside the module brief, with the previous revision's reason visible where there was one, then approve and verify the assessment reaches Completed
+      cov: C-CF-46, C-UF-34
+    - kind: pytest
+      test: test_output.py::test_project_submission_without_both_addresses_writes_no_row
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_learner_cannot_read_another_learners_project
+      category: security
+      weight: 5
+
+- id: learner_self_approval_of_a_project_is_denied
+  purpose: A learner cannot move their own project out of review
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_learner_self_approval_is_denied_and_the_project_stays_in_review
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reviewer_from_another_program_is_forbidden_on_the_project
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_learner_cannot_create_a_partner_program
+      category: security
+      weight: 5
+    - kind: browser
+      do: Verify a learner reaching /review, /registrar or /programs is refused with the surface unchanged behind the refusal and no error page
+
+- id: registrar_issues_a_credential_to_the_public_ledger
+  purpose: The registrar signs the credential and the ledger records it once
+  substeps:
+    - kind: browser
+      do: Open /registrar as registrar@example.com, issue the credential for the completed assessment, and verify the issuance board moves the card to its issued column with the ledger reference shown
+      cov: C-CF-107, C-UF-36
+    - kind: browser
+      do: Open /proof/<ledger_ref> signed out and verify the page reads back the holder's display name, the course and module titles, the issuance instant, the proctoring mode and the status without asking for an account
+      cov: C-UF-37
+    - kind: pytest
+      test: test_output.py::test_issuance_stores_exactly_one_ledger_row_for_the_credential
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_public_proof_endpoint_resolves_without_a_token
+      category: core_outcome
+      weight: 5
+
+- id: duplicate_issuance_writes_no_second_ledger_entry
+  purpose: Asking for one credential twice leaves exactly one ledger row
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_repeat_issuance_stores_no_second_ledger_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unknown_ledger_reference_is_reported_as_not_found
+      category: validation
+      weight: 3
+
+- id: learner_issuance_attempt_is_rejected
+  purpose: Only the registrar signs a credential
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_learner_credential_issuance_is_denied_and_the_row_is_untouched
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reviewer_credential_issuance_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_role_in_the_request_body_is_ignored_by_the_server
+      category: security
+      weight: 5
+
+- id: revocation_is_appended_and_never_edited
+  purpose: A revocation is a second ledger row and the issuance row is left alone
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_revocation_appends_a_row_and_leaves_the_issuance_row_stored
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_rows_are_append_only_and_carry_their_chain_fields
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Verify revoking a credential is treated as a destructive action: the control confirms first and states what will happen, and the confirmation is reachable from the keyboard with a visible focus ring
+      cov: C-UX-32, C-UX-36
+
+- id: reward_claim_at_the_quota_limit_yields_at_most_one_grant
+  purpose: Two Artisans claim the last unit of a reward at the same moment
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reward_quota_is_never_oversold_under_contention
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_bounty_application_without_a_credential_is_denied
+      category: security
+      weight: 5
+    - kind: browser
+      do: Verify the reward window gates bonus rewards only, so course completion, the credential and the recorded skills stay reachable after the window closes, and that an extension of the window is signed by the registrar alone and recorded with its reason
+      cov: C-CF-123
+    - kind: browser
+      do: Open /bounties and verify a bounty carrying its own state is shown beside the Artisan's own relationship to it, so an Artisan at work_started on a canceled bounty reads both states named with an explanation
+      cov: C-CF-132, C-CF-133, C-CF-134
+
+- id: registrar_creates_a_program_and_invites_seats
+  purpose: The registrar walks the three-step program wizard and imports a seat list
+  substeps:
+    - kind: browser
+      do: Open /programs, then /programs/new, and verify step one names the program and its treasury on its own address, restorable on a back navigation
+    - kind: browser
+      do: On /programs/new/seats paste a CSV of email addresses carrying one bad row, and verify the preview reports the error per row naming the line and the reason, and that nothing is written until the preview is confirmed
+      cov: C-FE-8, C-FE-9
+    - kind: browser
+      do: On /programs/new/review confirm the program and verify the roster afterwards reports completion state for each seat, that the treasury burn is shown, and that the registrar can publish an announcement to the cohort
+    - kind: browser
+      do: Submit the program form with an invalid treasury value and verify every form in the product rejects invalid input in place, naming the field at fault beside it, with nothing written
+      cov: C-CF-172
+    - kind: pytest
+      test: test_output.py::test_program_roster_carries_no_email_address
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_enrolment_body_is_refused_and_writes_nothing
+      category: validation
+      weight: 3
+
+- id: erasure_request_and_consent_record_are_honoured
+  purpose: An Artisan asks for erasure and the permanent ledger exception is recorded
+  substeps:
+    - kind: browser
+      do: Verify face detection runs on the Artisan's own machine so no image reaches the server, that biometric signals train no model, and that proctor events are removed on the pinned retention schedule
+      cov: C-CF-141, C-CF-142
+    - kind: browser
+      do: Verify the erasure flow states the thirty day grace period, clears the personal fields on execution, and names the credential in the ledger as the permanent documented exception
+      cov: C-CF-145, C-CF-146
+    - kind: pytest
+      test: test_output.py::test_erasure_request_is_stored_with_its_grace_window
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_views_are_recorded_as_rows_per_route
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_is_stored_and_survives_a_fresh_client
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_rate_limit_headers_are_present_on_a_mutating_call
+      category: presentation
+      weight: 1

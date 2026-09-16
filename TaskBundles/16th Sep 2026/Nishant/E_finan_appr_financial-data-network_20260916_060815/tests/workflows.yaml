@@ -1,0 +1,316 @@
+- id: app_is_reachable_and_accounts_sign_in
+  purpose: A visitor reaches the deployed console and every seeded account signs in through the identity provider
+  substeps:
+    - kind: browser
+      do: Open `/login` and confirm the app serves that route without authentication, then let a session expire mid-action and confirm the typed input is preserved
+      cov: C-UF-01, C-UF-14
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_ok
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_can_login
+      critical: true
+      category: security
+      weight: 5
+
+- id: member_reviews_connection_health
+  purpose: A developer opens an application and reads the live health of its connected end-user accounts
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com and open `/applications`, confirming the app serves the application list with the newest activity first
+      cov: C-UF-03
+    - kind: browser
+      do: Open `/connections` and confirm the app serves the connection list, with con_9km4 and con_3wp8 in different status columns
+      cov: C-UF-05
+    - kind: pytest
+      test: test_output.py::test_connection_statuses_come_from_the_closed_set
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_connection_payload_carries_no_consumer_financial_data
+      critical: true
+      category: security
+      weight: 5
+
+- id: member_files_production_access_request
+  purpose: A developer files a production access request against the seven question form
+  substeps:
+    - kind: browser
+      do: Open `/access-requests` and confirm the app serves the access request queue, then open the request modal on the identity row of the production environment
+      cov: C-UF-04
+    - kind: browser
+      do: Submit the modal and confirm the identity row reads pending before the response returns
+    - kind: pytest
+      test: test_output.py::test_seeded_access_requests_are_stored
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_submit_without_all_seven_answers_is_refused
+      category: validation
+      weight: 3
+
+- id: approver_signs_off_production_access
+  purpose: A compliance approver claims a submitted request and signs it off, enabling one product in production
+  substeps:
+    - kind: browser
+      do: Sign in as compliance@example.com and confirm the app lands on the overview route, the operator console for the signed-in organisation, which answers what is happening now, then claim the submitted request
+      cov: C-OV-01, C-OV-02, C-UF-02, C-UF-12
+    - kind: pytest
+      test: test_output.py::test_approver_claims_a_submitted_request
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_approver_approves_a_claimed_request
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_approval_is_stored_with_the_decider
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_approval_marks_only_the_requested_product_live
+      category: business_rule
+      weight: 3
+
+- id: developer_cannot_approve_request
+  purpose: A developer session is refused the decision endpoints and the stored request is untouched
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open AR-1001 and confirm the approve control is absent with a line naming the role that holds it
+    - kind: pytest
+      test: test_output.py::test_developer_cannot_approve_a_request
+      critical: true
+      category: security
+      weight: 5
+
+- id: administrator_cannot_approve_request
+  purpose: An administrator holds every operational power except the production access decision
+  substeps:
+    - kind: browser
+      do: Sign in as administrator@example.com, open AR-1001 and confirm the role change control is present while the approve control is not
+    - kind: pytest
+      test: test_output.py::test_administrator_cannot_approve_a_request
+      critical: true
+      category: security
+      weight: 5
+
+- id: filer_cannot_approve_own_request
+  purpose: The approver who filed a request is refused every decision on that same request
+  substeps:
+    - kind: browser
+      do: Sign in as compliance@example.com, open AR-1004 and confirm the approve control is absent with the separation-of-duties explanation
+    - kind: pytest
+      test: test_output.py::test_filer_cannot_approve_own_request
+      critical: true
+      category: security
+      weight: 5
+
+- id: analyst_is_denied_every_mutation
+  purpose: An analyst session is refused on every mutating endpoint in the console
+  substeps:
+    - kind: browser
+      do: Sign in as analyst@example.com and confirm the usage route renders while every write control across the console is replaced by a line naming the role
+    - kind: pytest
+      test: test_output.py::test_analyst_is_denied_every_mutation
+      critical: true
+      category: security
+      weight: 5
+
+- id: cross_organisation_read_is_denied
+  purpose: A member of one organisation is denied every read and every decision on another organisation's records
+  substeps:
+    - kind: browser
+      do: Sign in as administrator2@example.com and confirm the request queue lists only Wrenwood records
+    - kind: pytest
+      test: test_output.py::test_cross_organisation_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cross_organisation_request_absent_from_the_list
+      category: security
+      weight: 5
+
+- id: unauthenticated_caller_is_denied
+  purpose: Every route but login and health refuses a caller with no session
+  substeps:
+    - kind: browser
+      do: Open the audit route with no session and confirm the browser lands on the sign-in route
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: developer_cannot_create_production_credential
+  purpose: A developer is refused credential creation in the production environment
+  substeps:
+    - kind: browser
+      do: Sign in as developer@example.com, open the production environment of Vantor Payouts and confirm the credential creation control is absent
+    - kind: pytest
+      test: test_output.py::test_developer_cannot_create_a_production_credential
+      critical: true
+      category: security
+      weight: 5
+
+- id: secret_is_shown_once_at_creation
+  purpose: A created credential shows its secret once and never again, and stores only a hash
+  substeps:
+    - kind: browser
+      do: Confirm every list renders an empty state naming what would fill it, a loading state shaped like its own columns and a filtered-empty state carrying the filter summary, paginates on a cursor, reports a total, replaces a write control with a line naming the role holding the action, names the missing permission on a denied action, and quotes the request identifier on an error re-render
+      cov: C-UF-15, C-UF-16, C-UF-17, C-UF-18, C-UF-19, C-UF-20, C-UF-21, C-UF-22
+    - kind: pytest
+      test: test_output.py::test_credential_secret_is_returned_once_then_never
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_secret_value_is_not_stored_in_readable_form
+      category: security
+      weight: 5
+
+- id: third_live_credential_hits_the_limit
+  purpose: An environment refuses a third unrevoked credential so rotation stays two deep
+  substeps:
+    - kind: browser
+      do: Open a sandbox environment already holding two live credentials and confirm the creation control explains the limit
+    - kind: pytest
+      test: test_output.py::test_third_live_credential_is_refused
+      category: validation
+      weight: 3
+
+- id: approver_denies_or_returns_with_a_reason
+  purpose: A compliance approver denies with a reason or returns the request for more detail
+  substeps:
+    - kind: browser
+      do: As compliance@example.com, open a claimed request and confirm the deny control requires a reason before it submits
+    - kind: pytest
+      test: test_output.py::test_denial_requires_a_reason
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_denial_leaves_every_entitlement_stored_unchanged
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_returned_request_returns_to_submitted
+      category: business_rule
+      weight: 3
+
+- id: second_decision_is_a_conflict
+  purpose: A decided request refuses a second decision and keeps the first one
+  substeps:
+    - kind: browser
+      do: Open an already approved request and confirm no decision control is offered
+    - kind: pytest
+      test: test_output.py::test_second_decision_on_a_decided_request_conflicts
+      category: data_integrity
+      weight: 5
+
+- id: audit_chain_is_appended_and_verifiable
+  purpose: Every mutation appends one chained audit entry and the chain a caller reads back recomputes
+  substeps:
+    - kind: browser
+      do: Open `/webhooks`, `/team`, `/data-requests`, `/audit` and `/usage` and confirm the app serves the webhook endpoint list, the member list, the consumer data request list, the audit log oldest first, and the usage figure
+      cov: C-UF-06, C-UF-07, C-UF-08, C-UF-09, C-UF-10
+    - kind: pytest
+      test: test_output.py::test_audit_chain_verifies_from_stored_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_row_is_appended_on_approval
+      category: data_integrity
+      weight: 5
+
+- id: webhook_endpoint_starts_unverified
+  purpose: A new webhook endpoint requires transport security and receives nothing until it is verified
+  substeps:
+    - kind: browser
+      do: Open the webhooks route and confirm the seeded endpoint renders as verified with its subscribed event types
+    - kind: pytest
+      test: test_output.py::test_webhook_endpoint_requires_a_secure_scheme
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_new_webhook_endpoint_is_unverified
+      category: business_rule
+      weight: 3
+
+- id: bulk_prompt_over_limit_is_refused
+  purpose: A re-authentication prompt over the bulk limit is refused without a second approver
+  substeps:
+    - kind: browser
+      do: Select a filtered set of connections and confirm the dry run reports the count before the action is armed
+    - kind: pytest
+      test: test_output.py::test_bulk_reauthentication_over_the_limit_is_refused
+      category: validation
+      weight: 3
+
+- id: consumer_data_requests_and_usage
+  purpose: The console reports consumer data requests against their deadline and usage against the commitment
+  substeps:
+    - kind: browser
+      do: Open the consumer data requests route and confirm dsr_4410 shows its deadline
+    - kind: pytest
+      test: test_output.py::test_data_request_is_due_thirty_days_after_receipt
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_usage_reports_requests_against_committed_volume
+      category: presentation
+      weight: 1
+
+- id: public_edges_of_the_console_resolve
+  purpose: The terms page, the cookie choice and every internal link on the public edge of the console work
+  substeps:
+    - kind: browser
+      do: Open the sign-in route with no session and confirm the terms link and the cookie choice both render
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_reachable_from_every_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_is_asked_once_and_survives_reload
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_resolves
+      category: presentation
+      weight: 1
+
+- id: repeated_signin_and_leaked_secrets_are_refused
+  purpose: Rapid repeated sign-ins are refused and no credential value reaches the browser
+  substeps:
+    - kind: browser
+      do: Submit the sign-in form repeatedly and confirm the refusal is explained on screen
+    - kind: pytest
+      test: test_output.py::test_repeated_signin_is_refused
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_secret_reaches_the_browser
+      critical: true
+      category: security
+      weight: 5
+
+- id: seed_records_are_not_duplicated
+  purpose: Seeding is idempotent and the pinned vocabulary is reported exactly as specified
+  substeps:
+    - kind: browser
+      do: Open the application list and confirm each seeded application appears exactly once, newest activity first
+    - kind: pytest
+      test: test_output.py::test_seed_records_survive_a_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_environments_and_states_use_the_pinned_vocabulary
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_application_region_is_immutable
+      category: business_rule
+      weight: 3

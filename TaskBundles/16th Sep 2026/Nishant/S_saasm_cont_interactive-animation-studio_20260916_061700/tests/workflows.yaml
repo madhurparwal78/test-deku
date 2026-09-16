@@ -1,0 +1,392 @@
+- id: visitor_browses_marketplace_and_signs_up
+  purpose: A signed-out visitor reads the marketplace, opens a listing and signs up for a seat
+  substeps:
+    - kind: browser
+      do: Open /m signed out and verify the marketplace grid lists Loader Ring as a tile carrying its poster frame, its title, its edited-at meta and its like count, that the whole tile is a link with a real address, and that the surface carries a search field, three tabs and one pill control
+      cov: C-OV-7 (earned: the step reads the public grid signed out, which is what showing published work to anybody means), C-UF-1, C-UF-34, C-FE-56, C-FE-58, C-FE-53
+    - kind: browser
+      do: Open the listing route /m/rae/loader-ring signed out and verify it serves one playing listing with its channel address, showing its poster frame before the document loads so nothing is ever a blank rectangle
+      cov: C-UF-20, C-UF-2, C-FE-38
+    - kind: browser
+      do: Follow the open signup control to /signup, register a fresh email with the password deku-demo-pw-2026, and verify the new member lands on an empty workspace whose every list surface carries an empty state naming the next action
+      cov: C-UF-21, C-UF-3 (earned: the step follows the signup control to that route and completes it signed out), C-UF-28, C-RL-13 (earned: the step registers a fresh address with no invitation, which is open signup)
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_requires_no_credential
+      category: presentation
+      weight: 1
+      cov: C-DC-4 (earned: the test calls that endpoint with no credential and asserts 200 once seeding has finished)
+    - kind: pytest
+      test: test_output.py::test_new_signup_workspace_returns_empty_document_array
+      category: business_rule
+      weight: 3
+      cov: C-RL-14
+
+- id: editor_signs_in_and_reads_the_workspace
+  purpose: A seeded editor signs in and finds the folders and documents of Northlight Studio
+  substeps:
+    - kind: browser
+      do: Open /login, sign in as editor@example.com with the seeded password deku-demo-pw-2026 that the app writes to /app/USER_README.md, and verify a sign-in with no stored destination lands on /w
+      cov: C-RL-17, C-UF-4, C-UF-14, C-DC-6, C-DM-3
+    - kind: browser
+      do: Verify /w redirects to a readable folder, and that /w/files serves a top-nav of Files, Marketplace, Members and the account control over a split detail pane: the folders Product UI, Game UI and Broadcast plus the document list on the left, sorted by edited-at descending, and the selected document's detail on the right
+      cov: C-UF-6, C-UF-5, C-FE-1, C-FE-3, C-FE-54
+    - kind: browser
+      do: Disable scripting and reload /w/files: verify every page's HTML is produced on the server and arrives complete on first paint, that a member with scripting disabled still reads folders, documents, revisions, members and the marketplace, that every link can still be followed, and that the front end is a progressive enhancement rather than a single-page application
+      cov: C-TR-1, C-TR-2, C-TR-3, C-TR-5
+    - kind: browser
+      do: Follow the create control to /w/documents/new, name a document Hover Chip in Product UI, and verify the dedicated route lands on the new document
+      cov: C-UF-22, C-FE-4, C-UF-7
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token_for_seeded_editor
+      category: security
+      weight: 5
+      cov: C-TR-6
+    - kind: pytest
+      test: test_output.py::test_seeded_editor_reads_own_workspace_documents
+      category: business_rule
+      weight: 3
+      cov: C-RL-2
+    - kind: pytest
+      test: test_output.py::test_seeded_schema_carries_the_pinned_columns
+      category: data_integrity
+      weight: 5
+      cov: C-DM-4 (earned: the test reads the workspace row and asserts each pinned column is present), C-DM-11 (earned: the test asserts Spin's frame_count is the integer 120 rather than a duration), C-DM-12 (earned: the test asserts every transition index is an integer, which is the declaration order)
+
+
+- id: unauthenticated_workspace_write_denied
+  purpose: A request carrying no bearer token cannot create a document
+  substeps:
+    - kind: browser
+      do: Sign out and verify the member is returned to /m, then open /w/files signed out and verify the route redirects to /login, with a loading state on the route while it resolves
+      cov: C-UF-12, C-UF-29, C-UF-15
+    - kind: browser
+      do: Verify the login page keeps the destination and returns there after signing in, and that a token expiring mid-action keeps the typed values on the page and offers a fresh sign-in
+      cov: C-UF-13 (earned: the step asks for a protected route first, so returning there after sign-in is the observation), C-UF-16, C-UF-17
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_to_workspace_endpoint_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-DC-23 (earned: the test calls a workspace endpoint with no bearer token and asserts it is denied)
+
+- id: viewer_is_denied_every_editor_action
+  purpose: A viewer session is refused at the server on every editor-only endpoint
+  substeps:
+    - kind: browser
+      do: Sign in as viewer@example.com and verify no create control appears on /w/files
+      cov: C-RL-8
+    - kind: browser
+      do: Open /w/members as the viewer and verify the editor route is refused with a reason, leaving the protected state unchanged and never replacing the page with an error page
+      cov: C-UF-18, C-UF-32 (earned: the step asserts the refusal renders in place rather than as a replacement page)
+    - kind: browser
+      do: Verify the inline banner names what was refused and why, and that the page is not replaced by an error page
+      cov: C-UF-31, C-UF-30, C-FE-5
+    - kind: pytest
+      test: test_output.py::test_viewer_create_document_denied_leaves_row_count_unchanged
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-12
+    - kind: pytest
+      test: test_output.py::test_viewer_publish_denied_leaves_channel_build_unchanged
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-11
+
+- id: viewer_cannot_see_folders_off_the_granted_path
+  purpose: A viewer granted one folder cannot learn the name of any other folder
+  substeps:
+    - kind: browser
+      do: Sign in as viewer@example.com and open /w/files, verifying the viewer reads only the documents granted to them
+      cov: C-RL-6
+    - kind: browser
+      do: Verify the folder tree shows Broadcast and shows the name of neither Product UI nor Game UI anywhere on the page
+      cov: C-RL-9
+    - kind: pytest
+      test: test_output.py::test_viewer_cannot_read_folder_names_off_granted_path
+      critical: true
+      category: security
+      weight: 5
+      cov: C-FE-55
+
+- id: two_editors_edit_concurrently_and_converge
+  purpose: The log assigns one order and two editors changing one property converge on the higher sequence
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open Menu Transition on /w/d, verifying the route serves the seeded artboards Ring, Ring Compact, Menu and Ticker, the named animations Spin at 120 frames, Slide at 45 and Crawl at 600, and a state machine carrying the states Idle, Loading and Done with the inputs progress, complete and tap
+      cov: C-UF-8, C-DM-39, C-DM-40, C-DM-41, C-DM-42, C-OV-3
+    - kind: browser
+      do: Verify the document surface carries five resizable regions persisted per member per document, that the Design mode edits a resting value while the Animate mode writes a keyframe at the playhead, and that the canvas carries an unmistakable visual treatment while in Animate mode
+      cov: C-FE-44, C-FE-45, C-FE-46
+    - kind: browser
+      do: Verify the hierarchy tree is virtualised and scrolls ten thousand nodes at the display rate, that canvas handles hold a constant screen size regardless of zoom, and that selection hit-tests the rendered geometry rather than a bounding box
+      cov: C-FE-47, C-FE-48, C-FE-49
+    - kind: browser
+      do: Verify one player component draws every playing document on the surface, that it advances by a supplied elapsed time rather than reading a clock, and that artwork is rasterised at the device pixel ratio and re-rasterised on a ratio change
+      cov: C-FE-32, C-FE-34, C-FE-35
+    - kind: browser
+      do: Scroll a document out of the viewport and back: verify it is suspended and resumes at the state it held, that exceeding the frame budget drops documents furthest from the viewport centre first, and that the same document with the same start state and the same timestamped inputs produces byte-identical frames
+      cov: C-FE-36, C-FE-37, C-FE-33
+    - kind: browser
+      do: Drive the state machine from the graph: verify transition conditions are evaluated in declaration order and the first satisfied one wins, that a trigger input is consumed by exactly one evaluation and then cleared, that a transition cannot be taken before its exit time fraction, that setting an input is queued and applied at the next advance, and that a missing bound property falls back to the authored value
+      cov: C-FE-39, C-FE-40, C-FE-41, C-FE-42, C-FE-43
+    - kind: browser
+      do: Change a property on the canvas and verify an inline banner confirms the edit landed as one operation recorded on the append-only log
+      cov: C-OV-4
+    - kind: browser
+      do: Scrub a numeric field through one whole gesture and verify it produces one undo entry; verify undo reverses the member's own most recent un-undone operation and never another member's, and that an undo whose target no longer exists is refused with a reason
+      cov: C-FE-50, C-FE-51, C-FE-52
+    - kind: browser
+      do: In a second session sign in as editor2@example.com and open the same document
+      cov: C-UF-23 (earned: the two sessions of this workflow are what make the higher-seq convergence observable)
+    - kind: browser
+      do: Change the same property in both sessions and verify the superseded editor is told which member won
+      cov: C-UF-24
+    - kind: browser
+      do: Open the searchable command palette on its keyboard shortcut and verify every command is reachable from it, that Escape closes the layer and returns focus to its trigger, and that the header scrolls away with the page and never returns on scroll up
+      cov: C-FE-2, C-FE-25, C-FE-26
+    - kind: pytest
+      test: test_output.py::test_operation_seq_strictly_increases_per_document
+      category: data_integrity
+      weight: 5
+      cov: C-CF-2
+    - kind: pytest
+      test: test_output.py::test_concurrent_operations_receive_distinct_seq_values
+      category: data_integrity
+      weight: 5
+      cov: C-CF-3
+    - kind: pytest
+      test: test_output.py::test_same_property_conflict_resolves_to_higher_seq
+      category: data_integrity
+      weight: 5
+      cov: C-CF-6
+
+- id: edit_against_a_deleted_node_is_discarded
+  purpose: An edit to a node another member deleted is discarded and its author is told by whom
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and delete a node on Menu Transition
+      cov: C-CF-8
+    - kind: browser
+      do: In the second editor session verify an inline banner names the member who deleted the node
+      cov: C-CF-9
+    - kind: pytest
+      test: test_output.py::test_discarded_operation_names_deleting_member
+      category: business_rule
+      weight: 3
+      cov: C-CF-10
+
+- id: duplicate_operation_replay_changes_nothing
+  purpose: Replaying an operation identifier the document already holds is a no-op
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and make one edit on Menu Transition
+      cov: C-CF-1 (earned: the edit the step makes is the operation whose client-minted op_id the replay then reuses)
+    - kind: browser
+      do: Reload the document and verify the edit appears once rather than twice, and that the document surface shows one of draft, published or unshared changes, where unshared changes compares the document's head revision against the channel's current build
+      cov: C-CF-13 (earned: the reloaded surface is the stored state, and the step asserts it moved once), C-UF-33, C-DM-31
+    - kind: pytest
+      test: test_output.py::test_duplicate_op_id_returns_original_seq_without_second_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-12 (earned: the test compares the operation row count either side of the replay)
+
+- id: editor_materialises_a_revision_into_the_store
+  purpose: Materialising a revision writes content addressed bytes to the object store
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, edit Menu Transition, then materialise a revision and verify it is stored as a content addressed binary
+      cov: C-OV-5
+    - kind: browser
+      do: Verify /w/d history serves the revision list with restore, showing the new revision with its content hash and a timestamp in UTC
+      cov: C-UF-9, C-DM-1 (earned: the revision timestamp the history surface shows is the UTC value)
+    - kind: pytest
+      test: test_output.py::test_revision_content_hash_matches_stored_object_key
+      category: data_integrity
+      weight: 5
+      cov: C-DM-16
+    - kind: pytest
+      test: test_output.py::test_unchanged_document_materialises_no_new_revision
+      category: business_rule
+      weight: 3
+      cov: C-DM-17 (earned: the test materialises twice with no intervening edit and asserts no revision was added)
+
+- id: editor_restores_an_earlier_revision
+  purpose: Restoring an old revision grows history rather than rewinding it
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open the trash surface, and verify a soft-deleted document is recoverable and returns to its original folder where that folder still exists
+      cov: C-DM-25, C-DM-26
+    - kind: browser
+      do: Open /w/d history for Loader Ring, restore the oldest revision listed, and confirm the destructive action first, verifying the restore inserts a new revision carrying two parent rows
+      cov: C-DM-19, C-UF-9
+    - kind: browser
+      do: Verify every revision that existed before the restore is still listed afterwards
+      cov: C-DM-20
+    - kind: pytest
+      test: test_output.py::test_restore_creates_new_revision_with_two_parents
+      category: data_integrity
+      weight: 5
+      cov: C-DM-19
+
+- id: concurrent_publish_still_leaves_one_current_build
+  purpose: Publishing freezes a build, renders a poster, serves the bytes and never leaves two current builds
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open /w/d publish for Loader Ring, verifying the route serves publish, rollback and unpublish to an editor only
+      cov: C-UF-10
+    - kind: browser
+      do: Publish the head revision to the channel loader-ring and verify a poster frame is rendered for the build
+      cov: C-CF-15
+    - kind: browser
+      do: Verify the publish surface shows the channel address the runtime serves, and that the published head revision makes the bytes readable signed out
+      cov: C-CF-16, C-UF-25
+    - kind: browser
+      do: Verify the publish surface names exactly one current build after publishing, or none
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_published_revision_object_exists_in_bucket_at_pinned_key
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-DM-32 (earned: the object key the step reads back in the bucket is that scheme instantiated)
+    - kind: pytest
+      test: test_output.py::test_poster_asset_object_exists_in_bucket_after_publish
+      category: business_rule
+      weight: 3
+      cov: C-DM-33
+    - kind: pytest
+      test: test_output.py::test_runtime_endpoint_serves_current_build_bytes
+      category: core_outcome
+      weight: 5
+      cov: C-CF-30
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_leaves_channel_with_single_current_build
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-23 (earned: two simultaneous publishes are fired at one channel and exactly one is accepted, which only a storage-level guarantee produces)
+
+- id: draft_document_cannot_be_reached_publicly
+  purpose: A document that has never been published is reachable from no public address
+  substeps:
+    - kind: browser
+      do: Open /m signed out and search for menu, verifying the grid returns nothing
+      cov: C-UF-19
+    - kind: browser
+      do: Verify no marketplace surface anywhere lists Menu Transition
+      cov: C-OV-8 (earned: the step searches every marketplace surface for the never-published document and finds none)
+    - kind: pytest
+      test: test_output.py::test_unpublished_document_has_no_public_runtime_route
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-34
+    - kind: pytest
+      test: test_output.py::test_unpublished_document_absent_from_every_listing_ordering
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-35
+
+- id: editor_rolls_back_and_unpublishes
+  purpose: A rollback repoints the channel and an unpublish removes delivery without deleting the build
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open /w/d publish for Loader Ring
+      cov: C-UF-10
+    - kind: browser
+      do: Roll back to the previous build and verify the surface states the rollback reaches every reader within ten seconds, and that the earlier bytes surface inside that interval
+      cov: C-CF-25, C-UF-26
+    - kind: browser
+      do: Unpublish the channel and verify the listing disappears from /m within ten seconds
+      cov: C-CF-27
+    - kind: pytest
+      test: test_output.py::test_rollback_repoints_channel_to_earlier_build
+      category: business_rule
+      weight: 3
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_unpublish_removes_listing_but_keeps_build_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-28
+
+- id: marketplace_featured_is_not_most_liked
+  purpose: The featured ordering is editorial, paging is stable and a repeat like is a no-op
+  substeps:
+    - kind: browser
+      do: Open /m signed out and verify the Featured tab lists Loader Ring ahead of Match Ticker, and that the unpublished-document exclusion holds for a signed-in caller and a signed-out one alike
+      cov: C-CF-37
+    - kind: browser
+      do: Switch to the Latest tab and verify the ordering sorts by published_at descending, then search by title, by author handle and by tag and verify the search runs server side and is reflected in the address
+      cov: C-TR-16, C-TR-19
+    - kind: browser
+      do: Sign in, like a listing twice, and verify the like count moves once
+      cov: C-TR-20
+    - kind: pytest
+      test: test_output.py::test_featured_ordering_is_not_like_count_ordering
+      category: business_rule
+      weight: 3
+      cov: C-TR-18
+    - kind: pytest
+      test: test_output.py::test_cursor_paging_returns_no_duplicate_listing
+      category: business_rule
+      weight: 3
+      cov: C-TR-14
+    - kind: pytest
+      test: test_output.py::test_repeat_like_leaves_like_count_unchanged
+      category: data_integrity
+      weight: 5
+      cov: C-TR-21
+
+- id: invitation_over_the_seat_limit_is_refused
+  purpose: An acceptance that would exceed the seat cap is held rather than written
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open /w/members, verifying the route serves members, roles, seats and invites to an editor only
+      cov: C-UF-11
+    - kind: browser
+      do: Verify the members surface shows three editors against the seat cap of 3 that the workspace Northlight Studio carries
+      cov: C-CF-41
+    - kind: browser
+      do: Invite a fresh address as an editor, accept the invitation, and verify an inline banner refuses it
+      cov: C-UF-27
+    - kind: pytest
+      test: test_output.py::test_seat_blocked_invitation_writes_no_member_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_viewer_invitation_accepted_at_full_seat_cap
+      category: business_rule
+      weight: 3
+      cov: C-CF-46
+    - kind: pytest
+      test: test_output.py::test_third_editor_holds_the_last_seat
+      category: business_rule
+      weight: 3
+      cov: C-CF-40 (earned: the test recomputes the seat total from the grant rows rather than reading a column)
+
+- id: a_new_workspace_cannot_read_another_workspace
+  purpose: A fresh account never reads the rows of the seeded workspace
+  substeps:
+    - kind: browser
+      do: Sign up with a fresh email and verify the new workspace shows no folder from Northlight Studio, so a member never reads another workspace's rows
+      cov: C-CN-2
+    - kind: browser
+      do: Verify the marketplace still shows the published listings to the new account
+      cov: C-OV-7 (earned: the step reads the public grid signed out, which is what showing published work to anybody means)
+    - kind: pytest
+      test: test_output.py::test_new_signup_cannot_read_seeded_workspace_documents
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CN-1 (earned: the fresh account reaches none of the seeded workspace's rows, which is one workspace per account)
+    - kind: pytest
+      test: test_output.py::test_listing_handle_matches_its_author
+      category: presentation
+      weight: 1
+      cov: C-DM-7

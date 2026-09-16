@@ -1,0 +1,275 @@
+- id: visitor_enters_through_the_audio_gate
+  purpose: A first-time visitor meets the intro overlay, waits for the progress to fill, chooses a door and lands inside the room with the audio choice honoured
+  substeps:
+    - kind: browser
+      do: Open the index route of this public showcase site for a brand studio and confirm the intro overlay covers everything else: the two loader boxes running their infinite four-second linear loop, the studio title, the six brand letter tiles, the three tagline lines, an Enter button and an Enter without audio link, with every icon on screen drawn as inline vector geometry rather than an image file
+      cov: C-OV-01, C-FE-16, C-FE-10
+    - kind: browser
+      do: Point at the eyes mark and confirm the pupils morph to a heart on hover, then watch the eyes blink by sliding their two mask rectangles; reach both intro doors with the keyboard alone, confirm each takes a visible focus ring, and press Enter without audio
+      cov: C-FE-11, C-FE-12
+    - kind: browser
+      do: Navigate from the index route to the wall of work and back, confirming no persistent visible menu bar exists on either route, only the three corner controls, and that the stripped-down loader appears instead of the full intro while the audio choice still holds
+      cov: C-FE-03
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_ready
+      category: presentation
+      weight: 1
+
+- id: visitor_browses_the_filterable_work_wall
+  purpose: A prospective client opens the wall of published work, narrows it by a facet pill and the location carries the narrowed state across a back-navigation
+  substeps:
+    - kind: browser
+      do: Disable scripting and reload the filterable wall of published work: confirm the route markup arrives on first paint before any script runs, with the three published project cards and their titles already present. Re-enable scripting, confirm the Astro islands hydrate over that same markup, and confirm the network log requests no font file, no video file and no three-dimensional model file on this public showcase site for a brand studio
+      cov: C-OV-01, C-UF-02, C-TR-01, C-TR-03, C-TR-24
+    - kind: browser
+      do: Press the Motion facet pill and confirm the wall re-lays out without a page load, the pressed pill reflects its active state, the browser location carries the facet, and a back-navigation restores the unfiltered wall
+    - kind: pytest
+      test: test_output.py::test_published_projects_listed_by_position
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_facet_filter_returns_only_matching_projects
+      category: business_rule
+      weight: 3
+
+- id: visitor_reads_a_case_study
+  purpose: A visitor opens one project from the wall and reads the long scrolling case study, its sideways filmstrip and its awards strip, ending on the next-project link
+  substeps:
+    - kind: browser
+      do: Open the Marlow case study from its two-letter top-level segment and scroll the whole route, confirming the case study runs roughly seven to nine viewports tall, the filmstrip track translates sideways as the reader scrolls down, and the awards list scrolls inside its own frame
+      cov: C-FE-17, C-FE-18, C-FE-19, C-UF-05
+    - kind: browser
+      do: Scroll the case study at several speeds and confirm nothing reads the native scroll offset, which stays put while the content moves by transform, and that no second frame timer runs anywhere: the camera stays in step with the copy reveals at every speed. Confirm the largest display tier is set in the display serif italic, and that scrolling backwards un-reveals the split characters
+      cov: C-FE-09, C-TR-20, C-TR-21
+    - kind: pytest
+      test: test_output.py::test_case_study_returns_ordered_blocks
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_returns_ordered_awards
+      category: business_rule
+      weight: 3
+
+- id: visitor_drags_the_world_scene
+  purpose: A visitor reaches the world route from the corner shortcut and drags the scene, seeing the drag-arrow cursor and an inertial release
+  substeps:
+    - kind: browser
+      do: Press the world shortcut and confirm the drag-to-explore scene route loads a butterfly, an arch and a floor whose meshes are composed from primitives and never loaded as files, with the lighting textures drawn on a canvas at load. Confirm the build ships no binary asset and that no outbound network call happens at run time
+      cov: C-UF-03, C-FE-24, C-FE-25, C-CN-08, C-CN-07
+    - kind: browser
+      do: Drag across the scene and confirm one normalised progress value drives the scene camera, so the view orbits with the pointer and coasts to a stop on release; open the overlay menu over it, press Escape, and confirm Escape closes whatever opened over the page
+      cov: C-UX-12, C-TR-19
+
+- id: visitor_sends_a_new_business_enquiry
+  purpose: A visitor opens the contact route, reads the studio details and sends a new-business enquiry that returns a reference without a page reload
+  substeps:
+    - kind: browser
+      do: Open the contact route and confirm the studio contact address projects@vellum.co, the phone, the two studio addresses and the five social links all render from the single site globals row, which holds exactly one row for the whole site, laid out as two columns on desktop and stacked at a phone width
+      cov: C-DM-23, C-DM-14
+    - kind: browser
+      do: As an anonymous visitor without signing in, fill the name, email and message fields and send: confirm this is the one new-business enquiry action the public site collects, that the button fill shows a submitting state, that the success line appears with the reference without a reload, and that no email is sent by the product
+      cov: C-OV-03, C-CN-04, C-RL-07
+    - kind: pytest
+      test: test_output.py::test_enquiry_stored_row_returns_reference
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_globals_row_seeded_and_served
+      category: data_integrity
+      weight: 5
+
+- id: author_publishes_a_project_with_a_poster
+  purpose: A studio author signs in, adds a project from the inline row at the top of the project table, uploads its poster and publishes it onto the public wall
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com and confirm signing in sends an author to the studio project table at `/studio/projects`, which shows the project table to an author as a fixed side rail beside a compact monospace table with one row per project the author creates, edits, publishes and unpublishes
+      cov: C-UF-08, C-UF-13, C-RL-01
+    - kind: browser
+      do: Add a project from the inline row at the top of the table, the way an author creates their own projects in this signed-in console that lets the studio publish its own work, and confirm the saved row appears before the server answers, corrects itself if the server disagrees, and that state changes land with no easing
+      cov: C-RL-01, C-OV-02
+    - kind: browser
+      do: Upload a poster onto the owned project the author just created, publish it, and confirm the public wall at `/projects` lists published projects only. Unpublish it and confirm unpublishing asks for confirmation first. The signed-in console lets the studio publish its own work and nobody else's: the product is single tenant, with one studio and no second organisation to switch to
+      cov: C-RL-02, C-UX-13, C-CF-04, C-OV-02, C-CN-01
+    - kind: pytest
+      test: test_output.py::test_login_issues_bearer_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_uploaded_poster_object_key_matches_scheme
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_poster_object_present_in_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: author_works_the_enquiry_queue
+  purpose: A studio author opens the enquiry queue and reads the seeded enquiry alongside the one a visitor just sent
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com and open `/studio/enquiries`, which shows the enquiry queue to an author: confirm the author reads the enquiry queue newest first, that the one seeded enquiry with reference ENQ-1001 is listed, and that every enquiry reference in the queue is unique
+      cov: C-RL-04, C-UF-09, C-DM-13, C-DM-22
+    - kind: browser
+      do: Confirm every screen-reader-only label in the studio chrome uses the visually-hidden clip pattern, that icon-only controls carry labels, that text meets the stated contrast bar, and that every list surface has an empty state naming what would appear there
+      cov: C-FE-30, C-UF-18
+    - kind: pytest
+      test: test_output.py::test_seed_counts_persisted_in_database
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: draft_project_cannot_be_read_by_anyone_else
+  purpose: The unpublished project and its poster object answer their own author and refuse every other caller, the object store included
+  substeps:
+    - kind: browser
+      do: Sign out and request the draft project's two-letter route directly: confirm a draft route asked for by anyone but its owner renders the not-found surface, so the draft project stays unreachable to everyone but its own author. Confirm on the same pass that no comments surface exists anywhere on the site and no search surface exists either
+      cov: C-UF-17, C-OV-04, C-CN-02, C-CN-03
+    - kind: pytest
+      test: test_output.py::test_draft_project_absent_from_public_list
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_cannot_read_draft_project
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_other_author_cannot_read_draft_project
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_poster_object_denied_to_anonymous_media_request
+      critical: true
+      category: security
+      weight: 5
+
+- id: reader_denied_the_studio_console
+  purpose: A signed-in reader account cannot reach the studio console or any authoring endpoint, and a denied call leaves the protected rows untouched
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com and confirm signing in sends a reader to `/`, that a reader account reads published surfaces only, and that a signed-in reader asking for a studio route is refused. Confirm on the same pass that no payment surface exists anywhere and that no third-party analytics tag is loaded in the network log
+      cov: C-UF-12, C-UF-14, C-RL-06, C-CN-05, C-CN-06
+    - kind: pytest
+      test: test_output.py::test_reader_denied_author_only_endpoints
+      critical: true
+      category: security
+      weight: 5
+
+- id: unauthenticated_studio_request_lands_on_login
+  purpose: An anonymous request for a studio route lands on the sign-in route and returns to the requested studio route afterwards, and a stale bearer token is refused at the API
+  substeps:
+    - kind: browser
+      do: Request the studio enquiry queue while signed out and confirm an anonymous request to a studio route lands on `/login`, which signs an existing account in; sign in as author@example.com and confirm signing in returns to the requested studio route. Then confirm a direct API call from a reader session to an author-only endpoint is denied server-side, and that a denied mutating call leaves the protected state unchanged
+      cov: C-UF-10, C-UF-11, C-UF-06, C-RL-08, C-RL-09
+    - kind: pytest
+      test: test_output.py::test_expired_token_rejected_and_row_unchanged
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_enquiry_is_refused
+  purpose: A malformed enquiry, a honeypot submission and an illegal project slug are each refused without leaving a row behind
+  substeps:
+    - kind: browser
+      do: Submit the contact form with every field empty and confirm a missing enquiry name is rejected with a reason for that field, shown inline beside it, with the page intact and no success line. Confirm each inline error is announced through a screen-reader-only label using the visually-hidden clip pattern
+      cov: C-CF-28, C-FE-30
+    - kind: pytest
+      test: test_output.py::test_invalid_enquiry_refused_and_nothing_stored
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_honeypot_enquiry_stores_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_project_route_reserved_segments_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_project_slug_shape_refused
+      category: validation
+      weight: 3
+
+- id: duplicate_enquiry_stores_one_row
+  purpose: Re-sending the same enquiry leaves one stored row and returns the first reference rather than a second
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_duplicate_enquiry_stores_one_row
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_lead_promotion_at_most_one_winner
+  purpose: Two simultaneous promotions of two different projects leave exactly one lead row, never two and never zero
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_lead_promotion_yields_at_most_one
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_lead_flag_on_exactly_one_stored_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_at_set_exactly_on_published_rows
+      category: data_integrity
+      weight: 5
+
+- id: empty_facet_and_unknown_paths_stay_usable
+  purpose: An unmatched facet and an unknown path both leave the site usable, with an empty state rather than an error page
+  substeps:
+    - kind: browser
+      do: Request an unknown top-level path and confirm an unknown path renders the not-found surface with the corner chrome intact; open the overlay menu there and confirm Escape closes whatever opened over the page. Narrow the wall to a facet that matches nothing and confirm the list surface has an empty state naming what would appear there, and that the wall stays responsive while holding two hundred projects
+      cov: C-UF-16, C-UF-18, C-UX-12, C-CN-10
+    - kind: pytest
+      test: test_output.py::test_empty_facet_returns_empty_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_path_is_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_projects_list_is_top_level_array
+      category: presentation
+      weight: 1
+
+- id: new_visitor_signup_creates_a_reader
+  purpose: Open signup creates a reader account that lands on the public index and can send an enquiry, never an author account
+  substeps:
+    - kind: browser
+      do: Open `/signup`, which creates a reader account: confirm signup is open, that signing in sends a reader to `/` rather than the studio, and that an author account is seeded only and never created by signup. The product is single tenant, so there is no organisation to choose on the way in
+      cov: C-UF-07, C-UF-14, C-RL-10, C-RL-11, C-CN-01
+    - kind: pytest
+      test: test_output.py::test_signup_creates_reader_not_author
+      category: security
+      weight: 5
+
+- id: the_public_site_is_launch_ready
+  purpose: The public site carries the things a site needs before it goes out: a terms page linked everywhere, no broken internal link, a favicon, security headers, and nothing secret in what the browser downloads
+  substeps:
+    - kind: browser
+      do: Walk the footer of the index route, the wall of work, the contact route and the signup route, confirming each one links to the terms page and that the terms page states what the studio records about an enquirer
+      cov: C-CF-37
+    - kind: pytest
+      test: test_output.py::test_terms_page_reachable_from_footer_and_signup
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_internal_links_resolve_on_public_routes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_served_and_declared_in_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_security_headers_on_every_response
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_frontend_secrets_in_downloaded_assets
+      category: security
+      weight: 5

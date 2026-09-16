@@ -1,0 +1,102 @@
+schema_version = "1.4"
+
+[task]
+name = "deku/financial-data-network"
+version = "1.0.0"
+description = "Operator console for a financial data network: production access requests signed off by a compliance approver"
+uuid_v5 = "4610c5b9-52bd-5406-beb3-6fe7855074f6"
+keywords = ["greenfield", "enterprise", "typescript", "postgres", "keycloak", "approval-workflow", "rbac"]
+authors = ["abhishek.shaw@ethara.ai", "nishant.dubey@ethara.ai"]
+
+[metadata]
+category            = "Greenfield"
+sub_category        = "enterprise"
+domain              = "finance-accounting"
+pattern             = "approval-workflow"
+archetype           = "financial-data-network"
+variant             = "a"
+service_profile     = "P3-db-auth"
+task_code           = "E_finan_appr_financial-data-network_20260916_060815"
+naming_scheme       = "task-code-v1"
+grader_version      = "0.22.0"
+design_direction    = "glass-depth"
+capability_flags    = ""
+launch_surface      = "cookie_choice,no_broken_links,no_frontend_secrets,spam_protection,terms_page"
+language            = "typescript"
+variant_axes        = []
+spec_sections_given = [
+  "overview",
+  "roles",
+  "features",
+  "flow",
+  "uiux",
+  "frontend",
+  "techrequirements",
+  "datamodel",
+  "constraints",
+  "contract",
+]
+turns_expected  = 180
+tokens_expected = 6500000
+contributor_id  = "nishant.dubey@ethara.ai"
+created_at      = "2026-09-16"
+canary_present  = true
+
+reference_model_used = ""
+difficulty           = ""
+pass_rate            = ""
+pass_rate_ci         = []
+calibration_trials   = ""
+harbor_version       = "0.22.0"
+
+[metadata.services]
+backend = "postgres"
+auth    = "keycloak"
+
+[agent]
+timeout_sec = 18000.0
+
+[environment]
+os                = "linux"
+cpus              = 4
+memory_mb         = 8192
+storage_mb        = 20480
+build_timeout_sec = 1800.0
+
+network_mode  = "public"
+allowed_hosts = []
+
+env = { APP_PUBLIC_PORT = "4173", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://localhost:4173}", DB_URL = "${DB_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/ravel}", DATABASE_URL = "${DATABASE_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/ravel}", AUTH_ISSUER_URL = "${AUTH_ISSUER_URL:-http://keycloak:8080/realms/ravel}", AUTH_URL = "${AUTH_URL:-http://keycloak:8080}", AUTH_CLIENT_ID = "${AUTH_CLIENT_ID:-ravel-console}", AUTH_CLIENT_SECRET = "${AUTH_CLIENT_SECRET:-ravel-9f14c73e-console-2026}" }
+
+[environment.healthcheck]
+command            = "pg_isready -h postgres -p 5432 -q"
+interval_sec       = 5.0
+timeout_sec        = 5.0
+start_period_sec   = 60.0
+start_interval_sec = 2.0
+retries            = 60
+
+[verifier]
+environment_mode = "separate"
+timeout_sec      = 3600.0
+
+env = { ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY}", ANTHROPIC_BASE_URL = "${ANTHROPIC_BASE_URL}", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://localhost:4173}", DB_ADMIN_URL = "${DB_ADMIN_URL:-postgresql://deku_admin:deku-local-dev@postgres:5432/ravel}", AUTH_ADMIN_TOKEN = "${AUTH_ADMIN_TOKEN:-deku_admin:deku-local-dev}", DEKU_SERVICE_BACKEND = "postgres", DEKU_SERVICE_AUTH = "keycloak" }
+
+[delivery]
+format         = "harbor"
+schema_version = "1.4"
+reward_path    = "/logs/verifier/reward.json"
+reward_key     = "reward"
+reward_range   = [0.0, 1.0]
+reward_full    = 1.0
+network_policy = "public"
+
+[delivery.images]
+main     = "python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254"
+postgres = "postgres:16.4-bookworm@sha256:e62fbf9d3e2b49816a32c400ed2dba83e3b361e6833e624024309c35d334b412"
+keycloak = "quay.io/keycloak/keycloak:26.0.7@sha256:4388e2379b7e870a447adbe7b80bd61f5fbf04e925832b19669fda4957f05a81"
+
+
+[[artifacts]]
+source      = "/app"
+destination = "app"

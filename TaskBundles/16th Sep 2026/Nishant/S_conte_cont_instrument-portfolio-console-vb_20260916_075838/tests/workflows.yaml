@@ -1,0 +1,325 @@
+- id: owner_publishes_an_entry_and_reorders_the_shelf
+  purpose: The owner signs in, writes a work entry, publishes it, and moves it to the front of the shelf
+  substeps:
+    - kind: browser
+      do: Open /studio while signed out and confirm the address becomes /sign-in carrying /studio as the intended path
+      cov: C-CF-33
+    - kind: browser
+      do: Sign in as owner@example.com with the password deku-demo-pw-2026 and confirm the address becomes /studio
+      cov: C-UF-10
+    - kind: browser
+      do: Press NEW ENTRY, type a title, a kind, a year and a summary, press SAVE and confirm the banner reads Saved just now.
+      cov: C-CF-62
+    - kind: browser
+      do: Press PUBLISH and confirm the banner reads Published. It is on the site now. with UNPUBLISH now in the place PUBLISH was
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_owner_publishes_entry_and_it_appears_in_the_console_read
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-66 (earned: the entry appearing in the card row at its shelf position is what this step reads off the console)
+    - kind: pytest
+      test: test_output.py::test_reordered_shelf_position_is_stored_and_survives_a_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-85
+
+- id: console_read_serves_the_published_work_in_shelf_order
+  purpose: The whole public console arrives in one read, ordered by the shelf
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_console_read_returns_published_work_in_shelf_order
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-03
+    - kind: browser
+      do: Open / and move through Home, Product, Sketch, Award and Contact on the diagram in the upper right, confirming the document never reloads
+      cov: C-CF-17 (earned: the four child plates settling faster than the parent is what this step watches the diagram do)
+    - kind: pytest
+      test: test_output.py::test_seeded_studies_and_recognitions_are_present_in_the_console_read
+      category: business_rule
+      weight: 3
+      cov: C-DM-14 (earned: the first seeded study is one of the three this step looks for by name)
+
+- id: draft_entry_detail_cannot_be_read_by_a_visitor
+  purpose: An entry that is not published is absent from every public surface and answers as gone at its own path
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_draft_entry_detail_answers_gone_to_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-69
+    - kind: pytest
+      test: test_output.py::test_draft_entry_is_absent_from_the_console_read
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-67
+    - kind: browser
+      do: Open /product before publishing anything and confirm one label in the card row's place reads Work coming soon.
+      cov: C-UF-29
+
+- id: draft_preview_object_is_denied_to_an_unauthenticated_caller
+  purpose: The preview bytes live in the object store, and a draft entry's object is refused to a stranger at its exact key
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_published_entry_preview_object_exists_in_the_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-70
+    - kind: pytest
+      test: test_output.py::test_draft_entry_preview_object_is_denied_to_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-74
+
+- id: owner_invites_an_editor_and_authorship_survives
+  purpose: Inviting an editor is the owner's capability, and an entry an editor writes records that editor as its author
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_owner_invites_an_editor_and_an_editor_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-19 (earned: the call that creates an invitation is the only observation of an owner inviting an editor by address)
+    - kind: pytest
+      test: test_output.py::test_editor_authored_entry_records_the_editor_as_its_author
+      category: data_integrity
+      weight: 5
+      cov: C-RL-27 (earned: authorship stored as a field on the record is what lets the work outlive its author)
+    - kind: browser
+      do: Sign in as owner@example.com, open /studio/account and confirm the editor list carries an invite control
+      cov: C-RL-26 (earned: the account surface is where an editor is removed, which is the act that ends that editor's sessions)
+
+- id: editor_owner_only_writes_are_forbidden_at_the_api
+  purpose: An editor may write an entry, and the server refuses every act that would publish or reorder it
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_editor_publish_request_is_denied_and_leaves_published_false
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-09
+    - kind: browser
+      do: Sign in as editor@example.com, open an entry, and confirm no control labelled PUBLISH and no control labelled DELETE is present
+      cov: C-RL-11
+    - kind: pytest
+      test: test_output.py::test_editor_shelf_write_is_denied_and_leaves_the_order_unchanged
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-12
+
+- id: editor_inbox_and_log_access_is_denied
+  purpose: The inbox and the page-view log are the owner's alone, and an editor reaching either gets the product's own refusal surface
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_editor_inbox_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-13 (earned: the message list is what an editor is denied here)
+    - kind: pytest
+      test: test_output.py::test_editor_refusal_surface_carries_the_pinned_explanation
+      category: presentation
+      weight: 1
+      cov: C-CF-124
+    - kind: browser
+      do: Sign in as editor@example.com and confirm the rail carries no INBOX item and the dashboard shows no unread tile at any value
+      cov: C-CF-126
+    - kind: pytest
+      test: test_output.py::test_editor_page_view_log_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-15 (earned: the page-view log is what an editor is denied here)
+
+- id: unauthenticated_studio_request_is_denied
+  purpose: Every studio path requires a session, and a signed-out visitor is sent to sign in
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_studio_work_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-04 (earned: a caller with no session reaching a studio route is the visitor this step denies)
+    - kind: browser
+      do: Open /studio/inbox while signed out and confirm the address becomes /sign-in carrying the intended path
+      cov: C-CF-34
+
+- id: visitor_message_reaches_the_owner_inbox
+  purpose: A message sent from the public form is stored and appears in the owner's inbox as text
+  substeps:
+    - kind: browser
+      do: Open /contact, fill NAME, EMAIL and MESSAGE, press SEND and confirm the banner reads Sent. I will read it. with all three fields cleared
+      cov: C-CF-100
+    - kind: pytest
+      test: test_output.py::test_contact_message_is_persisted_as_an_unread_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-108 (earned: the stored row carries the sender name, the address, the body and the arrival moment the step posts)
+    - kind: pytest
+      test: test_output.py::test_contact_message_body_is_stored_verbatim_without_markup
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-112
+    - kind: browser
+      do: Sign in as owner@example.com, open /studio/inbox, open the new row, wait a second and confirm the row reads as read
+      cov: C-CF-115
+
+- id: invalid_form_input_is_refused_inline
+  purpose: Every form field is refused inline with its own sentence, the control stays live, and nothing is written
+  substeps:
+    - kind: browser
+      do: Open /contact and press SEND with every field empty, confirming three inline errors appear at once with SEND still live
+      cov: C-CF-54
+    - kind: pytest
+      test: test_output.py::test_contact_form_refuses_a_missing_name_with_the_pinned_error
+      category: validation
+      weight: 3
+      cov: C-CF-96
+    - kind: pytest
+      test: test_output.py::test_contact_form_refuses_a_malformed_address_with_the_pinned_error
+      category: validation
+      weight: 3
+      cov: C-CF-97
+    - kind: pytest
+      test: test_output.py::test_contact_form_refuses_a_short_body_with_the_pinned_error
+      category: validation
+      weight: 3
+      cov: C-CF-98
+    - kind: pytest
+      test: test_output.py::test_entry_title_over_the_bound_is_refused_with_the_pinned_error
+      category: validation
+      weight: 3
+      cov: C-CF-45
+    - kind: pytest
+      test: test_output.py::test_entry_year_outside_the_band_is_refused_with_the_pinned_error
+      category: validation
+      weight: 3
+      cov: C-CF-47
+    - kind: pytest
+      test: test_output.py::test_entry_link_without_a_secure_scheme_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-51 (earned: a link carrying a script scheme is the bad link the pinned sentence refuses)
+
+- id: bot_submissions_are_refused_by_the_decoy_and_the_limit
+  purpose: A form filled by a bot is refused without asking a person to prove anything
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_decoy_field_submission_is_refused_and_writes_no_row
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-102
+    - kind: pytest
+      test: test_output.py::test_repeated_submissions_are_refused_after_the_third_from_one_address
+      category: validation
+      weight: 3
+      cov: C-CF-105 (earned: the fourth submission from one address inside the hour is the limit this step drives past)
+
+- id: concurrent_entry_writes_accept_at_most_one
+  purpose: Two writes to one entry from the same version resolve to exactly one winner
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_entry_writes_from_one_version_accept_at_most_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-12
+
+- id: duplicate_position_reorder_is_refused_and_positions_survive
+  purpose: A shelf order is written whole or not at all, and an unpublished entry keeps the place its owner left it
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reorder_naming_a_duplicate_position_is_refused_whole
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-88
+    - kind: browser
+      do: Open /studio/shelf, focus a row handle, press space, move the row with the arrow keys, press space again and confirm the banner reads Order saved.
+      cov: C-CF-83
+    - kind: pytest
+      test: test_output.py::test_unpublished_entry_keeps_its_shelf_position_after_a_republish
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-91
+
+- id: sign_in_failures_reach_the_lockout_limit
+  purpose: Repeated failed sign-ins lock the account, and no failure names which field was wrong
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_wrong_password_answer_names_neither_field
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-30
+    - kind: pytest
+      test: test_output.py::test_sign_in_failures_reach_the_lockout_limit
+      category: security
+      weight: 5
+      cov: C-CF-31 (earned: the lockout after five consecutive failures is the limit this step drives the account to)
+
+- id: unknown_address_renders_the_product_not_found_surface
+  purpose: A failure is a screen the product designed, and an unknown code is never echoed back
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+      cov: C-CF-117
+    - kind: pytest
+      test: test_output.py::test_unknown_failure_code_renders_the_generic_surface
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-121
+    - kind: browser
+      do: Open an address that does not exist, confirm the surface reads 404 NOT FOUND, press RETURN HOME and confirm the address becomes /
+      cov: C-CF-118
+
+- id: the_environment_answers_before_anything_is_signed_in
+  purpose: The app is reachable and healthy, carries its security headers, declares its own preview on every public destination, and records each public view for the owner
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_two_hundred_without_credentials
+      category: presentation
+      weight: 1
+      cov: C-DC-04
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_response
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-22 (earned: the strict transport policy is one of the four headers this step reads off the response)
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_distinct_titles_and_preview_images
+      category: presentation
+      weight: 1
+      cov: C-TR-28
+    - kind: browser
+      do: Open / and confirm body text and every half-strength secondary line meet the stated contrast bar against the near-black ground
+      cov: C-UX-18
+    - kind: browser
+      do: Press tab repeatedly from a fresh load of / and confirm the focus order runs skip link, destination region, the five destinations, then the destination controls, with a visible ring on every stop
+      cov: C-UX-24
+    - kind: pytest
+      test: test_output.py::test_page_view_log_carries_no_network_address
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-130
+    - kind: browser
+      do: Sign in as owner@example.com, open /studio/log and confirm the most recent rows name the routes just visited
+      cov: C-CF-129 (earned: the log read is the newest-first page-view listing this step opens)
