@@ -1,0 +1,301 @@
+- id: reader_buys_a_tier_and_receives_the_entitlement
+  purpose: A stranger opens a product page cold, picks a tier, applies a discount, pays, and holds the entitlement
+  substeps:
+    - kind: browser
+      do: Open the product page that renders at its permalink route /p/field-notes-vol-one and read the name Field Notes Volume One with both tier names and both prices already on the page; confirm the page ground is a near-white warm neutral, that primary text is a near-black neutral with muted text the same hue held lighter, and that the primary action wears the mid, vivid orange nothing else on the page wears; then narrow the viewport and confirm the product page becomes a single column with the buy action pinned to the foot of the viewport
+      cov: C-CF-10, C-CF-11, C-CF-18, C-UF-02, C-UX-01, C-UX-02, C-UX-03, C-UX-37
+    - kind: browser
+      do: Pick the Standard tier, press the primary buy action, sign in as buyer@example.com with the password deku-demo-pw-2026, and read the checkout route rendering one open session as a single column of at most four fields, showing the unit price, the tax and the total on separate lines beside the seller-of-record disclosure that appears at checkout; confirm every interactive component carries its resting, pointed-at, pressed, focused, unavailable, loading and errored state, and that a loading control keeps its width so nothing beside the control moves
+      cov: C-CF-19, C-CF-122, C-FE-12, C-UF-03, C-UX-22, C-UX-23
+    - kind: browser
+      do: Apply the discount code LAUNCH20, read the discount line that appears and the changed figure arriving by counting to its new value of 2285, with the price block stating the currency explicitly beside every figure; then confirm and read the thanks route showing the confirmed purchase arriving as one settled state, offering a way into the library
+      cov: C-CF-26, C-CF-27, C-UF-04, C-UX-18, C-UX-20, C-FE-10
+    - kind: pytest
+      test: test_output.py::test_checkout_confirm_creates_order_with_worked_decomposition
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_paid_order_ledger_postings_are_stored_and_balance
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_paid_order_grants_one_entitlement
+      category: core_outcome
+      weight: 5
+
+- id: paid_checkout_creates_one_invoice_in_the_billing_platform
+  purpose: The invoice for a paid order is a real record in the billing platform for the amount the app computed
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_paid_checkout_invoice_exists_for_worked_total
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_billing_account_external_key_is_stored_once
+      category: data_integrity
+      weight: 5
+
+- id: receipt_reaches_the_buying_reader
+  purpose: A paid order sends exactly one receipt, to the buying reader alone, with the pinned subject prefix
+  substeps:
+    - kind: browser
+      do: Sign in as buyer@example.com and open /library, reading the loading placeholder occupying the space the content will occupy before either the entitlements held or the designed empty state naming the next action; confirm the buyer surfaces are spacious where the console is compact
+      cov: C-UF-05, C-UF-16, C-UX-12, C-UF-09
+    - kind: browser
+      do: Sign out from the library, confirm the storefront home is shown, then press the back control and confirm the library is no longer reachable
+      cov: C-UF-11, C-UF-12
+    - kind: browser
+      do: Open /library while signed out and confirm the sign-in route is shown, then sign in and confirm the library that was asked for is the page that opens; confirm a token expiring part way through an action leaves that action undone
+      cov: C-UF-07, C-UF-08, C-UF-14
+    - kind: pytest
+      test: test_output.py::test_receipt_email_reaches_the_buying_reader_only
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_entitlement_access_is_recorded
+      category: business_rule
+      weight: 3
+
+- id: duplicate_confirm_creates_at_most_one_order
+  purpose: Confirming one session twice with the same idempotency key leaves exactly one of everything behind
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_repeated_checkout_confirm_is_idempotent
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_confirm_sends_no_receipt_email
+      category: notification
+      weight: 3
+
+- id: concurrent_confirms_leave_the_quantity_limit_intact
+  purpose: Two readers confirming the last unit at one moment produce exactly one order between them
+  substeps:
+    - kind: browser
+      do: Open the product page for Lantern Press Kit once its one unit is gone and read the sold-out state offering the storefront rather than an error
+      cov: C-CF-13, C-CF-95, C-CF-96
+    - kind: pytest
+      test: test_output.py::test_quantity_limit_is_never_oversold_under_contention
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: reader_cannot_read_creator_orders
+  purpose: A reader session is refused at the creator order surface and sees no creator-side figure anywhere
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_creator_orders
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_order_view_omits_creator_figures
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_the_pricing_decomposition
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_creator_holds_no_library
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_discount_depth_below_zero_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signed_in_principal_reports_its_role
+      category: security
+      weight: 5
+
+- id: another_readers_entitlement_request_is_denied
+  purpose: A reader asking for a record belonging to another reader is answered as absent rather than as forbidden
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_other_reader_entitlement_is_absent
+      critical: true
+      category: security
+      weight: 5
+
+- id: anonymous_console_request_is_unauthenticated
+  purpose: A request carrying no token to a console endpoint is denied at the API with the protected state untouched
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_anonymous_console_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: draft_product_stays_hidden_from_the_storefront
+  purpose: A draft product is unreadable by a stranger at every public surface
+  substeps:
+    - kind: browser
+      do: Open the storefront home as a signed-out stranger and confirm it lists every published product, Field Notes Volume One beside Lantern Press Kit, with no Tide Tables Draft among them; confirm the buyer surfaces the app presents are a storefront, a product page, a checkout and a durable library
+      cov: C-CF-12, C-OV-02
+    - kind: pytest
+      test: test_output.py::test_draft_product_is_not_publicly_readable
+      category: security
+      weight: 5
+
+- id: creator_reads_the_money_decomposition
+  purpose: The creator reads a full order decomposition beside a ledger whose trial balance reads zero
+  substeps:
+    - kind: browser
+      do: Sign in as creator@example.com, land on the console home, and confirm the console carries a persistent left rail holding seven destinations; open the orders route, select a record on that split detail pane, confirm selecting it changes the right column with the address while never losing the left, and read the subtotal, discount, tax, total, platform fee, payment fee, affiliate share and net there, where the money decomposition carries an ordered ramp with one distinguishable colour per component and every ramp segment carries a written label beside its colour
+      cov: C-RL-03, C-FE-01, C-FE-02, C-FE-03, C-UF-06, C-UF-10, C-OV-01, C-UX-05, C-UX-06
+    - kind: browser
+      do: Filter the console order list and confirm the filtered list reorders by sliding its rows to their new positions, then press a destructive control and confirm it confirms first, naming what will be destroyed
+      cov: C-UX-19, C-UX-24
+    - kind: browser
+      do: Open /console/money and read the account tree beside the entry stream, expand an entry to see its legs with the account code and name, confirm debit reads differently from credit without relying on colour, confirm revenue carries a mid, vivid green where anything declined carries a mid, vivid red, and confirm a confirmation appears as a banner at the top of the working pane
+      cov: C-RL-04, C-FE-13, C-UX-04
+    - kind: pytest
+      test: test_output.py::test_trial_balance_is_zero_after_purchase
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_chart_of_accounts_rows_exist
+      category: data_integrity
+      weight: 5
+
+- id: creator_prices_a_product_before_committing
+  purpose: The pricing decomposition returns the ledger's own arithmetic and names the component that moved
+  substeps:
+    - kind: browser
+      do: Sign in as creator@example.com, open /console/pricing/field-notes-vol-one, set the discount depth to 2000 and the jurisdiction to IE on the direct channel, and read a net of 1602
+      cov: C-CF-98, C-CF-101
+    - kind: browser
+      do: Move the attribution channel to marketplace, read the net falling to 1440, and confirm the surface names the platform fee as the component that moved rather than presenting the moved total alone; confirm a skeleton whose blocks occupy the space the content will occupy ends by settling into that content
+      cov: C-CF-102, C-UX-17
+    - kind: pytest
+      test: test_output.py::test_pricing_read_matches_the_order_arithmetic
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_marketplace_channel_raises_the_platform_fee
+      category: business_rule
+      weight: 3
+
+- id: open_session_price_survives_a_reprice
+  purpose: A session honours the figures it locked when it opened, whatever happens to the tier afterwards
+  substeps:
+    - kind: browser
+      do: Sign in as buyer@example.com, open a checkout for Field Notes Volume One, and read the unit price, the tax resolved for IE and the total held as three separate lines rather than one bare figure; resize to a medium width and confirm the console rail collapses to icons, then to a narrow width and confirm the rail becomes a bottom bar
+      cov: C-UX-36
+    - kind: pytest
+      test: test_output.py::test_checkout_session_price_survives_a_reprice
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_discount_retaxes_the_discounted_base
+      category: business_rule
+      weight: 3
+
+- id: expired_discount_code_is_refused
+  purpose: A code outside its window or over a cap is refused with the reason named and the total unchanged
+  substeps:
+    - kind: browser
+      do: Open a checkout for Field Notes Volume One, apply the code EXPIRED10, and read the inline banner naming the closed window with the total left where it was; confirm the banner persists until dismissed or until the pane changes, and that the error is stated in place rather than leaving the app unusable
+      cov: C-CF-28, C-FE-09, C-UF-17
+    - kind: pytest
+      test: test_output.py::test_expired_discount_code_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_per_reader_discount_cap_refuses_a_second_use
+      category: validation
+      weight: 3
+
+- id: invalid_signup_submission_is_refused
+  purpose: A signup that fills the decoy field or repeats an address in use is refused with nothing written
+  substeps:
+    - kind: browser
+      do: Open /signup, follow the terms page link the form makes reachable, return, then submit with an address already in use and read the inline message naming the field at fault; confirm the form rejecting invalid input writes nothing, and that a transition re-triggered part way through re-targets from where the transition is
+      cov: C-CF-123, C-CF-124, C-UX-16
+    - kind: pytest
+      test: test_output.py::test_decoy_field_submission_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_email_is_refused
+      category: validation
+      weight: 3
+
+- id: storefront_and_terms_pages_render_for_a_stranger
+  purpose: The public surfaces a stranger meets first all render, including the not-found page and the terms page
+  substeps:
+    - kind: browser
+      do: Open / as a stranger, follow the terms page link reachable from the footer of every page, and read a terms page naming Handsel Commerce Ltd as the seller of record; confirm the seller-of-record disclosure cannot be suppressed by the creator branding on the page
+      cov: C-CF-118, C-CF-119, C-CF-120, C-CF-121
+    - kind: browser
+      do: Read the storefront home and confirm body text sits at sixteen pixels on a twenty-four pixel line with interface text a size smaller, that every semantic colour carries a foreground holding its contrast against the background it sits on, that every surface meets WCAG 2.2 Level AA with effects active, and that the monospace family carrying every amount is never overridable
+      cov: C-UX-07, C-UX-10, C-UX-11, C-UX-28
+    - kind: browser
+      do: Tab from the start of the document and confirm the buy action is reachable by keyboard within a short run of tab stops, that every interactive element takes focus with a visible ring, that each icon-only control carries a label, that no meaning is carried by colour alone, and that iconography is drawn inline rather than loaded as a font
+      cov: C-UX-31, C-UX-32, C-UX-33, C-FE-11, C-FE-15
+    - kind: browser
+      do: Resize to a narrow viewport and confirm every navigation target stays reachable, then open the checkout surface and confirm nothing there delays input, moves a target after appearing or animates a total; turn reduced motion on and confirm it removes the movement rather than the information
+      cov: C-UX-35, C-UX-21, C-UX-15
+    - kind: browser
+      do: Open an unknown address and confirm it renders the product's own not-found page with a way back
+      cov: C-CF-125
+    - kind: pytest
+      test: test_output.py::test_product_page_html_carries_the_price
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_names_the_seller_of_record
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_a_served_page
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent_and_the_account_is_seeded
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_a_top_level_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_out_of_scope_surfaces_are_absent
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_money_figure_carries_one_currency
+      category: data_integrity
+      weight: 5
+
+- id: entitlement_outlives_an_unpublished_product
+  purpose: Withdrawing a product from sale leaves every entitlement already granted intact
+  substeps:
+    - kind: browser
+      do: Sign in as creator@example.com, open /console/products, select Tide Tables Draft, and read the draft state beside the control that would publish it; press the control raising a new product and confirm a modal opens over the product list
+      cov: C-RL-01, C-FE-05
+    - kind: browser
+      do: Open the discount code list in the console and press the control that raises a new code, reading the modal that opens over the list
+      cov: C-FE-06, C-CF-111
+    - kind: pytest
+      test: test_output.py::test_unpublish_keeps_an_existing_entitlement
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_permalink_is_fixed_after_the_first_paid_order
+      category: business_rule
+      weight: 3

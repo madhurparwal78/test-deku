@@ -1,0 +1,439 @@
+- id: visitor_signs_up_behind_the_age_gate
+  purpose: A visitor gives a date of birth first, then a username, and lands signed in with the band already applied
+  substeps:
+    - kind: browser
+      do: Open / and read the signup card: Birthday sits above Username, above Password, above Gender (optional)
+      cov: C-CF-04, C-FE-02, C-FE-03
+    - kind: browser
+      do: Confirm every control on the signup form takes one height from the control scale, then fill Month, Day and Year, a username, and a password of at least eight characters, and press Sign Up
+      cov: C-UX-02
+    - kind: browser
+      do: Read the charts surface that opens and confirm the header shows the signed-in member
+    - kind: pytest
+      test: test_output.py::test_signup_persists_a_stored_identity_row
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_stores_the_date_of_birth_rather_than_a_band
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_child_band_is_derived_for_the_seeded_child_account
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_adult_band_is_derived_for_a_fresh_adult_signup
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_leap_day_birth_date_resolves_a_band
+      category: business_rule
+      weight: 3
+- id: signup_with_invalid_input_is_rejected
+  purpose: A signup that breaks a stated rule is refused inline with the field named and nothing written
+  substeps:
+    - kind: browser
+      do: Open / and submit the signup card with a six-character password
+    - kind: browser
+      do: Read the inline message under the Password field naming the field at fault, confirm the failure colour is the mid, vivid red that appears nowhere else, and confirm the reserved slot held the layout still
+      cov: C-CF-124, C-CF-26, C-UX-04
+    - kind: pytest
+      test: test_output.py::test_short_password_signup_is_refused_as_invalid
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_carrying_the_decoy_field_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_signup_attempts_in_quick_succession_are_refused
+      category: security
+      weight: 5
+- id: member_signs_in_by_more_than_one_route
+  purpose: The login surface offers a password route and an emailed code route, and both reach the charts surface
+  substeps:
+    - kind: browser
+      do: As an anonymous visitor ask for the protected route /kredz, land on /login, and confirm the card heading reads Log in to Kavora above Log In, Email Me a One-Time Code and Quick Sign-in
+      cov: C-FE-04, C-UF-01
+    - kind: browser
+      do: Sign in as player@example.com with the seeded password and land on /charts
+    - kind: browser
+      do: Open /settings/sessions, read the enrolled credentials list, then sign out and confirm signing out ends that session alone
+      cov: C-UF-03
+    - kind: pytest
+      test: test_output.py::test_login_answers_with_an_access_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credential_kinds_are_enrolled_and_revocable
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_one_time_code_email_reaches_the_account_inbox
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reused_one_time_code_is_refused
+      category: security
+      weight: 5
+- id: capability_and_locale_resolve_before_first_paint
+  purpose: The login surface knows which routes exist, which agreements apply and which variant it is in before anyone signs in
+  substeps:
+    - kind: browser
+      do: Open /login signed out and confirm the authentication choices render without a session
+    - kind: browser
+      do: Open the privacy page and the terms page from the footer of every page and read the agreement text
+      cov: C-CF-125, C-CF-126
+    - kind: browser
+      do: Change the language from the footer selector and confirm the address carries the locale
+      cov: C-FE-07
+    - kind: pytest
+      test: test_output.py::test_capability_metadata_answers_without_a_session
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_agreements_answer_without_a_session
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_flags_answer_for_an_anonymous_caller
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_experiment_assignment_is_stable_across_two_clients
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_locale_bundle_answers_one_namespace
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_telemetry_event_redacts_a_member_identifier
+      category: security
+      weight: 5
+- id: visitor_lands_on_the_public_surfaces
+  purpose: An unknown address renders the product's own not-found surface with the full chrome and two ways out
+  substeps:
+    - kind: browser
+      do: Open the unknown address /no-such-place and read the product own not-found surface, headed Something went wrong above the code 404
+      cov: C-CF-121, C-FE-05, C-FE-06
+    - kind: browser
+      do: Confirm the not-found surface still carries the header holding four nav destinations plus one right-hand action, the search, and the footer holding ten items ending with Sitemap, then follow every internal footer link on that public route to a surface that resolves
+      cov: C-CF-123, C-FE-01, C-UX-10, C-UX-12
+    - kind: browser
+      do: Press Home and land on the front surface
+    - kind: pytest
+      test: test_output.py::test_unknown_path_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_and_robots_resolve
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_response
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_secret_appears_in_what_the_browser_downloads
+      category: security
+      weight: 5
+- id: player_buys_a_kredz_pack
+  purpose: A player buys Builder Pack, the balance rises by the pack Kredz, an invoice exists and a receipt lands in the inbox
+  substeps:
+    - kind: browser
+      do: Sign in as player@example.com and open /kredz
+    - kind: browser
+      do: Open /kredz/packs/builder-pack and read the price beside the Kredz the pack carries
+    - kind: browser
+      do: Press Buy, read the confirmation toast in the success colour, a mid, soft teal, then read the new balance
+      cov: C-UX-05
+    - kind: pytest
+      test: test_output.py::test_pack_catalogue_lists_the_three_seeded_packs
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_kredz_pack_purchase_creates_one_billing_account
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_kredz_pack_purchase_creates_one_invoice_for_the_price
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_pack_receipt_email_reaches_the_buyer
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_item_purchase_sends_no_confirmation_mail
+      category: notification
+      weight: 3
+- id: duplicate_pack_submit_charges_once
+  purpose: Sending the same pack purchase twice under one idempotency key charges once and credits once
+  substeps:
+    - kind: browser
+      do: Sign in as player@example.com, open /kredz/packs/starter-pack and read the balance before buying
+    - kind: browser
+      do: Press Buy twice in quick succession and read the balance afterwards
+    - kind: pytest
+      test: test_output.py::test_resubmitted_pack_purchase_creates_no_second_invoice
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_idempotency_key_creates_one_stored_transaction
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_pack_purchase_sends_no_mail
+      category: notification
+      weight: 3
+- id: player_buys_a_marketplace_item
+  purpose: A player spends Kredz on an item somebody else published and the creator share lands in the creator balance
+  substeps:
+    - kind: browser
+      do: Sign in as player@example.com and open /marketplace
+    - kind: browser
+      do: Select Aurora Visor in the list and read the price beside the creator Vale Studio in the detail pane
+    - kind: browser
+      do: Press Buy, read the confirmation toast, and confirm buying Aurora Visor raises Vale Studio by 53 Kredz
+      cov: C-UF-07
+    - kind: pytest
+      test: test_output.py::test_item_catalogue_lists_the_seeded_marketplace_rows
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_item_purchase_splits_the_gross_by_the_seeded_rate
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_indivisible_gross_gives_the_remainder_to_the_creator
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_transaction_entries_sum_to_zero
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_balance_is_derived_from_stored_ledger_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_item_version_survives_a_later_price_change
+      category: data_integrity
+      weight: 5
+- id: age_restricted_purchase_is_denied
+  purpose: A member below an item's minimum band cannot buy it, and the refusal holds against a direct call
+  substeps:
+    - kind: browser
+      do: Sign in as player2@example.com and open /marketplace/vault-key
+    - kind: browser
+      do: Confirm the detail pane states the item is unavailable to this account
+    - kind: pytest
+      test: test_output.py::test_purchase_below_the_items_minimum_band_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_age_band_in_the_request_body_is_ignored
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_restricted_communication_direct_call_is_denied
+      category: security
+      weight: 5
+- id: concurrent_contention_on_a_scarce_resource
+  purpose: Two requests for the last thing a balance or an instance can hold produce exactly one winner
+  substeps:
+    - kind: browser
+      do: Sign in as player3@example.com and open /marketplace/aurora-visor
+    - kind: browser
+      do: Read the balance shown beside the price and confirm the two match
+    - kind: pytest
+      test: test_output.py::test_concurrent_purchases_of_the_last_affordable_item
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_joins_against_one_free_slot
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_short_balance_purchase_is_refused
+      category: validation
+      weight: 3
+- id: creator_requests_a_payout
+  purpose: A creator sees six eligibility conditions and a refusal names the one that failed
+  substeps:
+    - kind: browser
+      do: Sign in as creator2@example.com and open /create/payouts
+    - kind: browser
+      do: Read the six eligibility conditions and confirm tax documentation reads unmet
+    - kind: browser
+      do: Press Request and read the refusal naming the failing condition
+    - kind: pytest
+      test: test_output.py::test_payout_eligibility_answers_every_condition_separately
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_payout_refusal_names_the_failing_payout_condition
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_payout_above_the_derived_balance_is_refused
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_payout_settles_as_a_ledger_transaction
+      category: data_integrity
+      weight: 5
+- id: creator_publishes_an_asset
+  purpose: A creator publishes an asset, watches it move through the pipeline, and sees a pending preview placeholder
+  substeps:
+    - kind: browser
+      do: Sign in as creator@example.com and open /create
+    - kind: browser
+      do: Press New, fill the name, the declared type and the payload on /create/new, then publish
+    - kind: browser
+      do: Read the asset state in the detail pane and confirm the preview shows the pending placeholder
+      cov: C-UF-08, C-UF-13
+    - kind: pytest
+      test: test_output.py::test_asset_state_move_outside_the_permitted_table_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_rename_of_a_published_asset_returns_to_moderation
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_declared_type_disagreeing_with_the_payload_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_payload_carrying_the_malware_marker_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_preview_of_a_fresh_asset_is_pending
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_preview_batch_answers_many_asset_ids_in_one_response
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_creator_buying_its_own_item_is_denied
+      category: security
+      weight: 5
+- id: visitor_searches_across_four_scopes
+  purpose: One typed query offers four scopes, and the chosen scope opens a paged result list
+  substeps:
+    - kind: browser
+      do: Open /charts and type vault into the header search
+    - kind: browser
+      do: Read the four suggestion rows the header search offers after typing: Games, Marketplace, Communities and Creator Store
+      cov: C-UF-10
+    - kind: browser
+      do: Choose Games and read the result list on /search
+    - kind: pytest
+      test: test_output.py::test_search_resolves_each_of_the_four_scopes
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_age_ineligible_experience_is_filtered_before_ranking
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_charts_page_by_cursor_shows_every_row_once
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_search_result_is_a_defined_state
+      category: presentation
+      weight: 1
+- id: player_joins_a_running_instance
+  purpose: Pressing Play reserves a slot before connecting, and the free count drops at the moment of the reservation
+  substeps:
+    - kind: browser
+      do: Sign in as player@example.com and open /play/lantern-drift
+    - kind: browser
+      do: Read the free slot count, press Play, and read the reduced count
+      cov: C-UF-11
+    - kind: browser
+      do: Confirm the surface shows the reservation before any connection is made
+    - kind: pytest
+      test: test_output.py::test_join_records_a_reservation_row_and_drops_free_slots
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reservation_token_cannot_be_consumed_twice
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_presence_row_carries_a_lease_expiry
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_age_ineligible_join_is_refused_at_placement
+      category: security
+      weight: 5
+- id: player_cannot_reach_creator_routes
+  purpose: A player asking for a creator route is refused by the server and one creator cannot read another creator's rows
+  substeps:
+    - kind: browser
+      do: Sign in as player@example.com and open the creator dashboard route /create, a route inside this application
+      cov: C-CN-03
+    - kind: browser
+      do: Confirm the not-found surface renders rather than an empty creator dashboard
+      cov: C-UF-04
+    - kind: pytest
+      test: test_output.py::test_player_calling_a_creator_route_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_creator_cannot_read_another_creators_sales
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_role_in_the_request_body_is_ignored
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_anonymous_authenticated_call_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_session_revocation_leaves_other_sessions_alive
+      category: business_rule
+      weight: 3
+- id: the_ledger_reconciles_after_a_purchase
+  purpose: Every movement is an appended entry, balances are the sum of those entries, and nothing is rewritten
+  substeps:
+    - kind: browser
+      do: Sign in as player@example.com and open /kredz
+    - kind: browser
+      do: Read the ledger list and confirm each row shows a reason beside a signed amount
+    - kind: browser
+      do: Confirm the balance shown at the top matches the sum of the rows listed
+    - kind: pytest
+      test: test_output.py::test_ledger_entries_are_never_updated_after_commit
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_issued_minus_redeemed_reconciles_with_every_balance
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sale_row_records_the_rate_version_it_was_priced_at
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeding_twice_creates_no_duplicate_stored_row
+      category: data_integrity
+      weight: 5

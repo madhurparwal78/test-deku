@@ -1,0 +1,410 @@
+- id: developer_files_production_deploy_request
+  purpose: A developer reads live container health on an app and files a request to promote a version to production
+  substeps:
+  - kind: browser
+    do: Confirm the production marker is present and non-dismissible in the top bar
+    cov: C-FE-11
+  - kind: browser
+    do: Sign in as developer@example.com and open Nova Inference in the production environment
+    cov: 'C-CF-01 (earned: the seeded developer principal is the account this walk signs in with)'
+  - kind: browser
+    do: Read the live container list on the app and open the promote modal on the newest built version
+    cov: C-CF-12
+  - kind: pytest
+    test: test_output.py::test_health_endpoint_returns_200
+    category: presentation
+    weight: 1
+    cov: C-DC-05, C-TR-18
+  - kind: pytest
+    test: test_output.py::test_developer_files_production_deploy_request
+    critical: true
+    category: core_outcome
+    weight: 5
+    cov: 'C-CF-20, C-CF-21 (earned: the state read back after filing is asserted to be submitted or in-review), C-DM-04'
+  - kind: pytest
+    test: test_output.py::test_request_without_reason_is_refused
+    category: validation
+    weight: 3
+    cov: C-CF-22
+  - kind: browser
+    do: Confirm that the product presents a governed operator console for a serverless compute platform, with a public product page over the console. Confirm that a member opens an app, reads live container health, files a request to promote a version to the production environment. Confirm that a promotion request whose apply fails reaches `failed-to-apply`, stating a reason.
+    cov: C-OV-01, C-OV-02, C-CF-39
+  - kind: browser
+    do: Confirm that a promotion request whose apply fails leaves the previous version live.
+    cov: C-CF-40
+- id: operator_approves_and_applies_deploy_request
+  purpose: A second member holding operator decides the request and a separate apply step makes the version live
+  substeps:
+  - kind: browser
+    do: Open the request detail pane beside the list and read the requester, the reason and both versions
+    cov: C-UF-02
+  - kind: browser
+    do: Approve with a reason and confirm the inline banner reports the new state
+    cov: C-UF-04
+  - kind: browser
+    do: Drill down by breadcrumb from the workspace, to the production environment, to the requests resource, to the request tab, signed in as operator2@example.com
+    cov: C-UF-01
+  - kind: pytest
+    test: test_output.py::test_operator_decides_request_and_records_reason
+    critical: true
+    category: core_outcome
+    weight: 5
+    cov: 'C-CF-25, C-CF-26, C-DM-09 (earned: the decision is accepted only from an operator membership; which is what this step exercises)'
+  - kind: pytest
+    test: test_output.py::test_approval_does_not_change_live_version
+    category: data_integrity
+    weight: 5
+    cov: C-CF-36
+  - kind: pytest
+    test: test_output.py::test_apply_promotes_version_and_marks_applied
+    critical: true
+    category: data_integrity
+    weight: 5
+    cov: C-CF-37, C-CF-38, C-DM-07
+  - kind: browser
+    do: Confirm that a request to promote a version to production is decided by a second member who is not the requester. Confirm that approval of a promotion request changes no app until a separate apply step runs. Confirm that updating a secret creates a new version, leaving running containers on the version started with.
+    cov: C-OV-03, C-OV-04, C-CF-50
+- id: developer_cannot_decide_deploy_request
+  purpose: A developer calling the decision endpoint is denied at the API and the request row is untouched
+  substeps:
+  - kind: browser
+    do: Sign in as developer2@example.com, open the request and confirm no decision control is offered
+    cov: C-UF-07
+  - kind: pytest
+    test: test_output.py::test_developer_cannot_decide_request
+    critical: true
+    category: security
+    weight: 5
+    cov: C-CF-29, C-RL-04
+  - kind: pytest
+    test: test_output.py::test_decision_leaves_row_untouched_for_developer
+    category: data_integrity
+    weight: 5
+    cov: 'C-CF-30 (earned: the decider and the decision reason are compared before and after the refusal)'
+  - kind: browser
+    do: Confirm that a denial for missing elevation is distinguishable from a plain denial. Confirm that a machine token state is one of `live`, `superseded`, `expired`, `revoked`, `disabled`.
+    cov: C-TR-14, C-CF-55
+- id: requester_cannot_decide_own_request
+  purpose: The member who filed a request is denied at the API when deciding it even while holding operator
+  substeps:
+  - kind: browser
+    do: Sign in as operator@example.com, open the request they filed and confirm no decision control is offered
+    cov: C-UF-07
+  - kind: pytest
+    test: test_output.py::test_requester_cannot_decide_own_request
+    critical: true
+    category: security
+    weight: 5
+    cov: C-CF-31, C-DM-08
+  - kind: pytest
+    test: test_output.py::test_decision_leaves_row_untouched_for_requester
+    category: data_integrity
+    weight: 5
+    cov: C-CF-32
+  - kind: browser
+    do: Confirm that the last member holding `owner` in a workspace cannot be deactivated. Confirm that a decision denied for a lapsed grant leaves running work running.
+    cov: C-RL-14, C-TR-13
+- id: unauthenticated_console_call_denied
+  purpose: A console endpoint called with no session is denied and a wrong password does not sign anybody in
+  substeps:
+  - kind: browser
+    do: Open a console route with no session and confirm the sign-in page is presented
+    cov: C-UF-05, C-UF-06
+  - kind: pytest
+    test: test_output.py::test_unauthenticated_console_call_is_denied
+    critical: true
+    category: security
+    weight: 5
+    cov: 'C-CF-04, C-RL-09 (earned: server-side enforcement is what an anonymous call against a console endpoint proves)'
+  - kind: pytest
+    test: test_output.py::test_wrong_password_is_rejected
+    category: security
+    weight: 5
+    cov: 'C-CF-02, C-CF-03 (earned: the refusal body is read to confirm it names neither half of the pair)'
+  - kind: pytest
+    test: test_output.py::test_seeded_principals_sign_in
+    category: security
+    weight: 5
+    cov: C-CF-01, C-DM-22
+  - kind: browser
+    do: Confirm that four breakpoints run at small, medium, large, extra-large, with one spacing unit every gap is a multiple of. Confirm that a wait under the perceptual floor renders nothing rather than a skeleton. Confirm that no public registration form exists on any route.
+    cov: C-FE-09, C-FE-10, C-RL-11
+  - kind: browser
+    do: Confirm that no light theme is built. Confirm that the documentation application, the client library, the command line are not built. Confirm that single sign-on, directory provisioning, the payment provider are not built.
+    cov: C-CN-01, C-CN-03, C-CN-04
+- id: direct_promote_by_developer_forbidden
+  purpose: A developer promoting a production version without a request is denied at the API
+  substeps:
+  - kind: browser
+    do: Sign in as developer@example.com in production and confirm the promote control states the missing permission and the role that holds it
+    cov: C-UF-09
+  - kind: pytest
+    test: test_output.py::test_direct_promote_by_developer_is_denied
+    critical: true
+    category: security
+    weight: 5
+    cov: C-CF-23, C-CF-24, C-RL-10
+  - kind: browser
+    do: Confirm that seven radius steps run from a hairline on a dense control to a generous step on a card, with a pill for chrome controls. Confirm that the interface is set in medium by default, reserving regular for long prose. Confirm that a member is deactivated rather than removed from storage.
+    cov: C-FE-07, C-FE-08, C-RL-12
+  - kind: browser
+    do: Confirm that the last member holding `owner` in a workspace cannot be demoted.
+    cov: C-RL-13
+- id: second_decision_on_decided_request_conflict
+  purpose: A decision arriving against an already decided request conflicts and an illegal transition is refused
+  substeps:
+  - kind: browser
+    do: Open an already decided request in the detail pane beside the list, rather than replacing the list, and confirm the decision controls are no longer offered
+    cov: C-UF-02
+  - kind: pytest
+    test: test_output.py::test_second_decision_conflicts
+    category: data_integrity
+    weight: 5
+    cov: 'C-CF-34, C-DM-10 (earned: the row version changing on the first transition is what makes the second decision conflict)'
+  - kind: pytest
+    test: test_output.py::test_transition_outside_state_machine_is_refused
+    category: validation
+    weight: 3
+    cov: 'C-CF-33, C-CF-35, C-CF-28 (earned: the refusal proves the machine admits only the listed states)'
+  - kind: browser
+    do: Confirm that hover on a dark ground uses a transparent white overlay, with a stronger overlay for a pressed state. Confirm that a tinted transparent ground sits under a positive state, another under an error state.
+    cov: C-FE-05, C-FE-06
+- id: invalid_container_exit_reason_is_refused
+  purpose: A container exit reason outside the closed vocabulary is refused and platform faults stay out of the customer error rate
+  substeps:
+  - kind: browser
+    do: Open the containers list and confirm each terminated row shows an icon and a word beside its status hue
+    cov: C-UX-06
+  - kind: browser
+    do: Confirm an out-of-memory row shows the memory limit beside the observed peak
+    cov: C-CF-16
+  - kind: pytest
+    test: test_output.py::test_container_exit_reason_is_from_closed_vocabulary
+    category: business_rule
+    weight: 3
+    cov: 'C-CF-14, C-CF-13, C-DM-26 (earned: the seeded terminated containers are the rows whose exit reason this step reads)'
+  - kind: pytest
+    test: test_output.py::test_invalid_container_exit_reason_is_refused
+    category: validation
+    weight: 3
+    cov: C-CF-15
+  - kind: pytest
+    test: test_output.py::test_platform_faults_excluded_from_error_rate
+    category: business_rule
+    weight: 3
+    cov: C-CF-18, C-CF-19
+  - kind: browser
+    do: Confirm that charts use a categorical set of a light green, a soft orange, a light magenta, a mid teal, a soft amber, a mid green, a soft blue, a deep red. Confirm that annotation layers use a near-white muted violet, a light soft cyan.
+    cov: C-UX-08, C-UX-09
+- id: secret_value_never_returned_to_any_role
+  purpose: No route returns a secret value to any role and a secret a live deployment references cannot be deleted
+  substeps:
+  - kind: browser
+    do: Open the secrets list and confirm only key names and value lengths are shown
+    cov: C-CF-49
+  - kind: pytest
+    test: test_output.py::test_secret_value_never_returned
+    critical: true
+    category: security
+    weight: 5
+    cov: C-CF-48, C-TR-10, C-CF-46
+  - kind: pytest
+    test: test_output.py::test_secret_delete_with_live_reference_conflicts
+    category: validation
+    weight: 3
+    cov: 'C-CF-51, C-CF-47 (earned: the grant to a function is what makes the delete conflict)'
+  - kind: browser
+    do: Confirm that one vivid green accent is spent on the primary action, a highlighted headline word, an icon that must be found, a live indicator. Confirm that hover on a dark control is a low white overlay rather than a lighter opaque grey.
+    cov: C-UX-04, C-UX-10
+- id: audit_entry_edit_forbidden
+  purpose: An audit entry cannot be updated or deleted through any endpoint and the stored row survives the attempt
+  substeps:
+  - kind: browser
+    do: Open the audit route as a developer and confirm their own entries are readable
+    cov: C-RL-16
+  - kind: pytest
+    test: test_output.py::test_audit_entry_update_is_forbidden
+    critical: true
+    category: security
+    weight: 5
+    cov: C-CF-71, C-DM-11
+  - kind: pytest
+    test: test_output.py::test_audit_entry_delete_is_forbidden
+    category: security
+    weight: 5
+    cov: C-CF-72
+  - kind: pytest
+    test: test_output.py::test_audit_row_persisted_after_refused_update
+    category: data_integrity
+    weight: 5
+    cov: 'C-CF-73, C-CF-70 (earned: the stored action field read back is the recorded transition)'
+  - kind: browser
+    do: Confirm that the palette is authored as a raw layer naming physical ramps, a semantic layer naming ramps by job. Confirm that a component references the semantic layer rather than a raw token.
+    cov: C-FE-01, C-FE-02
+- id: cross_workspace_resource_cannot_be_read
+  purpose: A resource in a workspace the principal is not a member of is not disclosed
+  substeps:
+  - kind: browser
+    do: Confirm the workspace and the environment appear in the route before the resource
+    cov: C-CF-05
+  - kind: pytest
+    test: test_output.py::test_cross_workspace_resource_is_not_found
+    critical: true
+    category: security
+    weight: 5
+    cov: 'C-CF-06, C-DM-06, C-TR-11 (earned: an unscoped read would return the other workspace''s rows; which this step shows it does not), C-TR-12 (earned: trusting the path workspace would answer 200 here; which this step shows it does not)'
+  - kind: browser
+    do: 'Confirm that the neutral ramp carries fifteen steps, with five below the mid neutral used for separators. Confirm that three green ramps carry three jobs: accent, body copy on dark grounds, de-emphasis. Confirm that every route is rendered on the server, with interactive islands hydrating the streaming regions.'
+    cov: C-FE-03, C-FE-04, C-TR-01
+- id: readonly_member_denied_log_body
+  purpose: A read-only member is denied a log body and an unbounded log query is refused
+  substeps:
+  - kind: browser
+    do: Sign in as readonly@example.com and confirm the log route explains the missing permission
+    cov: C-UF-09
+  - kind: pytest
+    test: test_output.py::test_readonly_member_denied_log_body
+    critical: true
+    category: security
+    weight: 5
+    cov: 'C-RL-08, C-RL-07 (earned: the read-only role excludes a log body; which is the boundary this step walks)'
+  - kind: pytest
+    test: test_output.py::test_unbounded_log_query_is_refused
+    category: validation
+    weight: 3
+    cov: 'C-CF-58 (earned: the refusal carries the narrowing that would be accepted), C-CF-59 (earned: the default bound is what an unbounded query departs from)'
+  - kind: browser
+    do: Confirm that lines dropped by a rate limit are marked in the stream with the count, the window. Confirm that a list filter is encoded in the route, making a filtered view a shareable link. Confirm that every log line carries task, container, function, app, environment, source.
+    cov: C-CF-62, C-CF-76, C-CF-60
+  - kind: browser
+    do: Confirm that a secret value is scrubbed from a log body. Confirm that a waiting task carries a reason from the closed set `no capacity in region`, `workspace concurrency limit reached`, `accelerator quota reached`, `function maximum containers reached`, `cold start in progress`, `workspace on hold`.
+    cov: C-CF-61, C-CF-63
+- id: rollback_records_reason_and_new_version
+  purpose: A production rollback demands a reason and creates a new version rather than mutating history
+  substeps:
+  - kind: browser
+    do: Open the deployments tab and confirm each time is absolute in the member zone with the zone named, with a relative time only as a secondary label
+    cov: C-UX-27
+  - kind: pytest
+    test: test_output.py::test_rollback_without_reason_is_refused
+    category: validation
+    weight: 3
+    cov: C-CF-42
+  - kind: pytest
+    test: test_output.py::test_rollback_creates_new_version
+    category: data_integrity
+    weight: 5
+    cov: 'C-CF-41 (earned: the rollback is issued from an operator session against the deployments list), C-CF-43, C-CF-44'
+  - kind: browser
+    do: Confirm that container idle time is shown as a separate line beside serving time. Confirm that status hues run from a soft red, a soft amber, a vivid orange, a soft blue, with a light magenta reserved for platform faults. Confirm that every metered quantity is stored as an integer in a base unit, per task, per container.
+    cov: C-CF-66, C-UX-07, C-CF-65
+  - kind: browser
+    do: Confirm that a hard spend cap refuses new work, allowing running work to finish. Confirm that eyebrow labels, code, keyboard hints, every figure in a table are set in `Fira Mono`. Confirm that money is recorded in integer minor units in `usd`.
+    cov: C-CF-69, C-UX-12, C-DM-27
+  - kind: browser
+    do: Confirm that every stored time is UTC.
+    cov: C-DM-28
+- id: machine_token_secret_is_shown_once
+  purpose: A machine token secret is returned once at creation and never again, and revoking another member token is denied
+  substeps:
+  - kind: browser
+    do: Create a token and confirm the secret is shown once behind an explicit acknowledgement
+    cov: C-CF-53
+  - kind: pytest
+    test: test_output.py::test_machine_token_secret_shown_once
+    category: security
+    weight: 5
+    cov: C-CF-52, C-CF-54
+  - kind: pytest
+    test: test_output.py::test_token_revoke_by_other_developer_is_denied
+    category: security
+    weight: 5
+    cov: C-CF-56
+  - kind: browser
+    do: Confirm that an icon-only control carries a label. Confirm that reduced motion is honoured on every effect, leaving the loader spinning, leaving the pulsing skeleton pulsing. Confirm that a machine token created by a deactivated principal is disabled rather than removed.
+    cov: C-UX-18, C-UX-15, C-CF-57
+  - kind: browser
+    do: Confirm that body copy across the console is set in `Inter Variable`.
+    cov: C-UX-11
+- id: public_surface_and_not_found_page
+  purpose: The public page carries a privacy page, a social preview and a custom not-found page
+  substeps:
+  - kind: browser
+    do: Confirm the footer of the public page links to the privacy page
+    cov: C-CF-78
+  - kind: browser
+    do: Open an unknown address and read the product's own not-found page
+    cov: C-CF-80
+  - kind: pytest
+    test: test_output.py::test_unknown_address_renders_not_found_page
+    category: presentation
+    weight: 1
+    cov: C-CF-80, C-CF-81
+  - kind: pytest
+    test: test_output.py::test_privacy_page_reachable_from_footer
+    category: presentation
+    weight: 1
+    cov: C-CF-78
+  - kind: pytest
+    test: test_output.py::test_public_route_declares_social_preview
+    category: presentation
+    weight: 1
+    cov: C-TR-16, C-TR-17
+  - kind: browser
+    do: Confirm that a destructive confirmation names the exact resource, requiring the name typed in a production environment. Confirm that the privacy page states what the platform records about a workspace, how long each record is kept. Confirm that every content image carries alternative text, with a decorative image declaring the decorative role.
+    cov: C-CF-77, C-CF-79, C-UX-20
+  - kind: browser
+    do: Confirm that body text meets WCAG AA contrast against the ground of the text.
+    cov: C-UX-16
+- id: no_credential_reaches_the_browser
+  purpose: Nothing the browser downloads carries a credential
+  substeps:
+  - kind: browser
+    do: Open a console error surface and confirm the request identifier is shown with a copy control
+    cov: C-UF-13
+  - kind: pytest
+    test: test_output.py::test_no_credential_in_browser_payload
+    critical: true
+    category: security
+    weight: 5
+    cov: C-TR-15
+  - kind: browser
+    do: Confirm that each region of the shell skeletons independently, leaving the rail rendered. Confirm that navigating away from a dirty form raises a warning.
+    cov: C-UF-10, C-UF-12
+- id: invalid_form_submission_writes_nothing
+  purpose: A refused form writes nothing and leaves the stored record unchanged
+  substeps:
+  - kind: browser
+    do: Submit a token form with an empty name and confirm the field is named inline with the fix
+    cov: C-CF-82
+  - kind: pytest
+    test: test_output.py::test_form_validation_writes_nothing
+    category: validation
+    weight: 3
+    cov: C-CF-83
+  - kind: browser
+    do: Confirm that a suspended workspace keeps reads working, disabling every mutating control behind one explanation. Confirm that a task links to the container of the task, to the log lines of the task, to the metrics window of the task. Confirm that every figure on the overview links to the filtered list behind the figure.
+    cov: C-UF-08, C-CF-74, C-CF-75
+- id: seeded_roles_persist_and_seeding_is_idempotent
+  purpose: The seeded principals and their roles are stored and a restart does not duplicate a row
+  substeps:
+  - kind: browser
+    do: Open the apps list at a narrow viewport and confirm nothing overflows sideways
+    cov: C-UX-25
+  - kind: pytest
+    test: test_output.py::test_seed_is_idempotent
+    critical: true
+    category: data_integrity
+    weight: 5
+    cov: 'C-DM-13 (earned: counting each seeded row exactly once is how a re-run that duplicates is observed), C-DM-23 (earned: the seeded app names are the rows this step counts)'
+  - kind: pytest
+    test: test_output.py::test_seeded_roles_persisted
+    category: data_integrity
+    weight: 5
+    cov: C-DM-16, C-DM-17, C-DM-18, C-DM-19, C-DM-20, C-DM-21
+  - kind: browser
+    do: Confirm that figures in a table are monospaced, thousands separated, carrying a currency where money. Confirm that an identifier is shown in full with a copy control. Confirm that the page carries a banner landmark, a navigation landmark, a main landmark, a footer landmark.
+    cov: C-UX-26, C-UX-28, C-UX-21
+  - kind: browser
+    do: Confirm that headings descend in order without skipping a level.
+    cov: C-UX-22

@@ -1,0 +1,399 @@
+- id: visitor_generates_one_anonymous_model
+  purpose: A visitor with no account generates one model from a pre-computed sample and downloads the mesh
+  substeps:
+    - kind: browser
+      do: Open / as a visitor holding no session and confirm the four sample images sneaker, mug, chair and plant are offered
+      cov: C-CF-96
+    - kind: browser
+      do: Confirm the credit cost and the licence CC-BY-4.0 are both shown beside the generate control before pressing it
+      cov: C-CF-31
+    - kind: pytest
+      test: test_output.py::test_samples_endpoint_serves_four_precomputed_assets
+      category: presentation
+      weight: 1
+      cov: C-CF-97
+    - kind: pytest
+      test: test_output.py::test_job_submission_returns_a_queued_job
+      category: core_outcome
+      weight: 5
+      cov: C-CF-42
+    - kind: pytest
+      test: test_output.py::test_job_reaches_a_terminal_completed_state
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-41
+
+- id: creator_generates_and_saves_a_mesh
+  purpose: A signed-in creator spends a credit, watches the job complete and saves the mesh into the library
+  substeps:
+    - kind: browser
+      do: Sign in as creator@example.com with the password documented in /app/USER_README.md
+      cov: C-CF-03
+    - kind: browser
+      do: Upload a photograph through the file input and change the tier from standard to pro
+      cov: C-CF-35
+    - kind: browser
+      do: Confirm the displayed cost changes from 5 to 10 and the confirmation modal names customer-owned
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_seeded_creator_signs_in_with_pinned_password
+      category: security
+      weight: 5
+      cov: C-DM-42
+    - kind: pytest
+      test: test_output.py::test_default_generator_selection_costs_ten_credits
+      category: business_rule
+      weight: 3
+      cov: C-CF-27
+    - kind: pytest
+      test: test_output.py::test_cost_charged_equals_cost_shown
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-29
+    - kind: pytest
+      test: test_output.py::test_completed_asset_carries_three_download_formats
+      category: business_rule
+      weight: 3
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_job_records_its_octree_and_inference_parameters
+      category: data_integrity
+      weight: 5
+      cov: C-CF-16
+
+- id: creator_library_filters_compose
+  purpose: Library filters for status, tag and favourite apply together and archiving leaves the deletion clock running
+  substeps:
+    - kind: browser
+      do: Open /my-assets and apply the status filter completed with the tag prop and the favourite filter together
+      cov: C-CF-90
+    - kind: browser
+      do: Archive Harbour Crane and confirm the asset leaves the default view while its deletion date is unchanged
+      cov: C-CF-91
+    - kind: pytest
+      test: test_output.py::test_library_filters_compose
+      category: business_rule
+      weight: 3
+      cov: C-CF-89 (earned: the substep runs test_library_filters_compose, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_archiving_leaves_the_deletion_date_unchanged
+      category: data_integrity
+      weight: 5
+      cov: C-DM-34
+
+- id: creator_downloads_two_formats_for_one_credit
+  purpose: Downloading a second representation of one asset spends no further credit and creates no second entry
+  substeps:
+    - kind: browser
+      do: Open a completed asset in the detail pane and download the GLB, then the STL
+      cov: C-FE-16
+    - kind: browser
+      do: Confirm the download history shows two entries and the credit balance moved once
+      cov: C-CF-68
+    - kind: pytest
+      test: test_output.py::test_second_download_creates_no_second_asset
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-66
+    - kind: pytest
+      test: test_output.py::test_download_events_are_recorded_per_representation
+      category: data_integrity
+      weight: 5
+      cov: C-CF-67
+
+- id: foreign_creator_cannot_read_another_library
+  purpose: A second creator is refused an asset owned by the first, at the API, and the row is untouched
+  substeps:
+    - kind: browser
+      do: Sign in as creator2@example.com and request the asset Harbour Crane owned by creator@example.com
+      cov: C-RL-05
+    - kind: pytest
+      test: test_output.py::test_foreign_creator_reading_an_asset_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-14 (earned: the substep runs test_foreign_creator_reading_an_asset_is_refused, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_foreign_creator_patching_an_asset_is_refused
+      category: security
+      weight: 5
+      cov: C-RL-07
+    - kind: pytest
+      test: test_output.py::test_foreign_asset_row_is_unchanged_after_a_refused_read
+      category: security
+      weight: 5
+      cov: C-DM-19 (earned: the substep runs test_foreign_asset_row_is_unchanged_after_a_refused_read, whose assertions read the value this item pins)
+
+- id: unauthenticated_library_request_is_denied
+  purpose: A request with no session is refused at the API and a wrong password discloses nothing
+  substeps:
+    - kind: browser
+      do: Request /my-assets with no session and confirm the app refuses rather than rendering another account's library
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_library_request_without_session_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_for_an_asset_is_refused
+      category: security
+      weight: 5
+      cov: C-RL-16
+    - kind: pytest
+      test: test_output.py::test_sign_in_with_wrong_password_is_refused
+      category: security
+      weight: 5
+      cov: C-CF-04
+
+- id: concurrent_submissions_leave_one_accepted
+  purpose: Two jobs started in the same instant against a balance with room for one leave exactly one accepted
+  substeps:
+    - kind: browser
+      do: Sign in as creator3@example.com and confirm the balance shows 5 credits
+      cov: C-DM-48
+    - kind: pytest
+      test: test_output.py::test_two_simultaneous_submissions_leave_one_accepted
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-56 (earned: the substep runs test_two_simultaneous_submissions_leave_one_accepted, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_balance_never_falls_below_zero
+      category: data_integrity
+      weight: 5
+      cov: C-DM-29
+    - kind: pytest
+      test: test_output.py::test_submission_over_balance_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-54
+
+- id: failed_job_refunds_the_reservation
+  purpose: A job that ends failed returns its reservation in full and the append-only ledger still balances
+  substeps:
+    - kind: browser
+      do: Open a failed job in the library and confirm the refund is stated
+      cov: C-CF-49
+    - kind: pytest
+      test: test_output.py::test_failed_job_returns_the_reservation_in_full
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-27
+    - kind: pytest
+      test: test_output.py::test_credit_ledger_rows_are_append_only
+      category: data_integrity
+      weight: 5
+      cov: C-DM-23
+    - kind: pytest
+      test: test_output.py::test_balance_equals_the_sum_of_ledger_amounts
+      category: data_integrity
+      weight: 5
+      cov: C-DM-26
+
+- id: licence_and_retention_survive_a_plan_change
+  purpose: A licence stamped at creation and a deletion date set at creation both survive a later plan change
+  substeps:
+    - kind: browser
+      do: Move creator2@example.com from the free plan to pro and reopen Paper Lantern
+      cov: C-CF-72
+    - kind: pytest
+      test: test_output.py::test_licence_survives_a_plan_upgrade
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-30 (earned: the substep runs test_licence_survives_a_plan_upgrade, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_deletion_date_survives_a_downgrade
+      category: data_integrity
+      weight: 5
+      cov: C-DM-33
+    - kind: pytest
+      test: test_output.py::test_licence_change_request_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-73
+    - kind: pytest
+      test: test_output.py::test_queue_placement_is_recorded_at_submission
+      category: business_rule
+      weight: 3
+      cov: C-DM-35
+
+- id: duplicate_idempotency_key_returns_the_existing_job
+  purpose: A resubmission carrying an existing key yields the job that already exists and spends nothing further
+  substeps:
+    - kind: browser
+      do: Submit a generation, then resubmit the same request and confirm one job appears in the library
+      cov: C-CF-51 (earned: the walked step puts this ask on screen at the point the step describes)
+    - kind: pytest
+      test: test_output.py::test_repeated_idempotency_key_returns_the_existing_job
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-53
+    - kind: pytest
+      test: test_output.py::test_monthly_grant_is_idempotent_within_a_period
+      category: data_integrity
+      weight: 5
+      cov: C-DM-36
+
+- id: anonymous_allowance_limit_is_refused
+  purpose: A second anonymous generation is refused by name rather than with a generic failure
+  substeps:
+    - kind: browser
+      do: As a visitor who has already generated once, press generate again and read the refusal
+      cov: C-CF-100 (earned: the walked step puts this ask on screen at the point the step describes)
+    - kind: browser
+      do: Confirm the refusal offers registration as the way forward
+      cov: C-CF-101
+    - kind: pytest
+      test: test_output.py::test_second_anonymous_generation_is_refused
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-CF-99
+
+- id: expired_claim_token_is_refused
+  purpose: An anonymous claim token presented after its window is refused
+  substeps:
+    - kind: browser
+      do: Present a claim token older than the claim window on the sign-up form
+      cov: C-CF-105
+    - kind: pytest
+      test: test_output.py::test_expired_claim_token_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-102
+
+- id: invalid_source_format_is_refused
+  purpose: Input outside the accepted set is refused inline with the format named and nothing is written
+  substeps:
+    - kind: browser
+      do: Drop a file whose format is outside JPG, PNG and WEBP onto the generator and read the inline refusal
+      cov: C-CF-39
+    - kind: pytest
+      test: test_output.py::test_rejected_source_format_is_not_stored
+      category: validation
+      weight: 3
+      cov: C-CF-40
+    - kind: pytest
+      test: test_output.py::test_tier_outside_the_closed_set_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_decoy_field_submission_is_refused
+      category: security
+      weight: 5
+      cov: C-CF-180
+
+- id: stored_objects_land_in_the_private_bucket
+  purpose: A completed job writes its mesh objects into the object store and nobody else can read them
+  substeps:
+    - kind: browser
+      do: Complete a generation as creator@example.com and download the resulting GLB
+      cov: C-CF-63 (earned: the walked step puts this ask on screen at the point the step describes)
+    - kind: pytest
+      test: test_output.py::test_completed_job_writes_its_glb_object_to_the_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-12 (earned: the substep reads the glb representation row and confirms the object it names exists in the bucket)
+    - kind: pytest
+      test: test_output.py::test_completed_job_writes_its_obj_and_stl_objects_to_the_bucket
+      category: data_integrity
+      weight: 5
+      cov: C-CF-64 (earned: the substep reads the obj and stl representation rows and confirms each named object exists in the bucket)
+    - kind: pytest
+      test: test_output.py::test_bucket_is_not_publicly_readable
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-13
+    - kind: pytest
+      test: test_output.py::test_foreign_creator_download_of_an_object_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-15 (earned: the substep requests the download route from a second account session and from no session, and asserts the refusal status of each)
+
+- id: published_claims_hold_one_value_per_figure
+  purpose: Every published figure is rendered from one stored row carrying a basis and a measurement date
+  substeps:
+    - kind: browser
+      do: Open / and compare the statistics band with the comparison table for the success rate figure
+      cov: C-CF-149
+    - kind: browser
+      do: Open /gallery and confirm each item names its source and its quality tier
+      cov: C-CF-139
+    - kind: pytest
+      test: test_output.py::test_published_claims_carry_a_basis_and_a_measured_date
+      category: business_rule
+      weight: 3
+      cov: C-CF-141
+    - kind: pytest
+      test: test_output.py::test_success_rate_claim_holds_a_single_value
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-144
+    - kind: pytest
+      test: test_output.py::test_gallery_items_name_their_source_and_tier
+      category: presentation
+      weight: 1
+      cov: C-CF-140
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+      cov: C-CF-174
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_reachable
+      category: presentation
+      weight: 1
+      cov: C-CF-166 (earned: the substep runs test_privacy_page_is_reachable, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_ready
+      category: presentation
+      weight: 1
+      cov: C-TR-37
+
+- id: local_tools_declare_their_conversion_matrix
+  purpose: The browser tools state what they support and the tier and plan tables are read from one stored source
+  substeps:
+    - kind: browser
+      do: Open /3d-tools/file-converter and compare the printed supported pair count with the rendered matrix
+      cov: C-FE-19
+    - kind: browser
+      do: Open /pricing and confirm the polygon ceiling matches the ceiling named by the tier table
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_converter_pair_count_matches_its_matrix
+      category: business_rule
+      weight: 3
+      cov: C-CF-163
+    - kind: pytest
+      test: test_output.py::test_tier_table_carries_the_four_pinned_tiers
+      category: business_rule
+      weight: 3
+      cov: C-CF-07 (earned: the substep runs test_tier_table_carries_the_four_pinned_tiers, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_tier_ultra_carries_the_published_polygon_ceiling
+      category: business_rule
+      weight: 3
+      cov: C-CF-14
+    - kind: pytest
+      test: test_output.py::test_plans_endpoint_carries_the_three_pinned_plans
+      category: business_rule
+      weight: 3
+      cov: C-CF-116 (earned: the substep runs test_plans_endpoint_carries_the_three_pinned_plans, whose assertions read the value this item pins)
+    - kind: pytest
+      test: test_output.py::test_promotion_carries_a_start_and_an_end_date
+      category: business_rule
+      weight: 3
+      cov: C-CF-133

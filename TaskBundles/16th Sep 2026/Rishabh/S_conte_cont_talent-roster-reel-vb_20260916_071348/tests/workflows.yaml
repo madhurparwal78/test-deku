@@ -1,0 +1,394 @@
+- id: visitor_reads_the_work_index_and_opens_a_film
+  purpose: A signed-out reader moves down the work index, watches colour return to a still and opens a film into its reel
+  substeps:
+    - kind: browser
+      do: Open /works and confirm one sentence in serif display type sits at the foot of an otherwise empty first screen, reading Quiet decisions, made early, are the ones you notice last.
+      cov: C-CF-12,C-CF-42
+    - kind: browser
+      do: Scroll the index and confirm twelve entries run down the page in a left, right and centre rhythm, each captioned with its zero-padded ordinal at the still's left edge and its title at the still's right edge
+      cov: C-CF-13,C-CF-44,C-CF-45,C-CF-46,C-DM-07
+    - kind: browser
+      do: Point at a still and confirm the colour returns over a slow beat, with no lift, no scale and no shadow, then confirm the index carries no filter, no sort and no search
+      cov: C-CF-47,C-CF-48,C-UX-02
+    - kind: browser
+      do: Open the collection root /works and then the same address with a trailing slash /works/, and confirm the trailing-slash form resolves to the same surface with no redirect flash
+      cov: C-UF-01,C-UF-07
+    - kind: pytest
+      test: test_output.py::test_published_works_are_listed_with_contiguous_ordinals
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-14,C-TR-10
+    - kind: pytest
+      test: test_output.py::test_work_detail_returns_credits_media_and_neighbours
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_work_neighbours_wrap_from_last_to_first
+      category: business_rule
+      weight: 3
+
+- id: visitor_reads_the_roster_filtered_by_discipline
+  purpose: A signed-out reader opens the roster, switches discipline and follows a name into that talent's own page
+  substeps:
+    - kind: browser
+      do: Open /talents and confirm one talent fills the window without scrolling, the name in large serif title case above a small capital discipline label above the portrait
+      cov: C-CF-51,C-CF-52,C-DM-03,C-FE-13,C-FE-15
+    - kind: browser
+      do: Confirm the left margin lists DIRECTOR and PHOTOGRAPHER with a small square marking the active one, then select the other and confirm the set narrows without the address changing
+      cov: C-CF-24,C-CF-53,C-FE-45
+    - kind: browser
+      do: Open a talent and confirm the name is set at exactly the size the roster sets it, and that the contact address shown is the house address rather than that talent's own
+      cov: C-CF-55,C-CF-58,C-CF-83,C-UF-02
+    - kind: pytest
+      test: test_output.py::test_published_talents_are_listed_for_a_visitor
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_discipline_filter_narrows_the_roster
+      category: business_rule
+      weight: 3
+      cov: C-CF-23
+    - kind: pytest
+      test: test_output.py::test_talent_detail_returns_derived_credited_work
+      category: business_rule
+      weight: 3
+      cov: C-CF-57,C-DM-15
+
+- id: producer_publishes_a_talent_to_the_public_roster
+  purpose: The producer signs a director, attaches a portrait and a showreel, and publishes the profile to the public roster
+  substeps:
+    - kind: browser
+      do: Open /login, sign in as producer@example.com with the password deku-demo-pw-2026, and confirm /studio shows a sidebar listing the two kinds and the page-view log
+      cov: C-CF-70,C-RL-08,C-RL-09,C-RL-10,C-UF-04,C-UF-05
+    - kind: browser
+      do: Open /studio/talents/new as a dedicated route, enter a name and a discipline, attach a portrait with its text alternative, and confirm the talent is created unpublished
+      cov: C-CF-72,C-UF-12
+    - kind: browser
+      do: Publish the talent and confirm a full-page confirmation names what has become public and gives its public address, then confirm the name now appears on /talents
+      cov: C-CF-73,C-OV-03
+    - kind: pytest
+      test: test_output.py::test_producer_creates_a_talent_unpublished
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_publish_makes_the_item_readable_in_one_act
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-09
+    - kind: pytest
+      test: test_output.py::test_published_at_is_stamped_on_publish_and_cleared_on_unpublish
+      category: data_integrity
+      weight: 5
+
+- id: unpublished_talent_cannot_be_reached_by_guessing_the_address
+  purpose: A talent the house has signed but not announced is absent from every public read and reveals nothing on a direct request
+  substeps:
+    - kind: browser
+      do: While signed out, open the address of the seeded unpublished talent and confirm the house's own not-found route answers, in the site palette, inside the site frame, saying nothing about whether that person exists
+      cov: C-CF-07,C-CF-75,C-UF-03,C-UF-13
+    - kind: pytest
+      test: test_output.py::test_unpublished_item_is_denied_to_a_visitor_by_slug
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-01,C-CF-02,C-CF-03,C-CF-04,C-CF-06
+    - kind: pytest
+      test: test_output.py::test_media_of_an_unpublished_item_is_not_served_publicly
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_unpublish_removes_the_item_from_every_public_read
+      category: data_integrity
+      weight: 5
+      cov: C-CF-10
+
+- id: producer_orders_the_works_index
+  purpose: The producer moves one film above another and the public index renumbers with no gap
+  substeps:
+    - kind: browser
+      do: Open /studio/works and confirm the works are shown as a grid of cards carrying poster, title and publication state
+      cov: C-CF-71,C-CF-74
+    - kind: browser
+      do: Move the card numbered 007 above the one numbered 004, then open /works and confirm the twelve displayed ordinals still run 001 to 012 with nothing missing and nothing repeated
+      cov: C-CF-16,C-CF-18
+    - kind: pytest
+      test: test_output.py::test_reordering_works_changes_the_public_ordinals
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_ordinals_stay_contiguous_after_an_unpublish
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-17 (earned: the test reads the public ordinals after an unpublish and refuses any value shown twice)
+
+- id: discipline_set_follows_the_published_roster
+  purpose: Signing a talent in a new discipline adds a filter with nobody editing a list
+  substeps:
+    - kind: browser
+      do: Publish a talent carrying a discipline no published talent holds, then open /talents and confirm a third control has appeared in the left margin
+      cov: C-CF-19,C-CF-21,C-UX-03
+    - kind: pytest
+      test: test_output.py::test_discipline_set_is_derived_from_published_talent
+      category: business_rule
+      weight: 3
+      cov: C-CF-20,C-DM-06,C-TR-11
+    - kind: pytest
+      test: test_output.py::test_publishing_a_new_discipline_adds_it_to_the_derived_set
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unpublishing_the_last_talent_removes_the_discipline
+      category: business_rule
+      weight: 3
+      cov: C-CF-22
+
+- id: producer_previews_a_draft_before_publication
+  purpose: The producer checks an unannounced signing through the real route components before anyone else can see it
+  substeps:
+    - kind: browser
+      do: Signed in as the producer, open /preview for the seeded unpublished talent and confirm the page is drawn through the same components a published talent would use
+      cov: C-CF-66
+    - kind: browser
+      do: Confirm the marker PREVIEW - NOT PUBLISHED is visible and persistent on the preview route, in interface capitals, and that the waiting state shows Loading preview...
+      cov: C-CF-67,C-CF-68
+    - kind: pytest
+      test: test_output.py::test_preview_returns_an_unpublished_item_for_a_producer
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_preview_response_forbids_shared_cache_and_indexing
+      category: presentation
+      weight: 1
+      cov: C-CF-69,C-TR-28
+
+- id: preview_is_forbidden_without_a_producer_session
+  purpose: The preview harness renders nothing and reveals nothing to anyone who is not the producer
+  substeps:
+    - kind: browser
+      do: Sign out so the caller is an anonymous reader, open the preview route for the seeded unpublished talent, and confirm the route is refused and renders nothing about that person
+      cov: C-CF-64,C-CF-65,C-DM-20,C-RL-02,C-RL-03
+    - kind: pytest
+      test: test_output.py::test_preview_is_denied_without_a_producer_session
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_studio_endpoints_are_denied_to_an_unauthenticated_caller
+      critical: true
+      category: security
+      weight: 5
+
+- id: visitor_role_cannot_write_anything
+  purpose: An account created through signup can do nothing a signed-out reader cannot
+  substeps:
+    - kind: browser
+      do: Sign up for an account, sign in as the seeded visitor@example.com which holds the role visitor, and confirm /studio and the page-view log are both refused rather than shown, so that only the producer authenticates in order to act on anything
+      cov: C-CF-80,C-CN-10,C-DM-02,C-OV-04,C-RL-04,C-RL-05,C-RL-11,C-RL-12,C-RL-13,C-UF-06,C-UF-10
+    - kind: pytest
+      test: test_output.py::test_visitor_is_forbidden_the_publish_endpoint
+      critical: true
+      category: security
+      weight: 5
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_visitor_is_forbidden_the_page_view_log
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_cannot_grant_the_producer_role
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_a_wrong_password_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-08
+
+- id: visitor_arrives_on_the_entry_cluster_and_reads_the_house_story
+  purpose: A signed-out reader meets the front door and the manifesto, the two public surfaces that carry no listing
+  substeps:
+    - kind: browser
+      do: Open / and confirm a percentage counts up at the optical centre of a near-black window and reaches 100% only once the route is ready
+      cov: C-CF-34,C-CF-35,C-FE-30
+    - kind: browser
+      do: Confirm the window then fills with a loose cluster of overlapping stills, dense toward the centre, leaving the four corners empty and the exact centre clear, arranged the same way on a reload
+      cov: C-CF-36
+    - kind: browser
+      do: Tab through the cluster and confirm each still is a real link that shows a visible caption on focus in the same place the pointer label would sit, then confirm the route does not scroll and no reel plays on it
+      cov: C-CF-38,C-CF-39,C-CF-40,C-CF-41,C-CN-05,C-FE-35
+    - kind: browser
+      do: Open /about and confirm the route carries no photograph at all, opens on a figure repeating the house name seven times between two mirrored groups of four lines, and that the first paragraph keeps its seven authored line breaks
+      cov: C-CF-60,C-CF-61,C-FE-47,C-FE-48,C-OV-02,C-TR-01,C-UF-08
+    - kind: browser
+      do: Scroll the about route and confirm the text arrives blurred and sharpens, then scroll back up and confirm the text goes soft again
+      cov: C-CF-43,C-CF-50,C-CF-62,C-CF-63
+
+- id: media_uploads_land_in_the_object_store
+  purpose: Every poster the producer attaches is really in the bucket, at the key the scheme names
+  substeps:
+    - kind: browser
+      do: Attach a portrait in the studio and confirm the interface shows the media with its text alternative recorded beside it
+      cov: C-CF-28
+    - kind: pytest
+      test: test_output.py::test_uploaded_bytes_land_in_the_object_store_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-26,C-TR-05,C-TR-06,C-TR-07,C-TR-12
+    - kind: pytest
+      test: test_output.py::test_object_key_follows_the_scheme
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_identical_bytes_resolve_to_one_object
+      category: data_integrity
+      weight: 5
+      cov: C-DM-11,C-DM-18
+    - kind: pytest
+      test: test_output.py::test_media_row_records_role_dimensions_one_poster_and_at_most_one_reel
+      category: data_integrity
+      weight: 5
+      cov: C-CF-25,C-CF-27,C-DM-10,C-DM-13,C-DM-12 (earned: the test reads width and height off the stored media row and refuses a null or zero on either)
+
+- id: publish_without_a_text_alternative_is_refused
+  purpose: An item whose media carries no text alternative cannot be published, and the refusal says which media is missing one
+  substeps:
+    - kind: browser
+      do: Attach a portrait with the text alternative left empty, attempt to publish, and confirm the refusal names the media that is missing one
+      cov: C-CF-29,C-CF-30,C-DM-21,C-RL-07
+    - kind: pytest
+      test: test_output.py::test_publish_is_refused_when_media_has_no_alt_text
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_write_leaves_no_row
+      category: validation
+      weight: 3
+      cov: C-RL-06,C-DC-15 (earned: the test sends a malformed create and requires a 400 or 422, which is the client-error class this ask names, then reads the store back to prove the refusal wrote nothing)
+
+- id: duplicate_slug_within_a_kind_is_refused
+  purpose: A slug is unique within kind, survives a title change, and leaves a permanent redirect when it moves
+  substeps:
+    - kind: browser
+      do: Rename a published film in the studio and confirm the public address it was reachable at has not changed
+      cov: C-CF-33,C-DC-01
+    - kind: pytest
+      test: test_output.py::test_duplicate_slug_within_a_kind_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-32,C-DM-16
+    - kind: pytest
+      test: test_output.py::test_same_slug_across_kinds_is_accepted
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_slug_survives_a_title_change
+      category: data_integrity
+      weight: 5
+      cov: C-CF-31
+    - kind: pytest
+      test: test_output.py::test_changed_slug_leaves_a_permanent_redirect
+      category: business_rule
+      weight: 3
+
+- id: the_seeded_corpus_is_stored_exactly_once
+  purpose: The seeded films, talents and accounts exist once each, whatever the app has been restarted
+  substeps:
+    - kind: browser
+      do: Open /works and /talents and confirm the twelve films and three talents named in the brief are each shown once
+      cov: C-DM-19,C-DM-22
+    - kind: pytest
+      test: test_output.py::test_seeded_works_are_stored_with_unique_slugs
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent_across_a_restart
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-24,C-DM-23 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited)
+    - kind: pytest
+      test: test_output.py::test_credit_without_a_talent_reference_is_stored
+      category: data_integrity
+      weight: 5
+      cov: C-DM-14,C-UF-11
+    - kind: pytest
+      test: test_output.py::test_talent_selected_work_is_derived_not_stored
+      category: data_integrity
+      weight: 5
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_schema_holds_the_named_tables_and_no_ordinal_column_on_items
+      category: data_integrity
+      weight: 5
+      cov: C-CF-15,C-DM-01,C-DM-04,C-DM-08,C-DM-09,C-DM-05 (earned: the test reads the stored item id back and refuses one equal to the slug, which is what deriving it from the title produces),C-TR-04 (earned: the test reaches every named table through the database adapter, which connects at the environment variable the brief pins)
+
+- id: the_site_declares_itself_to_machines
+  purpose: Every public route names itself, carries its own social preview and answers with the headers a public site owes
+  substeps:
+    - kind: browser
+      do: Open each public route in turn and confirm the browser tab title differs on every one of them
+      cov: C-CF-79,C-CF-81,C-TR-24
+    - kind: browser
+      do: Confirm the generated social card carries the wordmark on the near-black ground with no photograph on it
+    - kind: pytest
+      test: test_output.py::test_each_public_route_carries_its_own_title_and_description
+      category: presentation
+      weight: 1
+      cov: C-CF-49
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_response
+      category: security
+      weight: 5
+      cov: C-TR-26,C-TR-27
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+      cov: C-DC-04,C-DC-02 (earned: the test calls the health route at the public address through the mapped port after the session has ended, so a response at all proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-03 (earned: the test calls the health route at the public address through the mapped port after the session has ended, so a response at all proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-05 (earned: the test calls the health route at the public address through the mapped port after the session has ended, so a response at all proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-06 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-DC-07 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-DC-08 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-DC-09 (earned: the test calls the health route at the public address through the mapped port after the session has ended, so a response at all proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-10 (earned: the test calls the health route at the public address through the mapped port after the session has ended, so a response at all proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-11 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-DC-12 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-DC-13 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-TR-02 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-TR-03 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-TR-09 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-TR-13 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited),C-TR-25 (earned: no grader watching a running product from outside can observe this; it is a property of the source, the image or the file system, and it is discharged by the handoff gates. Cited on the step whose success presupposes it and declared unobservable rather than left uncited)
+
+- id: an_invalid_address_answers_the_house_not_found_route
+  purpose: A mistyped address lands on the house's own not-found route rather than a framework default, and the visit is still counted
+  substeps:
+    - kind: browser
+      do: Mistype a film address and confirm the route answers in the site's own two colours, inside the site frame, with one line reading That page is not here. and nothing else
+      cov: C-CF-76,C-CF-78,C-FE-04
+    - kind: browser
+      do: Confirm the mistyped path is not printed back anywhere on the page
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_not_found_response_does_not_echo_the_requested_path
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-77
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+      cov: C-DC-14
+    - kind: pytest
+      test: test_output.py::test_page_view_is_recorded_for_a_public_route
+      category: business_rule
+      weight: 3
+      cov: C-CF-82,C-DM-17
+    - kind: pytest
+      test: test_output.py::test_page_view_rows_survive_a_re_read
+      category: data_integrity
+      weight: 5
+      cov: C-RL-01
