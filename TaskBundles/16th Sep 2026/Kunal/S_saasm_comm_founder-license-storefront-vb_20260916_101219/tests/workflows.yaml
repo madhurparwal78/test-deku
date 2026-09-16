@@ -1,0 +1,440 @@
+- id: visitor_reads_the_home_storefront
+  purpose: "A visitor opens the home route and reads the product argument end to end"
+  substeps:
+    - kind: browser
+      do: "Open / and read the hero: the headline Any prompt, one keystroke away., the three key caps Cmd, Shift and Space, the sub-headline, the note Free during beta. No card required., and the two actions labelled Join beta and Try the hotkey"
+      cov: "C-FE-145"
+    - kind: browser
+      do: "Scroll down the home route and read the window mockup of the Blueprint Library: a sidebar, a search field, a list of rows and a detail strip beside them, then the three numbered packet cards under their header card"
+      cov: "C-FE-137, C-FE-162"
+    - kind: browser
+      do: "Scroll to the injection history ledger and read its six rows, each one a timestamp with a Blueprint name, an arrow, a target application and a detail reading Quick copy or a file count, under the label Demonstration data"
+      cov: "C-FE-164, C-FE-121"
+    - kind: pytest
+      test: test_output.py::test_home_sections_render_in_the_pinned_order_without_scripts
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_instrument_copy_and_bullets_are_pinned
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_comparison_renders_as_a_real_table
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_pricing_and_help_copy_is_pinned
+      category: presentation
+      weight: 1
+- id: visitor_registers_for_the_beta
+  purpose: "A visitor registers a new address on /download and the access link is emailed"
+  substeps:
+    - kind: browser
+      do: "Open /download, type a new email address into the email field, tick the consent checkbox and press Join the beta, then observe that the form is replaced in place by a Check your inbox panel naming the submitted address, suggesting the spam folder and showing Resend link disabled with a visible count down from 60 seconds"
+      cov: "C-UF-38, C-UF-39, C-UF-40, C-UF-41"
+    - kind: browser
+      do: "On /download read the four confirmation chips above the form, the seven fields with their labels and placeholders, and the submit button labelled Join the beta"
+      cov: "C-FE-199"
+    - kind: pytest
+      test: test_output.py::test_registration_row_is_stored_with_a_normalised_email
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_download_page_carries_the_form_and_the_distribution_panel
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_registration_form_reports_errors_and_keeps_values
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_access_link_email_goes_to_the_registrant_only
+      critical: true
+      category: notification
+      weight: 5
+- id: registrant_opens_the_access_link_and_reaches_the_download
+  purpose: "A registrant opens an emailed access link and reaches the signed build"
+  substeps:
+    - kind: browser
+      do: "Open /beta/access/seed-live-4b7d9e2a61c3f085 and observe the heading Your access link is confirmed with the Download for Mac control focused, then observe that the address bar has dropped the token"
+      cov: "C-UF-42, C-UF-37"
+    - kind: browser
+      do: "From the confirmed access page open /beta/status and observe the founder place of the registrant shown on the status page"
+      cov: "C-UF-43, C-UF-20"
+    - kind: pytest
+      test: test_output.py::test_access_link_opens_a_session_and_reports_the_founder_place
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_access_link_drops_the_token_and_focuses_the_download
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_access_token_is_stored_only_as_a_hash
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_download_redirect_records_one_download_event
+      category: data_integrity
+      weight: 5
+- id: duplicate_registration_is_absorbed
+  purpose: "A repeat registration of one address adds no place, no account and no second panel"
+  substeps:
+    - kind: browser
+      do: "On /download submit the same email address a second time and observe that the Check your inbox panel looks identical to the panel shown for a first registration, showing the cohort as a whole rather than the visitor's own founder place"
+      cov: "C-FE-230, C-FE-229"
+    - kind: pytest
+      test: test_output.py::test_repeat_registration_returns_an_identical_response
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_trap_field_submission_is_discarded_silently
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_double_submission_sends_one_email
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_repeat_registration_creates_no_second_billing_account_or_invoice
+      category: data_integrity
+      weight: 5
+- id: invalid_registration_is_refused
+  purpose: "A submission the server rejects is refused with field errors and stores nothing"
+  substeps:
+    - kind: browser
+      do: "On /download press Join the beta with the email field empty and the consent box unticked, then read the error summary at the top of the form linking to each invalid field, and the message rendered in words beneath each invalid field"
+      cov: "C-FE-223, C-FE-222"
+    - kind: pytest
+      test: test_output.py::test_invalid_registration_is_refused_and_stores_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_data_request_is_stored_open_and_a_bad_one_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_repeated_submissions_send_at_most_three_access_emails
+      category: business_rule
+      weight: 3
+- id: access_link_opens_at_most_five_times
+  purpose: "A link that has been opened five times is spent and its owner is sent a fresh one"
+  substeps:
+    - kind: browser
+      do: "Open /beta/access/seed-usedup-3f8b6d0c2e71 and observe the heading This access link has been used up, the page saying that a fresh link was emailed to the owner of the link, and the re-request form carrying an email field and the reserved challenge box"
+      cov: "C-CF-82, C-UF-19, C-CF-84"
+    - kind: pytest
+      test: test_output.py::test_sixth_open_shows_the_used_up_page_and_sends_a_fresh_link
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_click_log_keeps_one_click_per_link_each_half_hour
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_opens_never_exceed_five
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_fresh_link_supersedes_the_older_link
+      category: business_rule
+      weight: 3
+- id: expired_access_link_is_refused
+  purpose: "An expired link explains itself and its owner re-requests a fresh one"
+  substeps:
+    - kind: browser
+      do: "Open /beta/access/seed-expired-7c1e2a9b4d36 and observe the expired-link page carrying the re-request form"
+      cov: "C-UF-44"
+    - kind: browser
+      do: "Submit registrant2@example.com in the re-request form on the expired-link page and observe the sentence If that address is registered, a fresh access link is on its way."
+      cov: "C-UF-45"
+    - kind: pytest
+      test: test_output.py::test_seeded_dead_links_render_their_own_failure_pages
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_resend_for_an_unknown_address_answers_the_same_sentence
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_registrant_status_page_shows_only_the_registrant_place
+      category: security
+      weight: 5
+- id: founder_places_survive_concurrent_registration
+  purpose: "Simultaneous registrations hold distinct places, each with its own billing account"
+  substeps:
+    - kind: browser
+      do: "Open / and read the founder licence card in the pricing section: the middle card carries the accent border and the scarcity badge naming how many founder places are left at the current price"
+      cov: "C-FE-174, C-FE-183"
+    - kind: pytest
+      test: test_output.py::test_concurrent_registrations_store_distinct_contiguous_places
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_founder_place_opens_one_billing_account_in_killbill
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_allocation_endpoint_matches_the_stored_founder_places
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_are_stored_once
+      category: data_integrity
+      weight: 5
+- id: founder_cohort_limit_closes_at_one_thousand
+  purpose: "The thousandth place is the last one the cohort ever hands out"
+  substeps:
+    - kind: browser
+      do: "On / follow the founder card action Claim a founder place and observe that it leads to the beta registration form on /download"
+      cov: "C-FE-179, C-FE-15"
+    - kind: pytest
+      test: test_output.py::test_founder_cap_closes_at_one_thousand_places
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_founder_card_reads_the_live_cohort
+      category: presentation
+      weight: 1
+- id: founder_checkout_cannot_open_before_launch
+  purpose: "Checkout and licence activation are refused until 1.0 and write nothing"
+  substeps:
+    - kind: browser
+      do: "Open /checkout/founder and observe the notice Founder checkout opens at 1.0 with a link leading back to /download"
+      cov: "C-UF-22, C-CF-132"
+    - kind: pytest
+      test: test_output.py::test_checkout_before_launch_is_refused_and_creates_no_billing_record
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_backend_secret_appears_in_anything_the_browser_downloads
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_public_route_offers_a_file_upload
+      category: security
+      weight: 5
+- id: operator_signs_in_and_publishes_a_release
+  purpose: "The operator signs in, reads the registrations and publishes a release"
+  substeps:
+    - kind: browser
+      do: "Open /operator, the route that serves the operator sign-in with the console, sign in as operator@example.com with the seeded password and observe the small console listing registrations with their founder places, with registrant@example.com at founder place 1"
+      cov: "C-UF-33, C-CF-125, C-UF-50, C-UF-25, C-OV-05"
+    - kind: browser
+      do: "In the operator console observe the releases list showing each release with its status, 0.2.0 as revoked, and a revoke control offered on each published release"
+      cov: "C-CF-126, C-UF-51, C-CF-127"
+    - kind: browser
+      do: "In the operator console search the registrations for an address that is registered nowhere and observe the message No registrations match"
+      cov: "C-UF-52"
+    - kind: pytest
+      test: test_output.py::test_operator_login_issues_a_token_and_refuses_a_wrong_password
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publishing_a_release_moves_every_release_surface
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_operator_lists_registrations_newest_first_with_their_places
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_changelog_projects_the_release_registry
+      category: presentation
+      weight: 1
+- id: operator_endpoints_are_denied_to_a_registrant
+  purpose: "A visitor and a registrant session are refused at every operator endpoint"
+  substeps:
+    - kind: browser
+      do: "Open /operator without signing in and observe the sign-in form asking for an email and a password, offering neither a password reset nor an operator signup"
+      cov: "C-UF-32, C-RL-17, C-CF-154"
+    - kind: browser
+      do: "Sign in on /operator, then use the console control Sign out and observe the operator returned to /"
+      cov: "C-UF-34"
+    - kind: pytest
+      test: test_output.py::test_operator_endpoints_are_denied_to_a_visitor_and_a_registrant
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_operator_revokes_the_access_links_of_one_address
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_registrant_session_never_opens_the_operator_console
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_release_publish_is_refused_and_stores_nothing
+      category: validation
+      weight: 3
+- id: visitor_reads_the_release_registry
+  purpose: "A visitor reads the changelog and the notes of the current stable release"
+  substeps:
+    - kind: browser
+      do: "Open /changelog and observe the current stable block showing 0.2.3 with its published date, its summary and the full checksum, above the earlier releases"
+      cov: "C-UF-48, C-FE-248"
+    - kind: browser
+      do: "On /changelog follow Read the notes for 0.2.3 and observe the release notes page showing the section Known issues"
+      cov: "C-UF-49"
+    - kind: browser
+      do: "On /changelog observe the release film with its poster image in the current stable block"
+      cov: "C-FE-249"
+    - kind: pytest
+      test: test_output.py::test_seeded_registry_lists_releases_highest_build_first
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_update_feed_lists_published_releases_with_registry_values
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_release_notes_render_their_sections_in_order_with_the_cache_policy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_the_security_headers
+      category: security
+      weight: 5
+- id: visitor_reaches_every_content_route
+  purpose: "Every content route resolves, carries the chrome and answers a crawler"
+  substeps:
+    - kind: browser
+      do: "Open /use-cases and follow one of the five numbered cards, each whole card being the link to its own use-case page, and observe that the radial diagram's five nodes link to those same five pages"
+      cov: "C-FE-234, C-FE-235"
+    - kind: browser
+      do: "Follow a use-case card to its page and observe the blocks in their pinned order, the contrast block with two columns, the application mockup carrying the label Demonstration data, and the Related use cases section holding the other four pages as a grid of cards beside the pricing and article grids elsewhere on the site"
+      cov: "C-FE-240, C-UX-24"
+    - kind: browser
+      do: "Open /press and use the Light and Dark control to switch the capture variants, then observe the fact sheet and the usage guidelines"
+      cov: "C-FE-271"
+    - kind: browser
+      do: "Open /contact, the route that serves the contact page, and observe the single support address shown as selectable text beside a mail link"
+      cov: "C-UF-16"
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ok_status
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_and_robots_describe_the_content_routes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_the_public_routes_resolves
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_site_chrome_carries_the_navigation_and_footer_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_roadmap_and_blog_pages_carry_their_pinned_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_press_contact_and_legal_pages_carry_their_pinned_copy
+      category: presentation
+      weight: 1
+- id: site_holds_for_a_keyboard_and_a_narrow_viewport
+  purpose: "The keyboard reaches every control and nothing overflows at a phone width"
+  substeps:
+    - kind: browser
+      do: "Open / and press the Tab key: observe the skip link Skip to content appearing as the first focusable element, then press Enter and observe focus moving into the main landmark"
+      cov: "C-FE-58, C-FE-56, C-FE-57"
+    - kind: browser
+      do: "Open / and move through the navigation with the Tab key, reaching every control in turn and reading the accessible name each one reports, so that no icon-only control is announced without a label"
+      cov: "C-UX-37, C-UX-38"
+    - kind: browser
+      do: "Open /roadmap and read the three buckets Now, Next and Later with their labels, then scroll to the end of the page and observe that the navigation capsule is still reachable with its six links"
+      cov: "C-FE-54"
+    - kind: browser
+      do: "From /blog follow the navigation item Pricing and observe the home route opening and then scrolling to the pricing section, which lands clear of the navigation capsule rather than underneath it"
+      cov: "C-UF-36, C-FE-16"
+    - kind: pytest
+      test: test_output.py::test_page_text_meets_the_contrast_bars
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_typography_uses_the_pinned_family_and_sizes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_narrow_viewport_holds_and_the_menu_opens
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_keyboard_focus_and_icon_labels_hold
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_release_notes_follow_a_dark_appearance
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_press_captures_switch_variants_and_rest_under_reduced_motion
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_legal_pages_print_without_backgrounds
+      category: presentation
+      weight: 1
+- id: visitor_summons_the_command_palette
+  purpose: "The palette opens on the shortcut, searches the library and acts on a selection"
+  substeps:
+    - kind: browser
+      do: "Press Control and K together on / and observe the command palette opening with the Blueprints group listed first, each Blueprint showing a truncated body carrying double-brace variables"
+      cov: "C-UF-46, C-CF-143, C-FE-93"
+    - kind: browser
+      do: "In the open command palette type roadmap and press Enter, then observe /roadmap opening"
+      cov: "C-UF-47, C-CF-144"
+    - kind: browser
+      do: "Open / and press the key cap showing the palette shortcut in the navigation capsule, then observe that Escape closes the palette dialog"
+      cov: "C-FE-101, C-FE-105, C-UX-29"
+    - kind: browser
+      do: "On / open the help panel, press the trigger of one question and then the trigger of another, observing that several help items stay open at once inside a console framed with a title bar and an Esc chip"
+      cov: "C-FE-190, C-FE-193"
+    - kind: browser
+      do: "On / press Try the hotkey, type the letters code to filter the five Blueprints down to the matching one, then press Enter and observe the finished prompt rendered with its blanks filled in, an interactive instrument answering the keyboard throughout"
+      cov: "C-FE-127, C-FE-128, C-FE-123"
+    - kind: browser
+      do: "On / operate the context tray by switching one file off, and observe the counts of files, values and docked prompts beneath the tray updating while the matching token inside the prompt body dims"
+      cov: "C-FE-133, C-FE-134"
+    - kind: browser
+      do: "On / step the Time Machine version scrubber with the arrow keys and observe the difference panel prefixing one added line and one removed line with a plus and a minus in text"
+      cov: "C-FE-159, C-FE-157"
+    - kind: pytest
+      test: test_output.py::test_page_command_palette_lists_blueprints_then_destinations
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_command_palette_keyboard_and_search_behave
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_help_panel_opens_links_and_filters
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_checksum_copy_control_copies_the_full_digest
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_hotkey_demonstration_renders_a_prompt
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_instruments_answer_the_keyboard_and_keep_their_own_scroll
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_blog_reading_time_matches_the_article_word_count
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_use_case_index_and_pages_carry_their_pinned_copy
+      category: presentation
+      weight: 1

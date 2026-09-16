@@ -1,0 +1,420 @@
+- id: "visitor_filters_catalogue_and_opens_case_study"
+  purpose: "A visitor filters the catalogue to one type and opens a case study from the filtered grid"
+  substeps:
+    - kind: browser
+      do: "Open the catalogue and read the live total the header prints beside the facet control"
+      cov: "C-CF-07"
+    - kind: browser
+      do: "Choose a facet and confirm the grid re-renders with the header, the facet panel and the floating controls still in place, with no route reload"
+      cov: "C-CF-15"
+    - kind: browser
+      do: "Press the floating control at the foot of the catalogue and confirm the two view modes, Grid plus List, exchange places"
+      cov: "C-CF-20"
+    - kind: browser
+      do: "Choose the list view, move to another route and back, then reload, and confirm the chosen view mode persists"
+      cov: "C-CF-21"
+    - kind: browser
+      do: "Read the unfiltered catalogue order and confirm publication date newest first, with an editor-positioned film where the editor placed it"
+      cov: "C-CF-23"
+    - kind: browser
+      do: "Reload the catalogue twice and confirm the ordering is stable, with two films sharing a date in the same order both times"
+      cov: "C-CF-24"
+    - kind: browser
+      do: "Read one tile and confirm it prints the labels Type plus Director with the value after a slash"
+      cov: "C-CF-25"
+    - kind: browser
+      do: "Confirm a tile identity counts from 01 in the unfiltered grid, then filter and confirm the filtered catalogue renumbers from 01"
+      cov: "C-CF-26"
+    - kind: browser
+      do: "Open a film with several directors, confirm all of them are listed, and follow one name into a filtered catalogue"
+      cov: "C-CF-27"
+    - kind: browser
+      do: "Open the catalogue before its media arrives and confirm every media box is already laid out at final size and filled, with nothing reflowing afterwards"
+      cov: "C-CF-30"
+    - kind: pytest
+      test: "test_output.py::test_catalogue_lists_only_readable_films"
+      critical: true
+      category: "core_outcome"
+      weight: 5
+      cov: "C-CF-09 (earned: the test reads the catalogue list and requires the six readable films with the three hidden ones absent)"
+    - kind: pytest
+      test: "test_output.py::test_facet_filter_returns_only_that_type"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-12 (earned: the test reads both filtered lists and intersects them)"
+
+- id: "catalogue_counts_agree_with_the_list"
+  purpose: "The catalogue total and every facet count agree with the films the list actually returns"
+  substeps:
+    - kind: browser
+      do: "Read the header, then the footer, and confirm the primary navigation carries eight items in one fixed order, repeated by the footer in the same order"
+      cov: "C-UX-12"
+    - kind: browser
+      do: "Read a film running time under an hour, then a podcast episode above one, and confirm each duration is rendered in its own form"
+      cov: "C-CF-33"
+    - kind: pytest
+      test: "test_output.py::test_catalogue_counts_match_the_list"
+      critical: true
+      category: "data_integrity"
+      weight: 5
+      cov: "C-CF-09 (earned: the test compares the claimed total and each facet count against the length of the list it describes)"
+    - kind: pytest
+      test: "test_output.py::test_seeded_rows_are_not_duplicated"
+      category: "data_integrity"
+      weight: 5
+      cov: "C-DM-14 (earned: the test counts the stored rows for every readable film, so a second seeding run shows as a duplicate)"
+
+- id: "publishing_persists_and_is_logged"
+  purpose: "A published film is stored, raises the counts, and leaves an editorial log row behind"
+  substeps:
+    - kind: browser
+      do: "Sign in to the back office and confirm staff can draft, review, schedule, embargo and publish a record there"
+      cov: "C-OV-03"
+    - kind: browser
+      do: "Sign in as a Publisher, open a record that same Publisher authored, and confirm publishing it is refused"
+      cov: "C-RL-09"
+    - kind: browser
+      do: "Walk one asynchronous surface and confirm it resolves to one of the six states: reserved, skeleton, partial, settled, empty or failed"
+      cov: "C-UF-12"
+    - kind: browser
+      do: "Open the slate with nothing announced and confirm a container empty by structure does not render, while a container empty for now renders a message"
+      cov: "C-UF-13"
+    - kind: browser
+      do: "Interrupt the counts request and confirm a count failing to compute renders an empty bracket pair, never a zero"
+      cov: "C-UF-14"
+    - kind: browser
+      do: "Break one module on a route and confirm the failing module renders its own failed state, leaving the rest of the route alive"
+      cov: "C-UF-15"
+    - kind: browser
+      do: "Submit a form and confirm the outcome renders as an inline banner in place"
+      cov: "C-UF-16"
+    - kind: pytest
+      test: "test_output.py::test_published_film_survives_a_reread"
+      critical: true
+      category: "data_integrity"
+      weight: 5
+      cov: "C-CF-17 (earned: the test compares what the catalogue displayed against the detail re-read and against the stored row)"
+    - kind: pytest
+      test: "test_output.py::test_publishing_a_draft_raises_the_counts"
+      category: "data_integrity"
+      weight: 5
+      cov: "C-CF-10 (earned: the test publishes the seeded draft and requires the total to rise by one)"
+    - kind: pytest
+      test: "test_output.py::test_editorial_log_row_accompanies_a_mutation"
+      category: "data_integrity"
+      weight: 5
+      cov: "C-CF-54 (earned: the test counts the log rows before and after one edit)"
+
+- id: "case_study_shows_crew_and_onward_link"
+  purpose: "A case study prints its credits in industry order and its onward link follows the filter the visitor arrived under"
+  substeps:
+    - kind: browser
+      do: "Read the crop-mark overlay on a featured figure and confirm it prints its three concentric labelled rectangles plus the aspect-ratio bracket"
+      cov: "C-FE-02"
+    - kind: browser
+      do: "Confirm the crop-mark overlay is decorative, absent from the accessibility tree a screen reader reads"
+      cov: "C-FE-03"
+    - kind: browser
+      do: "Read the text between two navigation items and confirm the separator slash is a real character in a real element"
+      cov: "C-FE-04"
+    - kind: browser
+      do: "Start a podcast preview, then start a film, and confirm one media source plays at a time across video and audio"
+      cov: "C-CF-35"
+    - kind: browser
+      do: "Change a published film's slug in the back office, then open the old address and confirm a redirect stands where the immutable slug was"
+      cov: "C-DM-09"
+    - kind: browser
+      do: "Attempt to delete a person holding credits and confirm the deletion is refused"
+      cov: "C-DM-10"
+    - kind: pytest
+      test: "test_output.py::test_case_study_returns_credits_in_industry_order"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-41 (earned: the test reads the credits and requires their roles to run in the industry order)"
+    - kind: pytest
+      test: "test_output.py::test_onward_link_follows_the_active_filter"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-43 (earned: the test follows the onward link under a facet and requires the destination to be inside it)"
+
+- id: "unknown_facet_is_invalid_and_falls_back"
+  purpose: "An unknown facet value falls back to every film with a message, and a facet with no films returns an empty list"
+  substeps:
+    - kind: browser
+      do: "Open an address held in the redirect table and confirm a permanent redirect rather than the not-found page"
+      cov: "C-UF-10"
+    - kind: browser
+      do: "Open an address nobody published and confirm the product's own not-found page with three routes back to the catalogue"
+      cov: "C-UF-11"
+    - kind: browser
+      do: "Open site credits from the footer and confirm the overlay carries no address and no history entry"
+      cov: "C-UF-07"
+    - kind: browser
+      do: "Scroll a long route and confirm the header is fixed, never hiding on scroll, never shrinking"
+      cov: "C-FE-07"
+    - kind: pytest
+      test: "test_output.py::test_unknown_facet_falls_back_to_all_films"
+      category: "validation"
+      weight: 3
+      cov: "C-CF-18 (earned: the test requests an unknown facet value and requires the unfiltered list rather than an error)"
+    - kind: pytest
+      test: "test_output.py::test_facet_with_no_films_returns_an_empty_list"
+      category: "validation"
+      weight: 3
+      cov: "C-CF-29 (earned: the test requests a facet nothing matches and requires a list rather than a failure)"
+
+- id: "editor_cannot_publish_a_record"
+  purpose: "An Editor session is refused the publish command at the API and the record stays in draft"
+  substeps:
+    - kind: browser
+      do: "Walk every public route and confirm no public route carries a staff sign-in control"
+      cov: "C-CF-03"
+    - kind: browser
+      do: "Present a staff credential to a public route handler and confirm the credential is refused"
+      cov: "C-CF-04"
+    - kind: browser
+      do: "Open the back-office route while signed out and confirm it serves the staff sign-in"
+      cov: "C-UF-06"
+    - kind: pytest
+      test: "test_output.py::test_editor_cannot_publish_a_record"
+      critical: true
+      category: "security"
+      weight: 5
+      cov: "C-RL-06 (earned: the test issues the publish command from an Editor session and re-reads the catalogue)"
+
+- id: "publisher_cannot_lift_an_embargo_early"
+  purpose: "A Publisher session is refused the early embargo lift at the API and the embargo instant is unchanged"
+  substeps:
+    - kind: browser
+      do: "Sign in with a wrong password and confirm the rejection names neither half of the credential"
+      cov: "C-CF-05"
+    - kind: browser
+      do: "Request a sign-in link for a known address, then for an unknown address, and confirm the response is identical"
+      cov: "C-CF-06"
+    - kind: browser
+      do: "Browse the catalogue, filter it, read a case study and search, all with no account"
+      cov: "C-OV-04"
+    - kind: browser
+      do: "Move keyboard focus to the header location and confirm the contact address it fades out to reveal resolves on focus as well as on hover"
+      cov: "C-FE-08"
+    - kind: pytest
+      test: "test_output.py::test_publisher_cannot_lift_an_embargo_early"
+      critical: true
+      category: "security"
+      weight: 5
+      cov: "C-RL-08 (earned: the test issues the early lift from a Publisher session and re-reads the catalogue)"
+
+- id: "unauthenticated_write_is_denied"
+  purpose: "An anonymous caller is refused every back-office write and nothing in the database changes"
+  substeps:
+    - kind: browser
+      do: "Request the account route while signed out, confirm the customer sign-in, then sign in and confirm the return"
+      cov: "C-UF-08"
+    - kind: browser
+      do: "Open the navigation overlay, confirm focus moves to its close control, close it, and confirm focus returns to the toggle"
+      cov: "C-FE-09"
+    - kind: pytest
+      test: "test_output.py::test_unauthenticated_write_is_denied"
+      critical: true
+      category: "security"
+      weight: 5
+      cov: "C-RL-13 (earned: the test calls a mutating endpoint with no session and then re-reads the protected state)"
+    - kind: pytest
+      test: "test_output.py::test_security_headers_and_request_identifier_are_returned"
+      category: "security"
+      weight: 5
+      cov: "C-TR-04 (earned: the test reads the response headers on a public route and provokes an error body)"
+    - kind: pytest
+      test: "test_output.py::test_no_credential_reaches_the_browser"
+      category: "security"
+      weight: 5
+      cov: "C-TR-05 (earned: the test reads the served markup of three public routes and searches it for credential markers)"
+
+- id: "customer_cannot_reach_another_customers_download"
+  purpose: "A customer is refused another customer's download whatever identifier the request carries"
+  substeps:
+    - kind: browser
+      do: "Sign in as a customer and confirm the account route serves that customer's own orders, entitlements and downloads"
+      cov: "C-UF-05"
+    - kind: browser
+      do: "Scroll to the foot of a route and confirm the footer is uncovered from behind the page"
+      cov: "C-FE-10"
+    - kind: pytest
+      test: "test_output.py::test_customer_cannot_reach_another_customers_download"
+      critical: true
+      category: "security"
+      weight: 5
+      cov: "C-RL-04 (earned: the test requests the other customer's download and reads the requesting customer's own order list)"
+    - kind: pytest
+      test: "test_output.py::test_card_named_field_is_refused"
+      category: "security"
+      weight: 5
+      cov: "C-TR-08 (earned: the test submits an order carrying a field named for a card and requires a refusal)"
+
+- id: "embargoed_film_is_absent_from_every_surface"
+  purpose: "An embargoed film is absent from the list, the counts and the search results, and a withheld client name is absent from the payload"
+  substeps:
+    - kind: pytest
+      test: "test_output.py::test_embargoed_film_is_absent_everywhere"
+      critical: true
+      category: "data_integrity"
+      weight: 5
+      cov: "C-CF-49 (earned: the test compares the embargoed address against an invented one and reads the list, the counts and the search results)"
+    - kind: pytest
+      test: "test_output.py::test_withheld_client_name_is_absent_from_the_payload"
+      category: "data_integrity"
+      weight: 5
+      cov: "C-CF-53 (earned: the test flattens each payload and searches it for the withheld client name)"
+
+- id: "expired_rights_window_removes_the_film"
+  purpose: "A film past its rights end is publicly unreadable and gone from the counts while staying in the back office"
+  substeps:
+    - kind: browser
+      do: "Open the catalogue and the feed and confirm the product stays responsive across the seeded records"
+      cov: "C-CN-08"
+    - kind: pytest
+      test: "test_output.py::test_expired_rights_window_removes_the_film"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-52 (earned: the test requires the film past its rights end to be unreadable publicly while its back-office record remains)"
+    - kind: pytest
+      test: "test_output.py::test_markup_carries_every_film_without_scripting"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-31 (earned: the test reads the served catalogue markup and requires every film title in it before any script runs)"
+
+- id: "invalid_writes_are_refused_with_reasons"
+  purpose: "The publication gate returns every failure at once, and a refused submission explains itself"
+  substeps:
+    - kind: browser
+      do: "Send an enquiry, then open the back office, and confirm the enquiry is stored with no mail delivery attempted"
+      cov: "C-CN-03"
+    - kind: pytest
+      test: "test_output.py::test_publication_gate_returns_every_failure"
+      category: "validation"
+      weight: 3
+      cov: "C-CF-45 (earned: the test strips a record and requires more than one failure in the refusal)"
+    - kind: pytest
+      test: "test_output.py::test_enquiry_refuses_an_attachment_on_a_restricted_subject"
+      category: "validation"
+      weight: 3
+      cov: "C-CF-46 (earned: the test submits an attachment on a restricted subject and requires a refusal rather than a silent drop)"
+    - kind: pytest
+      test: "test_output.py::test_repeated_form_submission_is_refused"
+      category: "validation"
+      weight: 3
+      cov: "C-CF-60 (earned: the test submits the enquiry form six times in quick succession and requires a refusal)"
+
+- id: "customer_buys_a_digital_pack"
+  purpose: "A customer buys a digital pack, gains an entitlement to the product, and gains no second entitlement on a repeat purchase"
+  substeps:
+    - kind: browser
+      do: "Walk the product for a second tenant or an organisation switcher and confirm one studio exists"
+      cov: "C-CN-01"
+    - kind: browser
+      do: "Open the shop and confirm its fixed two-panel composition at a desktop width"
+      cov: "C-FE-11"
+    - kind: pytest
+      test: "test_output.py::test_purchase_creates_an_order_and_an_entitlement"
+      critical: true
+      category: "core_outcome"
+      weight: 5
+      cov: "C-DM-04 (earned: the test buys a product and counts the entitlement rows across the purchase)"
+    - kind: pytest
+      test: "test_output.py::test_second_purchase_creates_no_second_entitlement"
+      category: "business_rule"
+      weight: 3
+      cov: "C-DM-04 (earned: the test re-buys an owned product and requires the entitlement count to stay where it was)"
+    - kind: pytest
+      test: "test_output.py::test_generated_placeholder_is_stable"
+      category: "presentation"
+      weight: 1
+      cov: "C-TR-10 (earned: the test reads the catalogue markup twice and requires the two reads to match byte for byte)"
+
+- id: "duplicate_order_key_creates_one_order"
+  purpose: "An order submitted twice under one idempotency key produces exactly one order and one entitlement"
+  substeps:
+    - kind: browser
+      do: "Walk the product for a native application, an installable shell or a push notification prompt and confirm none exists"
+      cov: "C-CN-07"
+    - kind: pytest
+      test: "test_output.py::test_repeated_order_key_creates_one_order"
+      critical: true
+      category: "data_integrity"
+      weight: 5
+      cov: "C-DM-07 (earned: the test submits twice under one idempotency key and counts the stored orders)"
+    - kind: pytest
+      test: "test_output.py::test_no_third_party_origin_is_referenced"
+      category: "security"
+      weight: 5
+      cov: "C-TR-09 (earned: the test reads every absolute address in the served markup and requires each to be the product's own origin)"
+
+- id: "concurrent_purchase_of_the_last_item"
+  purpose: "Two simultaneous purchases of the last edition produce one acceptance and one clean sold-out refusal"
+  substeps:
+    - kind: pytest
+      test: "test_output.py::test_last_item_sells_exactly_once_under_concurrency"
+      critical: true
+      category: "data_integrity"
+      weight: 5
+      cov: "C-DM-06 (earned: the test fires both purchases together, reads the two statuses, then reads the stock columns)"
+
+- id: "archives_and_studio_state_are_served"
+  purpose: "The slate, the feed and the podcast archive each serve their own records, and the product's own chrome answers for itself"
+  substeps:
+    - kind: browser
+      do: "Walk the product for a client portal where a client reviews work in progress and confirm none exists"
+      cov: "C-OV-06"
+    - kind: browser
+      do: "Walk a case study, the feed and the podcast archive for comments, likes, a follower graph or visitor-to-visitor messaging and confirm none exists"
+      cov: "C-OV-07"
+    - kind: pytest
+      test: "test_output.py::test_slate_excludes_confidential_entries"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-49 (earned: the test reads the slate surface and requires the confidential entry to be absent from it)"
+    - kind: pytest
+      test: "test_output.py::test_feed_featured_article_is_a_singleton"
+      category: "business_rule"
+      weight: 3
+      cov: "C-CF-12 (earned: the test reads the feed list endpoint and counts the articles marked featured)"
+    - kind: pytest
+      test: "test_output.py::test_podcast_groups_published_episodes_by_season"
+      category: "business_rule"
+      weight: 3
+      cov: "C-DM-08 (earned: the test reads every episode and requires its season and number pair to be unique and zero-padded)"
+    - kind: pytest
+      test: "test_output.py::test_studio_state_is_served_by_the_app"
+      category: "presentation"
+      weight: 1
+      cov: "C-TR-02 (earned: the test reads the open state the server computes, which exists only when the server renders the route's data)"
+    - kind: pytest
+      test: "test_output.py::test_health_endpoint_reports_ready"
+      category: "presentation"
+      weight: 1
+      cov: "C-DC-04 (earned: the test reaches the app over the network at its configured address and reads the health route)"
+    - kind: pytest
+      test: "test_output.py::test_machine_readable_hooks_are_present"
+      category: "presentation"
+      weight: 1
+      cov: "C-FE-06 (earned: the test reads the served markup and its stylesheets for the hook names, the inline vectors and the type family)"
+    - kind: pytest
+      test: "test_output.py::test_every_content_image_carries_alternative_text"
+      category: "presentation"
+      weight: 1
+      cov: "C-CF-57 (earned: the test reads every image tag on three public routes and requires alternative text on each)"
+    - kind: pytest
+      test: "test_output.py::test_every_internal_link_resolves"
+      category: "presentation"
+      weight: 1
+      cov: "C-CF-58 (earned: the test follows every internal link on the home route and requires each to answer)"
+    - kind: pytest
+      test: "test_output.py::test_every_public_route_declares_a_preview_image"
+      category: "presentation"
+      weight: 1
+      cov: "C-CF-59 (earned: the test reads the document head of three public routes for a preview image and a description)"
+    - kind: pytest
+      test: "test_output.py::test_terms_page_is_reachable_from_every_footer"
+      category: "presentation"
+      weight: 1
+      cov: "C-CF-61 (earned: the test reads three footers for the terms link and then opens the terms page)"
