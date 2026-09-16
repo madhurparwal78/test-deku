@@ -1,0 +1,277 @@
+- id: site_boots_and_serves_its_public_routes
+  purpose: The deployed storefront answers its health route and serves every public route as a complete document
+  substeps:
+    - kind: browser
+      do: Open the home route and confirm the wordmark, the header menu and the market summary block are visible
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_health_and_deployment_contract
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-DC-4 (earned: the health route is the first call this grader makes, and it reads the status it returns)
+    - kind: pytest
+      test: test_output.py::test_public_routes_render_before_script
+      category: presentation
+      weight: 1
+      cov: C-UF-1 (earned: the grader fetches every route in the brief route table and reads the document each returns)
+
+- id: visitor_signs_up_for_a_free_account
+  purpose: A visitor creates a free account from the sign-up form and lands signed in
+  substeps:
+    - kind: browser
+      do: Open the sign-up route, submit a fresh address with the corpus password, confirm the account route opens signed in
+      cov: C-CF-1
+    - kind: pytest
+      test: test_output.py::test_signup_creates_account_and_rejects_duplicate
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-12
+    - kind: pytest
+      test: test_output.py::test_persisted_account_row_survives_a_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-3 (earned: the grader reads the persisted account row back from the database and asserts the role it carries)
+
+- id: invalid_signup_is_refused_with_the_field_named
+  purpose: A sign-up carrying an empty password is refused inline with the field named and nothing written
+  substeps:
+    - kind: browser
+      do: Submit the sign-up form with an empty password and read the inline message naming the field
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_form_validation_refuses_invalid_input
+      category: validation
+      weight: 3
+      cov: C-CF-14
+
+- id: market_summary_streams_its_values
+  purpose: The market summary answers the pinned shape and moves its values without the page being fetched again
+  substeps:
+    - kind: browser
+      do: Open the home route, watch a ticker card value change without the page reloading
+      cov: C-CF-16
+    - kind: browser
+      do: Watch one ticker card change while the neighbouring cards hold their place
+      cov: C-CF-17
+    - kind: browser
+      do: Watch the primary chart preview pan its visible window as new ticks arrive
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_market_summary_shape_and_direction
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-20
+    - kind: pytest
+      test: test_output.py::test_market_values_move_without_a_reload
+      category: data_integrity
+      weight: 5
+      cov: C-TR-9
+
+- id: author_drafts_an_idea_with_a_stored_snapshot
+  purpose: An author drafts an idea and its chart snapshot bytes land in the object store at the pinned key
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com, open the studio, compose a draft in the dialog, attach a chart snapshot
+      cov: C-CF-25
+    - kind: browser
+      do: Press Escape over the compose dialog and confirm the dialog closes
+      cov: C-UX-17
+    - kind: pytest
+      test: test_output.py::test_snapshot_bytes_are_stored_in_the_bucket_at_their_key
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-26
+    - kind: pytest
+      test: test_output.py::test_snapshot_upload_across_accounts_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-28
+
+- id: draft_idea_is_denied_to_every_other_account
+  purpose: A draft idea and its snapshot answer the owning author alone
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com and confirm the draft idea appears nowhere on the ideas route
+      cov: C-CF-35
+    - kind: pytest
+      test: test_output.py::test_draft_idea_is_private_to_its_author
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_draft_snapshot_is_denied_to_other_accounts
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-34
+
+- id: publishing_opens_the_idea_once
+  purpose: Publishing makes the idea public and a repeated publish changes nothing
+  substeps:
+    - kind: browser
+      do: Publish the draft from the studio row and land on the confirmation route carrying the public idea link
+      cov: C-UF-4
+    - kind: pytest
+      test: test_output.py::test_publish_opens_the_idea_and_repeats_cleanly
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-37
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_accepts_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-39
+
+- id: publish_across_accounts_is_denied
+  purpose: An author cannot publish an idea owned by a second author
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_publish_across_accounts_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-7
+
+- id: reader_boosts_a_published_idea
+  purpose: A reader raises an idea boost count by exactly one, and a repeat leaves it where it is
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com, open Gold Breakout Watch, press boost, read the count rise by one
+      cov: C-CF-41
+    - kind: pytest
+      test: test_output.py::test_boost_counts_once_per_account
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-42
+    - kind: pytest
+      test: test_output.py::test_published_ideas_list_newest_first
+      category: business_rule
+      weight: 3
+      cov: C-CF-40
+
+- id: anonymous_boost_is_denied
+  purpose: A boost from a caller holding no session is refused at the API
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_anonymous_boost_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-43
+
+- id: reader_cannot_reach_the_author_studio
+  purpose: A reader account is refused the studio rather than shown an empty one
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com and open the studio route, reading the refusal message
+      cov: C-UF-8
+    - kind: pytest
+      test: test_output.py::test_reader_is_denied_the_studio_surface
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-5 (earned: the grader submits a compose request from a reader session and requires the server to refuse it)
+
+- id: marketing_routes_carry_their_pinned_offer
+  purpose: The futures, platform and markets routes carry their pinned copy, the asset-class matrix and every seeded symbol
+  substeps:
+    - kind: browser
+      do: Open the futures route, select the Metals tab, confirm the card swaps without the address changing
+      cov: C-CF-48
+    - kind: pytest
+      test: test_output.py::test_futures_route_carries_price_and_matrix
+      category: business_rule
+      weight: 3
+      cov: C-CF-45
+    - kind: pytest
+      test: test_output.py::test_platform_route_states_six_capabilities
+      category: presentation
+      weight: 1
+      cov: C-CF-50
+    - kind: pytest
+      test: test_output.py::test_markets_route_lists_every_seeded_symbol
+      category: business_rule
+      weight: 3
+      cov: C-UF-2
+
+- id: cookie_choice_survives_a_reload
+  purpose: The cookie question is asked once and the answer outlives a reload
+  substeps:
+    - kind: browser
+      do: Open the home route, refuse non-essential cookies, reload, confirm the band does not return
+      cov: C-CF-53
+    - kind: browser
+      do: Confirm the cookie band offers a refusing control as easy to press as the accepting one
+      cov: C-CF-54
+    - kind: browser
+      do: Open a later route once the cookie answer is recorded and confirm the band stays away
+      cov: C-CF-58
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_survives_a_reload
+      category: business_rule
+      weight: 3
+      cov: C-CF-53
+
+- id: unknown_address_renders_the_not_found_chrome
+  purpose: An unknown address answers not found inside the product own chrome
+  substeps:
+    - kind: browser
+      do: Open an address that does not exist, read the not-found copy, press the way home
+      cov: C-CF-57
+    - kind: pytest
+      test: test_output.py::test_unknown_address_renders_the_not_found_chrome
+      category: presentation
+      weight: 1
+      cov: C-CF-56
+
+- id: public_pages_hold_their_accessibility_bars
+  purpose: Content images carry alternative text and a phone width shows nothing running off the side
+  substeps:
+    - kind: browser
+      do: Open the home route and inspect every content image for its alternative text
+      cov: C-UX-13
+    - kind: pytest
+      test: test_output.py::test_content_images_carry_alternative_text
+      category: presentation
+      weight: 1
+      cov: C-UX-13
+    - kind: browser
+      do: Narrow the viewport to a phone width and confirm the summary stacks with no horizontal scrollbar
+      cov: C-UX-14
+    - kind: browser
+      do: At that narrow viewport reach every navigation target the header carries
+      cov: C-UX-16
+    - kind: browser
+      do: Confirm an unavailable control carries a signal other than its colour alone
+      cov: C-UX-18
+    - kind: browser
+      do: Confirm the product commits to dark, with the light data surfaces reading as inversions inside it
+      cov: C-UX-19
+    - kind: browser
+      do: Watch the network while the home route loads and confirm no external call leaves beyond the font host
+      cov: C-CN-8
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+      cov: C-UX-14
+
+- id: no_credential_reaches_the_browser
+  purpose: Nothing the browser downloads carries a store key or a database address
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_no_credential_reaches_the_browser
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-10

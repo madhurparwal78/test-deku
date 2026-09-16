@@ -1,0 +1,509 @@
+- id: site_boots_and_serves_its_public_routes
+  purpose: 'The deployed portfolio answers its health route and serves every public route as a complete document'
+  substeps:
+    - kind: browser
+      do: 'Open the index and confirm the wordmark, the top-bar entries and the opening line are visible before anything moves'
+      cov: 'C-OV-1 (earned: the reader is looking at the whole first screen of the single scroll, which is where a portfolio built as one continuous page is told apart from one built as separate pages)'
+    - kind: browser
+      do: 'Follow the footer link to the privacy page from three different routes and confirm each one arrives'
+      cov: 'C-CF-132'
+    - kind: browser
+      do: 'Read the whole index and confirm no comment thread, no like control, no follower count, no price and no advertising slot appears anywhere on it'
+      cov: 'C-CN-2, C-CN-3, C-CN-4 (earned: the reader is sweeping the whole index for the surfaces this product deliberately does not have, which is the only way an absence is observable)'
+    - kind: browser
+      do: 'Read the stack band and confirm it is a grouped list of the author''s own working tools rather than a statement about how the site is built'
+      cov: 'C-CN-7'
+    - kind: browser
+      do: 'Watch the page load with the network panel open and confirm no image file, no video file and no font file is downloaded'
+      cov: 'C-FE-28'
+    - kind: pytest
+      test: test_output.py::test_health_and_deployment_contract
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: 'C-DC-1, C-DC-2, C-DC-3, C-DC-4, C-DC-5, C-DC-6, C-DC-7, C-DC-8, C-DC-9, C-DC-10, C-DC-11, C-DC-12, C-DC-13, C-TR-6 (earned: this grader drives the health route, the index over the public address and the bind address, so every line of the deployment contract becomes observable in one pass)'
+    - kind: pytest
+      test: test_output.py::test_public_routes_render_complete_documents
+      category: presentation
+      weight: 1
+      cov: 'C-TR-1, C-TR-2, C-UF-1, C-UF-2, C-FE-1, C-FE-2, C-FE-5, C-FE-6, C-FE-14, C-FE-15, C-FE-16, C-FE-17, C-DM-20, C-DM-21, C-DM-22, C-DM-23, C-DM-24, C-OV-2 (earned: this grader fetches every public route and reads the served document, so the chrome, the pinned index copy and the seeded records all come from the same response)'
+    - kind: pytest
+      test: test_output.py::test_favicon_resolves_at_its_declared_address
+      category: presentation
+      weight: 1
+      cov: 'C-TR-13'
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_resolves
+      category: presentation
+      weight: 1
+      cov: 'C-CF-127'
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+      cov: 'C-DC-14, C-TR-8 (earned: this grader calls each listing over the same origin and reads its shape, so a second datastore answering a different shape surfaces here)'
+
+- id: visitor_signs_up_and_invalid_input_is_refused
+  purpose: 'A visitor creates an account from the sign-up form and a form carrying invalid input is refused with the field named'
+  substeps:
+    - kind: browser
+      do: 'Open the sign-up route, submit a fresh address with the corpus password, confirm the account route opens signed in'
+      cov: 'C-CF-1'
+    - kind: browser
+      do: 'Submit the sign-up form with an empty password and read the inline message naming the field that is wrong'
+      cov: 'C-CF-13'
+    - kind: pytest
+      test: test_output.py::test_signup_creates_account_and_rejects_duplicate
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-CF-2, C-CF-3, C-CF-4, C-CF-5, C-CF-6, C-CF-7, C-CF-8, C-CF-10, C-CF-11, C-CF-12 (earned: this grader signs up, signs in with the corpus password, reuses the token and repeats the address, so the seeded accounts, the token lifetime and the duplicate refusal are exercised together)'
+    - kind: pytest
+      test: test_output.py::test_persisted_account_row_carries_its_role
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-9, C-DM-3, C-DM-4 (earned: this grader reads the stored account row back out of the datastore and inspects what it holds, so the hashing and the uniqueness are read from the row rather than from the response)'
+    - kind: pytest
+      test: test_output.py::test_form_validation_refuses_invalid_input
+      category: validation
+      weight: 3
+      cov: 'C-CF-14'
+
+- id: unauthenticated_request_for_a_protected_route_is_denied
+  purpose: 'A signed-out or wrongly-roled caller is denied at the API and lands on the sign-in route rather than inside the surface'
+  substeps:
+    - kind: browser
+      do: 'Sign out, request the studio address, and land on the sign-in route rather than inside the studio'
+      cov: 'C-UF-6'
+    - kind: pytest
+      test: test_output.py::test_role_boundaries_are_enforced_server_side
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-RL-3, C-RL-6, C-RL-7, C-UF-3, C-UF-5, C-UF-10, C-DC-15, C-DC-16 (earned: this grader calls the author-only surfaces from a reader session and from no session at all, so each boundary is exercised as a direct request rather than as a hidden button)'
+    - kind: pytest
+      test: test_output.py::test_signed_out_request_returns_to_the_route_asked_for
+      category: security
+      weight: 5
+      cov: 'C-UF-7, C-UF-8, C-UF-9 (earned: this grader requests each protected route signed out, signs in, and reads where the browser lands, which is the redirect behaviour these asks describe)'
+    - kind: pytest
+      test: test_output.py::test_no_secret_reaches_the_browser
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-TR-3, C-TR-4, C-TR-5, C-TR-7, C-TR-11, C-TR-12 (earned: this grader scans every document and response the browser receives for the environment names and the store credentials, which is the only place a hardcoded address or key would surface)'
+
+- id: index_plays_its_nine_bands_in_order
+  purpose: 'The index carries nine bands in a fixed order with the rail naming the band the reader is in'
+  substeps:
+    - kind: browser
+      do: 'Read the left rail and confirm a vertical ruler of hairline ticks with a longer mark at each of the nine band boundaries'
+      cov: C-FE-4
+    - kind: browser
+      do: 'Scroll the index from the opening line to the footer and watch the rail marker travel while the band name changes at each boundary'
+      cov: 'C-OV-3, C-CF-20'
+    - kind: browser
+      do: 'Scroll through the experience band and watch each employer header stay pinned to the top while that employer''s roles are read'
+      cov: 'C-CF-25'
+    - kind: browser
+      do: 'Read the open-source band and confirm the inline links in a piece of writing wear the one blue and lighten under the pointer'
+      cov: C-UX-6
+    - kind: browser
+      do: 'Scroll the index quickly with several diagrams on screen and confirm the page keeps up without stalling or jumping'
+      cov: 'C-FE-12, C-TR-15 (earned: the reader is scrolling hard with several diagrams playing, which is where a page that recalculates layout on every frame stops keeping up)'
+    - kind: browser
+      do: 'Reload the index and confirm nothing on the page jumps or re-lays out at the moment the fonts settle'
+      cov: 'C-TR-16'
+    - kind: browser
+      do: 'Watch the index at rest and confirm the field and the diagrams are the only surfaces moving'
+      cov: 'C-FE-27'
+    - kind: browser
+      do: 'Confirm the accent shows on the current band name, on the fixed contact control and on the waiting run-log row, and on nothing else'
+      cov: C-UX-4
+    - kind: browser
+      do: 'Scroll until a diagram overlay, the rail and the top bar all overlap and confirm each covers the one below it in the stated order'
+      cov: C-FE-8
+    - kind: browser
+      do: 'Read the open-source band and confirm each repository row shows its name, its one-line description and its language chip'
+      cov: 'C-FE-29'
+    - kind: pytest
+      test: test_output.py::test_band_sequence_tiles_the_document
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-15, C-CF-16, C-CF-17, C-CF-18, C-CF-19 (earned: this grader reads the band list and its fractions straight from the endpoint, so the count, the order, the field names and the tiling come from one payload)'
+    - kind: pytest
+      test: test_output.py::test_rail_names_the_current_band
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-21, C-FE-4'
+    - kind: pytest
+      test: test_output.py::test_top_bar_scrolls_to_a_band_and_moves_focus
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-22, C-CF-23, C-UX-23 (earned: this grader presses a top-bar entry and reads both the scroll position and where keyboard focus landed, which is what separates scrolling to a band from navigating away)'
+    - kind: pytest
+      test: test_output.py::test_index_carries_its_seeded_records
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-24, C-CF-26, C-CF-27, C-DM-5, C-DM-6 (earned: this grader counts the seeded content rows and reads the served index, so the six roles, the four employers, the four principles and the five systems are checked against both)'
+
+- id: wireframe_field_stops_drawing_once_it_is_covered
+  purpose: 'The opening field turns behind the headline, is hidden from assistive technology, and stops rendering once covered'
+  substeps:
+    - kind: browser
+      do: 'Watch the opening field turn slowly behind the headline and dissolve into the page ground at the foot of the first screen'
+      cov: 'C-CF-28, C-CF-29, C-CF-31'
+    - kind: browser
+      do: 'Move the pointer across the first screen and watch the volume lean slightly toward it with a few coloured threads running through the mass'
+      cov: 'C-FE-9, C-FE-10 (earned: the reader is watching the coloured threads run through the mass as connected paths and the volume lean toward the pointer, which is what the scrim behind the headline has to survive)'
+    - kind: browser
+      do: 'Watch the headline arrive word by word, each word sliding up and sharpening from a blur'
+      cov: 'C-UX-13'
+    - kind: browser
+      do: 'Sit on the first screen for a minute and watch the figure in the top bar climb steadily from the moment the page opened'
+      cov: 'C-TR-17 (earned: the reader is watching the counter figure climb continuously from the moment the page opened, which is the whole of what the counter owes)'
+    - kind: pytest
+      test: test_output.py::test_field_is_decorative_and_stops_when_covered
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: 'C-CF-30, C-CF-32, C-CF-33, C-UX-24 (earned: this grader reads the field''s own frame counter and its accessibility state before and after the field is scrolled past, which is where a loop that never stops shows itself)'
+    - kind: pytest
+      test: test_output.py::test_reduced_motion_holds_the_field_and_finishes_the_diagrams
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-34, C-CF-35, C-UX-16, C-UX-17, C-UX-18 (earned: this grader opens the index under a reduced-motion preference and reads the frame counter, the diagram progress and the counter figure, which is every part of the reduced-motion rule)'
+    - kind: pytest
+      test: test_output.py::test_counter_climbs_without_resetting
+      category: business_rule
+      weight: 3
+      cov: 'C-TR-17, C-TR-18, C-TR-19 (earned: this grader reads the counter figure three times, once after scrolling, so the climb and the absence of a reset come from the same element)'
+
+- id: diagram_structure_with_an_invalid_kind_is_refused
+  purpose: 'A structure carrying an illegal kind, a dangling edge or a stop outside the range fails validation and blocks the export'
+  substeps:
+    - kind: browser
+      do: 'Open the diagram step of the wizard, introduce an edge naming a node that does not exist, and read the validation report naming the offending edge'
+      cov: 'C-CF-40'
+    - kind: browser
+      do: 'Confirm the preview holds the last valid drawing while validation is reporting a finding'
+      cov: 'C-UF-17 (earned: the reader is watching the preview hold its last good drawing instead of collapsing, which is the error behaviour this ask describes)'
+    - kind: pytest
+      test: test_output.py::test_diagram_validation_refuses_illegal_structure
+      category: validation
+      weight: 3
+      cov: 'C-CF-36, C-CF-37, C-CF-38, C-CF-39, C-CF-41, C-CF-42, C-DM-7 (earned: this grader submits a structure carrying an illegal kind, a dangling edge and a stop outside the range, then reads the report, so each closed vocabulary is exercised by a violation of it)'
+    - kind: pytest
+      test: test_output.py::test_export_is_refused_while_validation_fails
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-66, C-CF-67 (earned: this grader lists the bucket before and after a refused export, so an object written despite a failing validation appears as a difference in the listing)'
+
+- id: one_structure_renders_both_diagram_layouts
+  purpose: 'One declared structure renders the tall layout and the wide layout, identically on two consecutive renders'
+  substeps:
+    - kind: browser
+      do: 'Drag the scrub bar under a diagram to the halfway point and watch the gate collapse to a sliver of its height and dim'
+      cov: 'C-CF-45, C-CF-56 (earned: the reader is dragging the timeline by hand across both drawings at once, which is the only way to see that one description produced them)'
+    - kind: browser
+      do: 'Scroll a system diagram through the viewport and watch a mark travel along its connector while the run log ticks its rows off in order'
+      cov: 'C-CF-49, C-CF-50'
+    - kind: browser
+      do: 'Watch a promoted path draw itself in and then retract on the same diagram'
+      cov: 'C-UX-15'
+    - kind: pytest
+      test: test_output.py::test_diagram_renders_both_layouts_from_one_structure
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-46, C-CF-47, C-DM-8, C-FE-11, C-FE-13 (earned: this grader reads the stored structure back and inspects its two declared layouts and its sampled series, which is where one description producing two drawings is observable)'
+    - kind: pytest
+      test: test_output.py::test_diagram_render_is_deterministic
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-43, C-CF-44 (earned: this grader renders one structure twice at the same progress and compares the two drawings character for character, which is what repeatability means here)'
+    - kind: pytest
+      test: test_output.py::test_run_log_and_text_alternative
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-48, C-CF-51, C-CF-52, C-CF-53 (earned: this grader reads each seeded system''s run log and each diagram''s text alternative, so the row count, the status row and the description come from the records that produce them)'
+
+- id: author_exports_a_still_into_the_object_store
+  purpose: 'Exporting a diagram writes the drawn bytes into the bucket at the pinned key and records the key on the row'
+  substeps:
+    - kind: browser
+      do: 'Sign in as the author, walk the three wizard steps, press export on the review step and read the inline banner confirming the still was written'
+      cov: 'C-CF-54, C-CF-55, C-FE-26'
+    - kind: browser
+      do: 'Open the studio index and confirm it is a grid of cards, one per piece and one per diagram, each carrying its own drawing and its state'
+      cov: 'C-FE-25'
+    - kind: pytest
+      test: test_output.py::test_still_bytes_live_in_the_bucket_at_their_key
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-61, C-CF-62, C-CF-63, C-DC-17 (earned: this grader exports, reads the returned key against the pinned scheme, then asks the object store whether that key exists, which is the only way to tell a stored object from a stored filename)'
+    - kind: pytest
+      test: test_output.py::test_seeded_content_is_complete_and_idempotent
+      category: data_integrity
+      weight: 5
+      cov: 'C-DM-1, C-DM-2, C-DM-25, C-CN-1 (earned: this grader counts every seeded table and looks for duplicate addresses and duplicate keys, which is what a second boot would leave behind if seeding were not idempotent)'
+    - kind: pytest
+      test: test_output.py::test_studio_grid_and_inline_banner
+      category: presentation
+      weight: 1
+      cov: 'C-UF-13, C-UF-16 (earned: this grader walks the studio index and the three wizard addresses and reads what each surface shows, which is where an empty grid or a missing loading state appears)'
+
+- id: draft_piece_cannot_be_read_by_anyone_else
+  purpose: 'A draft piece, its diagram and the objects exported for them answer the owning author and nobody else'
+  substeps:
+    - kind: browser
+      do: 'Sign out, request the draft piece by its address, and land on the product''s own not-found page rather than on a page revealing the draft exists'
+      cov: 'C-UF-11'
+    - kind: pytest
+      test: test_output.py::test_draft_piece_and_its_still_answer_only_their_owner
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-OV-4, C-CF-68, C-CF-69, C-CF-70, C-CF-71, C-CF-72, C-RL-1 (earned: this grader requests the draft body and the draft still as the owner, as a second author, as a reader and as nobody, then reads the published listing, so the whole boundary is exercised as direct requests)'
+    - kind: pytest
+      test: test_output.py::test_export_into_another_account_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-CF-64, C-CF-65, C-RL-9'
+    - kind: pytest
+      test: test_output.py::test_publishing_another_account_piece_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-CF-76, C-RL-2 (earned: this grader publishes the first author''s draft from the second author''s session and then re-reads the row, so the refusal and the untouched state are both observed)'
+
+- id: author_publishes_a_piece_and_it_reaches_the_archive
+  purpose: 'Publishing opens the row, the page and the stored object together, and the piece reaches the archive newest first'
+  substeps:
+    - kind: browser
+      do: 'Press publish on a draft in the studio grid, read the inline banner, then open the archive and find the piece at the top with its code and date'
+      cov: 'C-FE-19, C-RL-8'
+    - kind: browser
+      do: 'Open the archive and watch each entry sharpen from a blur as it enters, with the reading column offset from the left edge'
+      cov: 'C-FE-20'
+    - kind: browser
+      do: 'Open the archive with its full seeded list and confirm the page renders without stalling'
+      cov: 'C-CN-8'
+    - kind: browser
+      do: 'Press the theme control in the top bar and confirm it carries a name and reports its pressed state'
+      cov: 'C-FE-3'
+    - kind: pytest
+      test: test_output.py::test_publish_opens_the_row_the_page_and_the_object
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: 'C-OV-5, C-CF-73, C-CF-74 (earned: this grader publishes, then reads the row, the page and the stored still as an anonymous caller, which is the three things publishing opens together)'
+    - kind: pytest
+      test: test_output.py::test_published_listing_is_newest_first
+      category: business_rule
+      weight: 3
+      cov: 'C-DM-17, C-DM-18 (earned: this grader reads the listing and compares its publication stamps in order, and the seeded pieces are the rows it reads them from)'
+    - kind: pytest
+      test: test_output.py::test_series_number_independently
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-57, C-CF-58, C-CF-59, C-CF-60, C-DM-9, C-DM-10 (earned: this grader creates one piece in each series and inspects the codes and the numbers the datastore holds, which is where independent numbering is observable)'
+    - kind: pytest
+      test: test_output.py::test_publish_without_a_still_is_refused
+      category: validation
+      weight: 3
+      cov: 'C-CF-75 (earned: this grader publishes a piece whose diagram never exported and reads the refusal, which is exactly the case this ask describes)'
+    - kind: pytest
+      test: test_output.py::test_archive_and_piece_routes_ship_no_drawing_code
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: 'C-TR-14, C-DM-19, C-FE-18 (earned: this grader opens the archive, counts the drawing surfaces it creates and reads its served document, so the absence of the field code and the archive''s own copy come from one visit)'
+
+- id: concurrent_publishes_of_one_draft_accept_at_most_one
+  purpose: 'A repeated publish and two simultaneous publishes each leave exactly one published piece and one stored object'
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_repeated_publish_leaves_one_piece_and_one_object
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-77, C-CF-78'
+    - kind: pytest
+      test: test_output.py::test_simultaneous_publishes_accept_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-79'
+
+- id: visitor_sends_a_note_and_opens_the_thread
+  purpose: 'A note sent from the panel returns a thread link that opens that one note and nothing else'
+  substeps:
+    - kind: browser
+      do: 'Press the fixed contact control on the index, fill the panel, press send, and read the confirmation carrying the thread link without losing the place in the scroll'
+      cov: 'C-CF-80, C-UX-28 (earned: the reader is pressing the one leading action on the index and watching the panel open over their place in the scroll rather than replacing it)'
+    - kind: browser
+      do: 'Choose the consulting intent in the panel and watch the budget band appear, then choose another intent and watch it go'
+      cov: 'C-CF-87'
+    - kind: pytest
+      test: test_output.py::test_panel_is_reachable_at_its_own_address
+      category: presentation
+      weight: 1
+      cov: 'C-CF-81, C-FE-21, C-FE-22 (earned: this grader fetches the channel''s own address and reads the panel''s copy out of the served document)'
+    - kind: pytest
+      test: test_output.py::test_note_returns_a_thread_token_reaching_one_note
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-CF-89, C-CF-90, C-CF-91, C-CF-92, C-CF-93, C-RL-5, C-UF-12, C-DM-11 (earned: this grader sends a note, opens it by its token, tries a token that resolves to nothing and asks for a listing, so what the token reaches and what it does not are read together)'
+    - kind: pytest
+      test: test_output.py::test_sender_adds_a_message_to_their_thread
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-94, C-CF-95, C-DM-12 (earned: this grader adds a message as the sender and then tries to remove the note, so what a sender may do and what they may not are exercised together)'
+    - kind: pytest
+      test: test_output.py::test_contact_panel_validates_and_keeps_what_was_typed
+      category: validation
+      weight: 3
+      cov: 'C-CF-82, C-CF-83, C-CF-84, C-CF-85, C-CF-86, C-CF-88, C-FE-23, C-FE-24 (earned: this grader submits a note at each end of every stated bound and reads the refusal, so every length, every intent and every message rule is exercised by a violation of it)'
+    - kind: pytest
+      test: test_output.py::test_focus_is_visible_and_the_panel_traps_it
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-UX-20, C-UX-21, C-UX-22 (earned: this grader opens the panel, reads where focus sits and presses escape, which is the whole focus contract for this surface)'
+
+- id: subscription_records_nobody_until_the_link_is_followed
+  purpose: 'A subscription stays pending until the confirmation link is followed, an expired link is refused, and unsubscribing needs no sign-in'
+  substeps:
+    - kind: browser
+      do: 'Subscribe from the foot of the archive and read the line telling the reader to follow the confirmation link'
+      cov: 'C-CF-96 (earned: the reader is reading the wording that tells them nothing is recorded yet, which is the visible half of the pending rule)'
+    - kind: pytest
+      test: test_output.py::test_subscription_confirms_before_anything_is_recorded
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-97, C-DM-13, C-DM-14 (earned: this grader reads the stored subscriber row before and after the confirmation link is followed, which is where the pending rule lives)'
+    - kind: pytest
+      test: test_output.py::test_expired_confirmation_token_is_refused
+      category: validation
+      weight: 3
+      cov: 'C-CF-98, C-CF-99'
+    - kind: pytest
+      test: test_output.py::test_unsubscribe_needs_no_sign_in
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-100'
+
+- id: fourth_note_in_an_hour_hits_the_rate_limit
+  purpose: 'A fourth note from one address inside an hour is refused with the pinned message and no fourth row'
+  substeps:
+    - kind: browser
+      do: 'Send four notes from one address in quick succession and read the refusal on the fourth with everything typed still in the panel'
+      cov: 'C-CF-101'
+    - kind: pytest
+      test: test_output.py::test_note_rate_limit_refuses_the_fourth_in_an_hour
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-CF-102, C-CF-103'
+    - kind: pytest
+      test: test_output.py::test_no_outbound_message_leaves_the_app
+      category: data_integrity
+      weight: 5
+      cov: 'C-TR-9, C-TR-10, C-CN-6 (earned: this grader subscribes and then reads the recorded outbound row, which is where a message that left the app instead would be missing)'
+
+- id: desk_sorts_notes_and_two_choosers_conflict_on_one_slot
+  purpose: 'Arriving notes are sorted into three lanes with their signals shown, and two senders choosing one slot produce one confirmation and one refusal'
+  substeps:
+    - kind: browser
+      do: 'Open the desk as the author, expand the collapsed noise lane, and read the signals that placed the top card in its lane'
+      cov: 'C-CF-105, C-CF-110'
+    - kind: browser
+      do: 'Press reply on a desk card, edit the drafted wording, press send, and confirm the reply appears on the sender''s own thread'
+      cov: 'C-RL-10'
+    - kind: pytest
+      test: test_output.py::test_note_sorting_places_each_lane
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: 'C-CF-104, C-CF-106, C-CF-107, C-CF-108, C-CF-109, C-CF-111, C-CN-5'
+    - kind: pytest
+      test: test_output.py::test_desk_shows_three_lanes_with_the_breakdown
+      critical: true
+      category: security
+      weight: 5
+      cov: 'C-CF-112, C-CF-113, C-CF-114, C-RL-4, C-UF-4 (earned: this grader opens the desk as the author, as a reader and as nobody, and reads the lanes and the card fields it returns)'
+    - kind: pytest
+      test: test_output.py::test_reply_reaches_the_thread_only_when_sent
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-115 (earned: this grader counts the thread''s messages before and after the author sends, so a reply that left without being sent would show as a message nobody wrote)'
+    - kind: pytest
+      test: test_output.py::test_slot_hold_and_double_booking
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-CF-116, C-CF-117, C-CF-118, C-CF-119, C-CF-120, C-DM-16 (earned: this grader offers the slots, races two senders onto one of them and then reads the booking rows, so the hold, the single winner and the absence of a stranded hold are read together)'
+
+- id: cookie_choice_and_the_empty_surfaces_hold_at_any_width
+  purpose: 'The cookie question is asked once, page views stay anonymous, and every surface holds at a narrow viewport with its empty state named'
+  substeps:
+    - kind: browser
+      do: 'Answer the cookie band on a first visit, reload the index, and confirm the band does not return'
+      cov: 'C-CF-121'
+    - kind: browser
+      do: 'Read the archive beside the desk and confirm the reading bands sit spacious where the working lanes sit compact'
+      cov: C-UX-11
+    - kind: browser
+      do: 'Open an address that does not exist and read the code, the line and the way home inside the site''s own chrome'
+      cov: 'C-CF-131 (earned: the reader is looking at the product''s own not-found page inside the site''s own chrome rather than at a framework default)'
+    - kind: browser
+      do: 'Answer the cookie band and confirm the refusal sits beside the acceptance at the same size and the same reach, with neither one tucked behind the other'
+      cov: C-CF-123
+    - kind: browser
+      do: 'Open the studio grid with nothing written and the desk with nothing waiting, and read the sentence each empty surface gives for the absence'
+      cov: C-UF-13
+    - kind: browser
+      do: 'Open the desk on a slow connection and watch shimmering blocks in the shape of the final cards stand in until the notes arrive'
+      cov: C-UF-16
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_is_asked_once_and_persists
+      category: business_rule
+      weight: 3
+      cov: 'C-CF-122, C-CF-123 (earned: this grader answers the band, reloads and looks for the band again, which is what surviving a reload means here)'
+    - kind: pytest
+      test: test_output.py::test_page_views_record_route_day_and_deepest_band
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: 'C-OV-6, C-CF-124, C-CF-125, C-CF-126, C-DM-15 (earned: this grader records a view, reads the stored row for identifying values and then asks for the aggregate with and without the author session)'
+    - kind: pytest
+      test: test_output.py::test_privacy_page_states_what_is_recorded
+      category: presentation
+      weight: 1
+      cov: 'C-CF-133'
+    - kind: pytest
+      test: test_output.py::test_not_found_page_is_the_products_own
+      category: presentation
+      weight: 1
+      cov: 'C-CF-128, C-CF-129, C-CF-130 (earned: this grader requests an address that does not exist and reads the status and the document, which is where the product''s own page is told apart from a framework default)'
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+      cov: 'C-UX-25'
+    - kind: pytest
+      test: test_output.py::test_body_text_meets_the_contrast_bar
+      category: presentation
+      weight: 1
+      cov: 'C-UX-19'
+    - kind: pytest
+      test: test_output.py::test_empty_states_name_the_absence
+      category: presentation
+      weight: 1
+      cov: 'C-UF-14, C-UF-15 (earned: this grader fetches the desk and the diagram editor and looks for the pinned empty-state copy in what comes back)'
