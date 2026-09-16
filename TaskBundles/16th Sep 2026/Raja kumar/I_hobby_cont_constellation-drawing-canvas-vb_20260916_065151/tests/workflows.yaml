@@ -1,0 +1,363 @@
+- id: first_light_sky_and_catalogue
+  purpose: "A stargazer signs in, the star field paints, and the coordinate readout opens on the celestial equator"
+  substeps:
+    - kind: browser
+      do: "Open /login, sign in as stargazer@example.com with password deku-demo-pw-2026, and confirm the canvas at / paints a dark full-viewport star field that does not scroll"
+      cov: "C-OV-01, C-CF-01, C-CF-35 (earned: the step confirms the field fills the viewport with no scrolling)"
+    - kind: browser
+      do: "On the canvas at /, read the coordinate readout in the top right and confirm the readout text is exactly RA 06h 00m 00s   Dec -00° 00' with the declination sign written, which is right ascension ninety degrees divided by fifteen"
+      cov: "C-CF-36, C-FE-01, C-FE-02"
+    - kind: browser
+      do: "On the canvas at /, read the hint line along the bottom centre and confirm the hint text is exactly Select two stars to connect them"
+      cov: "C-CF-37"
+    - kind: browser
+      do: "On the canvas at /, confirm the collection panel sits beside the canvas as a split detail pane listing the four seeded skies with Monoceros Arch at the top"
+      cov: "C-CF-21, C-UF-02 (earned: the canvas route is the screen this step reads)"
+    - kind: browser
+      do: "On the canvas at /, confirm interface text is set in the Roboto family, that body text against its background is legible at the WCAG AA contrast bar, and that every content image on the screen carries alternative text"
+      cov: "C-UX-04, C-UX-03, C-CF-38"
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+      cov: "C-DC-03, C-DC-04, C-DC-01 (earned: the health route answers at APP_PUBLIC_URL on the mapped container port), C-DC-07 (earned: the app answers after the session that started it ended), C-DC-08 (earned: the app answers from outside its own loopback interface)"
+    - kind: pytest
+      test: test_output.py::test_seeded_stargazer_signs_in_and_receives_token
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-02 (earned: the token returned at sign-in is then used to authorise a collection read), C-RL-07, C-DM-07 (earned: the seeded password is the credential this sign-in uses), C-UF-01 (earned: signing in is the act this step performs), C-DC-12 (earned: the guarded collection route accepts only the bearer token issued here)"
+    - kind: pytest
+      test: test_output.py::test_catalogue_reports_full_row_count
+      category: business_rule
+      weight: 3
+      cov: "C-CF-05 (earned: the reported row count is the number of stars the catalogue holds), C-DC-10 (earned: the page is read back out of the items envelope), C-DC-02 (earned: the catalogue read is made under the api prefix on the app origin), C-DC-06 (earned: the catalogue page is read back field by field against the contract shape)"
+    - kind: pytest
+      test: test_output.py::test_a_denied_call_is_a_client_error_not_a_server_fault
+      category: validation
+      weight: 3
+      cov: "C-DC-05, C-DC-11 (earned: the client-error class asserted across four refusal paths at once)"
+    - kind: pytest
+      test: test_output.py::test_stored_password_is_never_readable
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-04, C-TR-01 (earned: the stargazers row is read from the PostgreSQL the app writes through DATABASE_URL)"
+    - kind: pytest
+      test: test_output.py::test_signing_out_ends_that_session_alone
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-40, C-CF-41, C-DC-14 (earned: the session is ended by POST /api/auth/logout and its token is refused afterwards)"
+
+- id: catalogue_pages_filtered_by_brightness
+  purpose: "The catalogue pages by an opaque cursor and a brightness filter selects across the whole catalogue before a page is taken"
+  substeps:
+    - kind: browser
+      do: "On the canvas at /, confirm bright stars paint as larger blooms than faint stars and that star colours range from blue-white through warm orange across the field"
+      cov: "C-CF-06, C-CF-07"
+    - kind: pytest
+      test: test_output.py::test_catalogue_row_matches_the_generated_rule
+      category: business_rule
+      weight: 3
+      cov: "C-DM-01 (earned: the worked row is compared against the whole-number rule), C-DM-02 (earned: HD00800 is the worked row this step reads back)"
+    - kind: pytest
+      test: test_output.py::test_brightness_filter_fills_the_page_before_paging
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-08 (earned: the filter selects across the catalogue before the page is taken), C-DM-03 (earned: the count of matching stars is what makes a full filtered page possible)"
+    - kind: pytest
+      test: test_output.py::test_catalogue_total_count_reports_matching_rows_not_page
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-05, C-TR-03 (earned: the page is taken at a stated limit)"
+    - kind: pytest
+      test: test_output.py::test_catalogue_walk_yields_every_row_once
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-07, C-TR-04 (earned: the walk follows the opaque cursor from one page to the next)"
+    - kind: pytest
+      test: test_output.py::test_last_page_of_an_exact_multiple_reports_no_more
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-06"
+
+- id: pick_resolves_the_brighter_star
+  purpose: "A click resolves to the brightest star inside the radius rather than the nearest one"
+  substeps:
+    - kind: browser
+      do: "On the canvas at /, click an empty patch of sky away from any star and confirm no star is marked as a pending endpoint"
+      cov: "C-CF-12"
+    - kind: pytest
+      test: test_output.py::test_pick_resolves_the_brightest_star_in_radius
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-09, C-CF-10"
+    - kind: pytest
+      test: test_output.py::test_pick_ties_resolve_to_the_lower_catalogue_id
+      category: business_rule
+      weight: 3
+      cov: "C-CF-11"
+    - kind: pytest
+      test: test_output.py::test_pick_outside_any_radius_resolves_no_star
+      category: business_rule
+      weight: 3
+      cov: "C-CF-12 (earned: the same no-star outcome asserted over the API rather than in the interface)"
+    - kind: pytest
+      test: test_output.py::test_pick_measures_great_circle_separation_across_the_seam_and_near_a_pole
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-09 (earned: a pick across the right ascension seam and near a pole resolves the one star whose great-circle separation lies inside the radius)"
+
+- id: draw_and_persist_a_constellation
+  purpose: "Joining two stars writes a segment against catalogue ids, sounds a note, and survives a reload"
+  substeps:
+    - kind: browser
+      do: "On the canvas at /, open the create slide-over panel, type the sky name Summer Kite, choose the green palette colour, confirm, and observe a toast reporting the sky was created"
+      cov: "C-UF-07, C-RL-01 (earned: creating a sky from the panel is the stargazer making one of their own)"
+    - kind: browser
+      do: "Open the new Summer Kite sky, click one star and confirm that star brightens as a pending endpoint, then click a second star and confirm a green line joins the two"
+      cov: "C-OV-01 (earned: the end-to-end draw outcome walked in the interface)"
+    - kind: browser
+      do: "On the Summer Kite sky, reload the page and confirm the drawn line still joins the same two stars"
+      cov: "C-CF-13 (earned: a segment pinned to catalogue stars survives a reload only when the stored endpoints are star ids)"
+    - kind: browser
+      do: "On the Summer Kite sky, activate undo once and confirm the most recently drawn line is gone while earlier lines remain"
+      cov: "C-CF-16"
+    - kind: pytest
+      test: test_output.py::test_segment_is_persisted_against_two_catalogue_ids
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-13, C-DM-05 (earned: the stored segment carries its position inside the sky)"
+    - kind: pytest
+      test: test_output.py::test_segment_order_survives_a_reread
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-18"
+    - kind: pytest
+      test: test_output.py::test_undo_removes_only_the_last_segment
+      category: business_rule
+      weight: 3
+      cov: "C-CF-16 (earned: undo asserted over the API against the seeded three-segment sky)"
+    - kind: pytest
+      test: test_output.py::test_seeded_collection_reads_newest_first
+      category: business_rule
+      weight: 3
+      cov: "C-CF-21 (earned: the newest-first collection order asserted over the API), C-DM-08"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_segments_each_take_their_own_position
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-42, C-DM-05"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_undos_each_remove_a_segment_of_their_own
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-43"
+
+- id: invalid_segment_and_name_are_refused
+  purpose: "Invalid segments and names are refused, and another stargazer's writes are refused on every route"
+  substeps:
+    - kind: browser
+      do: "On the canvas at /, open the create slide-over panel, leave the sky name empty, submit, and confirm an inline refusal names the name field while no new sky appears in the collection"
+      cov: "C-CF-19"
+    - kind: browser
+      do: "Open The Kite sky, which carries no segments, and confirm the canvas states an empty state inviting a first connection rather than showing a bare sky"
+      cov: "C-UF-03 (earned: the single-sky route opened by its owner)"
+    - kind: browser
+      do: "Open Winter Hexagon, activate the clear control, and confirm a confirmation box reads Clear all constellations? offering Cancel and Clear, then choose Cancel and confirm the segment is still drawn"
+      cov: "C-FE-05"
+    - kind: pytest
+      test: test_output.py::test_unknown_star_id_in_a_segment_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-14, C-DC-11 (earned: the unknown star id is refused as a client error rather than a server error)"
+    - kind: pytest
+      test: test_output.py::test_self_joining_segment_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-15"
+    - kind: pytest
+      test: test_output.py::test_empty_sky_name_is_refused_with_the_field_named
+      category: validation
+      weight: 3
+      cov: "C-CF-19 (earned: the same inline refusal asserted over the API with the field named in the body)"
+    - kind: pytest
+      test: test_output.py::test_overlong_sky_name_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-20"
+    - kind: pytest
+      test: test_output.py::test_undo_on_an_empty_sky_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-17"
+    - kind: pytest
+      test: test_output.py::test_limit_outside_the_band_is_refused
+      category: validation
+      weight: 3
+      cov: "C-TR-03 (earned: the limit band refused at its boundary over the API)"
+    - kind: pytest
+      test: test_output.py::test_another_stargazer_is_refused_on_every_write_route
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-02"
+
+- id: collection_paging_stays_stable
+  purpose: "A collection page walked by cursor yields each sky exactly once even when a sky is created between two pages"
+  substeps:
+    - kind: browser
+      do: "On the canvas at /, confirm the collection panel lists Monoceros Arch, Lepus Lantern, The Kite and Winter Hexagon, lists no sky belonging to another stargazer, and that narrowing the window to a phone width makes nothing overflow sideways"
+      cov: "C-OV-03, C-CN-01, C-UX-07"
+    - kind: pytest
+      test: test_output.py::test_collection_paging_yields_each_sky_once_after_an_insert
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-07 (earned: the once-only walk asserted across an insertion between two pages), C-TR-04"
+    - kind: pytest
+      test: test_output.py::test_collection_lists_only_the_owning_stargazer
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-OV-03, C-RL-02 (earned: another stargazer's skies are absent from the listing)"
+    - kind: pytest
+      test: test_output.py::test_seeding_twice_duplicates_no_row
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-09"
+
+- id: publish_is_frozen_and_concurrent_safe
+  purpose: "Publishing freezes a copy, replays create no second record, simultaneous publishes have a single winner, and the caller never mints a token"
+  substeps:
+    - kind: browser
+      do: "Open Lepus Lantern, publish it through the share sheet, and confirm the sheet is titled Share your Constellation and presents a link with a copy action"
+      cov: "C-FE-06, C-CF-23"
+    - kind: browser
+      do: "Copy the published Lepus Lantern link, open it in a session with nobody signed in, and confirm the three seeded segments appear in the seeded yellow line colour"
+      cov: "C-CF-29, C-UF-04 (earned: the published sky route is the address opened), C-RL-04"
+    - kind: browser
+      do: "Signed in again, add one more segment to Lepus Lantern, then reopen the published link and confirm the published drawing still shows only the three original segments"
+      cov: "C-CF-26 (earned: reopening the link after a later edit is how a frozen copy shows it was never edited), C-OV-02 (earned: the reopened link showing the earlier drawing is the published sky staying frozen)"
+    - kind: pytest
+      test: test_output.py::test_published_payload_is_frozen_against_later_edits
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-26 (earned: the frozen payload is asserted unchanged after the sky gains a segment), C-DM-06 (earned: a published row never updated is what the unchanged payload shows)"
+    - kind: pytest
+      test: test_output.py::test_idempotent_publish_replay_creates_no_second_record
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-11"
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_on_one_share_key_has_a_single_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-09, C-TR-10 (earned: two simultaneous publishes leave exactly one record)"
+    - kind: pytest
+      test: test_output.py::test_client_supplied_manage_token_is_never_honoured
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-25 (earned: the token supplied in the publish body is the one shown to be ignored), C-CF-24 (earned: the token that comes back is the server-minted one, shown by contrast with the supplied one)"
+    - kind: pytest
+      test: test_output.py::test_republishing_mints_a_new_share_token
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-27"
+    - kind: pytest
+      test: test_output.py::test_duplicate_rapid_publish_from_one_session_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-28 (earned: the repeated-submission half of the same publish refusal)"
+    - kind: pytest
+      test: test_output.py::test_filled_decoy_field_refuses_the_publish
+      category: validation
+      weight: 3
+      cov: "C-CF-28"
+    - kind: pytest
+      test: test_output.py::test_unknown_share_token_resolves_to_nothing
+      category: security
+      weight: 5
+      cov: "C-DM-08 (earned: the seeded share token is the control the unknown token is contrasted against)"
+
+- id: private_render_denied_to_another_stargazer
+  purpose: "A render lands in the object store as an append-only object and a second stargazer is denied every route to a private sky"
+  substeps:
+    - kind: browser
+      do: "Open Winter Hexagon and use the download control inside the share sheet to render the current view, confirming the interface reports the render succeeded"
+      cov: "C-CF-30 (earned: the download control is the render being stored)"
+    - kind: browser
+      do: "Sign out, sign in as stargazer2@example.com, and confirm the collection panel lists Corvus Sketch only"
+      cov: "C-RL-08, C-CN-01 (earned: the absence of any discovery route observed in the interface)"
+    - kind: pytest
+      test: test_output.py::test_render_upload_lands_in_the_object_store
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-30, C-TR-02, C-DC-13, C-DC-09 (earned: the object lands in the MinIO that was already running at STORAGE_ENDPOINT)"
+    - kind: pytest
+      test: test_output.py::test_render_upload_is_append_only_across_revisions
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-32 (earned: append-only across revisions is the earlier render left in place), C-CF-31, C-TR-12"
+    - kind: pytest
+      test: test_output.py::test_render_svg_carries_one_line_per_segment
+      category: business_rule
+      weight: 3
+      cov: "C-CF-33"
+    - kind: pytest
+      test: test_output.py::test_render_latest_is_refused_before_any_render
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-34 (earned: a sky with no stored object serves nothing, so no app-side copy stands in)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_renders_each_take_a_revision_of_their_own
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-44, C-CF-31"
+    - kind: pytest
+      test: test_output.py::test_other_stargazer_is_denied_the_private_sky
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-02 (earned: the direct request for another owner's sky is refused), C-UF-06 (earned: the non-owner asking for a sky is denied), C-DM-04 (earned: ownership holding for the life of the sky is what the refusal demonstrates)"
+    - kind: pytest
+      test: test_output.py::test_other_stargazer_is_denied_the_private_render
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-03"
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_to_the_collection_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-03 (earned: a request carrying no token is the anonymous request this step fires), C-CF-08 (earned: the anonymous catalogue read is the visitor being refused), C-UF-05 (earned: a visitor asking for a protected route is refused before being served), C-RL-05 (earned: the refused write is followed by a read showing the state unchanged)"
+    - kind: pytest
+      test: test_output.py::test_published_share_reads_without_a_token
+      category: security
+      weight: 5
+      cov: "C-RL-04 (earned: the visitor read path asserted over the API without a token)"
+    - kind: pytest
+      test: test_output.py::test_unseeded_email_cannot_sign_in
+      category: security
+      weight: 5
+      cov: "C-RL-06, C-CN-02 (earned: a refused sign-in sends nothing, and the environment declares no mail service for any path to use)"
+    - kind: pytest
+      test: test_output.py::test_internal_links_on_public_routes_resolve
+      category: presentation
+      weight: 1
+      cov: "C-CF-39"

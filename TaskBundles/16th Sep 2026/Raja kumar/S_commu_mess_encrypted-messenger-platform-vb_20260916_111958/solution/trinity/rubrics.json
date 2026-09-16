@@ -1,0 +1,272 @@
+{
+  "banner": "GENERATED SECTION. DO NOT HAND-EDIT.",
+  "source_of_truth": "solution/trinity/grounding.yaml",
+  "task": "deku/encrypted-messenger-platform-vb",
+  "schema": [
+    "id",
+    "dimension",
+    "weight",
+    "evaluation_target",
+    "criterion",
+    "judgment",
+    "evidence",
+    "mode"
+  ],
+  "compiled_weight_share": 1.0,
+  "items": [
+    {
+      "id": "R1",
+      "dimension": "security",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "An envelope returned by GET /api/messages carries only guid, ciphertext, server_timestamp and group_id, and no row names the sender.",
+      "judgment": "Send sealed, fetch as the recipient device, compare field sets and scan rows for the sender.",
+      "evidence": [
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R2",
+      "dimension": "security",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A bearer-token send addressed to another account is refused and queues nothing.",
+      "judgment": "Send with a device token to another username and fetch the target queue.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R3",
+      "dimension": "data_integrity",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "A send whose device set differs from the recipient's active devices is refused whole with ascending missing_devices and extra_devices.",
+      "judgment": "Send short and wide device sets and fetch every device.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R4",
+      "dimension": "data_integrity",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Acknowledging an envelope deletes its ciphertext row and leaves the other device's copy.",
+      "judgment": "Acknowledge on one device and scan rows for both ciphertexts.",
+      "evidence": [
+        "database-row",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R5",
+      "dimension": "data_integrity",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "A resent acknowledged guid is accepted and not delivered again.",
+      "judgment": "Acknowledge, resend the same guid, fetch.",
+      "evidence": [
+        "http-response-body",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R6",
+      "dimension": "data_integrity",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "Simultaneous sends of one guid leave one envelope.",
+      "judgment": "Fire six identical sends behind a barrier and count the guid.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R7",
+      "dimension": "data_integrity",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "A device holds only its newest 1000 envelopes even under simultaneous sends.",
+      "judgment": "Send 1003 then 12 simultaneous envelopes and compare the fetched guids.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R8",
+      "dimension": "data_integrity",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "Simultaneous bundle fetches never share a one-time pre-key.",
+      "judgment": "Fetch bundles behind a barrier and compare key ids.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R9",
+      "dimension": "business_rule",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "The 301st key bundle fetch by a device within sixty seconds is refused.",
+      "judgment": "Fetch 300 bundles, then one more.",
+      "evidence": [
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R10",
+      "dimension": "data_integrity",
+      "weight": 5,
+      "evaluation_target": "http-response-body",
+      "criterion": "Of two simultaneous group changes from one revision exactly one applies and the other returns the current revision.",
+      "judgment": "Patch behind a barrier and read the group.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R11",
+      "dimension": "security",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "After ten wrong recovery guesses, including simultaneous ones, the right verifier is refused.",
+      "judgment": "Guess nine, restore, guess twelve at once, restore again.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R12",
+      "dimension": "security",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "A second device cannot register without a link code from the same account.",
+      "judgment": "Register without, with a foreign, unknown and used code.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R13",
+      "dimension": "security",
+      "weight": 5,
+      "evaluation_target": "http-status-code",
+      "criterion": "An unlinked device's token is refused and its queued envelopes are deleted.",
+      "judgment": "Unlink, call device endpoints with the old token, scan rows.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R14",
+      "dimension": "data_integrity",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "Repeating a donation with one Idempotency-Key stores one row.",
+      "judgment": "Repeat sequentially and simultaneously, count rows.",
+      "evidence": [
+        "database-row",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R15",
+      "dimension": "data_integrity",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "A $25.00 gift is stored as 2500 usd.",
+      "judgment": "Post a gift and read the donations row.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R16",
+      "dimension": "validation",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "An invalid donation stores nothing.",
+      "judgment": "Post invalid bodies and count rows.",
+      "evidence": [
+        "http-status-code",
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R17",
+      "dimension": "security",
+      "weight": 5,
+      "evaluation_target": "database-row",
+      "criterion": "No database row carries a message plaintext after a browser roundtrip.",
+      "judgment": "Send through two browsers and scan every row for the text.",
+      "evidence": [
+        "database-row"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R18",
+      "dimension": "security",
+      "weight": 3,
+      "evaluation_target": "database-row",
+      "criterion": "The users row holds a password hash, never the password.",
+      "judgment": "Sign up and scan rows for the password.",
+      "evidence": [
+        "database-row",
+        "http-status-code"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R19",
+      "dimension": "business_rule",
+      "weight": 3,
+      "evaluation_target": "http-response-body",
+      "criterion": "An exhausted device still returns a bundle with a null one-time pre-key.",
+      "judgment": "Drain the keys and fetch again.",
+      "evidence": [
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    },
+    {
+      "id": "R20",
+      "dimension": "security",
+      "weight": 3,
+      "evaluation_target": "http-status-code",
+      "criterion": "A non-admin member cannot remove others or change state.",
+      "judgment": "Patch as a non-admin and compare the group.",
+      "evidence": [
+        "http-status-code",
+        "http-response-body"
+      ],
+      "mode": "compiled"
+    }
+  ]
+}

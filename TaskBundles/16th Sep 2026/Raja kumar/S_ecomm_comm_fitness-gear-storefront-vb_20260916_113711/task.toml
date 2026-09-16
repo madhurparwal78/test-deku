@@ -1,0 +1,94 @@
+schema_version = "1.4"
+
+[task]
+name = "deku/fitness-gear-storefront-vb"
+version = "1.0.0"
+description = "A direct to consumer fitness gear storefront where most orders are paid in cash on delivery: phone code checkout, race-safe stock holds, server-recomputed promotions, delivery confidence bands, signed carrier events and Kill Bill invoicing at delivery."
+authors = [
+  "utsav.jain@ethara.ai" ,
+  "raja.kumarint17@ethara.ai"
+]
+uuid_v5 = "8c9d3d0a-1641-55ca-b4f7-baf06bf3d692"
+keywords = ["greenfield", "solo_founder", "python", "postgres", "mailpit", "killbill", "cash-on-delivery", "checkout"]
+
+[metadata]
+category     = "Greenfield"
+sub_category = "solo_founder"
+domain          = "ecommerce-retail"
+pattern         = "commerce-checkout"
+service_profile = "P5-db-pay-email"
+variant_axes    = ["critical_depth", "spec_sections"]
+capability_flags = "aesthetic"
+task_code       = "S_ecomm_comm_fitness-gear-storefront-vb_20260916_113711"
+naming_scheme   = "task-code-v1"
+design_direction = "companion"
+launch_surface = "alt_text,custom_404,no_frontend_secrets,privacy_page,social_preview"
+grader_version  = "0.22.0"
+rubric_version  = "1"
+language     = "python"
+archetype    = "fitness-gear-storefront"
+variant      = "b"
+spec_sections_given = ["overview", "roles", "features", "flow", "uiux", "frontend", "techrequirements", "datamodel", "constraints", "contract"]
+turns_expected  = 200
+tokens_expected = 8000000
+contributor_id  = "raja.kumarint17@ethara.ai"
+created_at      = "2026-09-16"
+canary_present  = true
+difficulty           = ""
+reference_model_used = ""
+pass_rate            = 0.0
+pass_rate_ci         = [0.0, 0.0]
+calibration_trials   = 0
+harbor_version       = "0.20.0"
+
+[metadata.services]
+backend  = "postgres"
+email    = "mailpit"
+payments = "killbill"
+
+[agent]
+timeout_sec = 18000.0
+
+[environment]
+os                = "linux"
+cpus              = 4
+memory_mb         = 8192
+storage_mb        = 20480
+build_timeout_sec = 900.0
+network_mode  = "public"
+allowed_hosts = []
+env = { APP_PUBLIC_PORT = "4173", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://main:4173}", DB_URL = "${DB_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/deku}", DATABASE_URL = "${DATABASE_URL:-postgresql://deku_app:deku-local-dev@postgres:5432/deku}", SMTP_HOST = "${SMTP_HOST:-mailpit}", SMTP_PORT = "${SMTP_PORT:-1025}", SMTP_USER = "${SMTP_USER:-peakfit-mailer}", SMTP_PASS = "${SMTP_PASS:-mail-relay-9a3f62}", PAYMENTS_API_URL = "${PAYMENTS_API_URL:-http://killbill:8080}", PAYMENTS_API_KEY = "${PAYMENTS_API_KEY:-orbit-labs}", PAYMENTS_API_SECRET = "${PAYMENTS_API_SECRET:-orbit-labs-secret-9f14c73e}", PAYMENTS_API_USER = "${PAYMENTS_API_USER:-peakfit-store}", PAYMENTS_API_PASSWORD = "${PAYMENTS_API_PASSWORD:-kb-store-7c41e9}", CARRIER_WEBHOOK_SECRET = "${CARRIER_WEBHOOK_SECRET:-carrier-sig-5e8d2b7a41}", CART_HOLD_SECONDS = "${CART_HOLD_SECONDS:-45}" }
+
+[environment.healthcheck]
+command            = "pg_isready -h postgres -p 5432 -q"
+interval_sec       = 5.0
+timeout_sec        = 5.0
+start_period_sec   = 60.0
+start_interval_sec = 2.0
+retries            = 60
+
+[verifier]
+environment_mode = "separate"
+timeout_sec      = 3600.0
+env = { ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY}", ANTHROPIC_BASE_URL = "${ANTHROPIC_BASE_URL}", APP_PUBLIC_URL = "${APP_PUBLIC_URL:-http://localhost:4173}", DB_ADMIN_URL = "${DB_ADMIN_URL:-postgresql://deku_admin:deku-local-dev@postgres:5432/deku}", EMAIL_INBOX_API_URL = "${EMAIL_INBOX_API_URL:-http://mailpit:8025/api/v1}", PAYMENTS_API_URL = "${PAYMENTS_API_URL:-http://killbill:8080}", PAYMENTS_API_KEY = "${PAYMENTS_API_KEY:-orbit-labs}", PAYMENTS_API_SECRET = "${PAYMENTS_API_SECRET:-orbit-labs-secret-9f14c73e}", PAYMENTS_ADMIN_USER = "${PAYMENTS_ADMIN_USER:-admin}", PAYMENTS_ADMIN_PASSWORD = "${PAYMENTS_ADMIN_PASSWORD:-password}", CARRIER_WEBHOOK_SECRET = "${CARRIER_WEBHOOK_SECRET:-carrier-sig-5e8d2b7a41}", CART_HOLD_SECONDS = "${CART_HOLD_SECONDS:-45}", DEKU_SERVICE_BACKEND = "postgres", DEKU_SERVICE_EMAIL = "mailpit", DEKU_SERVICE_PAYMENTS = "killbill" }
+
+[delivery]
+format = "harbor"
+schema_version = "1.4"
+reward_path = "/logs/verifier/reward.json"
+reward_key = "reward"
+reward_range = [0.0, 1.0]
+reward_full = 1.0
+network_policy = "public"
+
+[delivery.images]
+main = "mcr.microsoft.com/playwright/python:v1.49.1-noble@sha256:42e251ec3238672c931be6c3565ff279690ae072c3e22058128d0412494f6866"
+postgres = "postgres:16.4-bookworm@sha256:e62fbf9d3e2b49816a32c400ed2dba83e3b361e6833e624024309c35d334b412"
+mailpit = "axllent/mailpit:v1.30.6@sha256:7f33095f80e901f6ad08028f06ca284aa58fe84942be5496008d041d3b9f4d4d"
+killbill = "killbill/killbill:0.24.21@sha256:e6b6ab4a0e6287ebf57aafa2d5f22cfa6250dfa056682c74d7c208b4a39d0c9b"
+killbill-db = "killbill/mariadb:0.24@sha256:921e17f2ce804746d8fb2546249760b242e21d6f3398c6326a8a0901742b536a"
+killbill-init = "curlimages/curl:8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69"
+
+[[artifacts]]
+source      = "/app"
+destination = "app"

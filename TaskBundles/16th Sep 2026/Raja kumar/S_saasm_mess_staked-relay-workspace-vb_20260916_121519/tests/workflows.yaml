@@ -1,0 +1,590 @@
+- id: intro_releases_the_page_on_every_path
+  purpose: "The public page's introduction lets every visitor reach the page by keyboard, deep link, return visit, reduced motion or without scripts, inside its byte budget"
+  substeps:
+    - kind: browser
+      do: "Open /, press Skip the intro if the introduction is showing, open the FAQ section, expand the question about why the service is paid, and verify its answer text is shown below the question"
+      cov: "C-CF-154"
+    - kind: browser
+      do: "Open /#tokenSaleSection and verify the text $0.035 for token is not shown before the checkbox I am a private investor and a potential user of Nightjar is ticked and Show the terms is pressed, and that it is shown after"
+      cov: "C-CF-133"
+    - kind: browser
+      do: "Open /, press Skip the intro if the introduction is showing, scroll through the features and verify the link text reads Know more from our Whitepaper, that no application-store badge appears anywhere on the page, that the hero headline carries a six-sided hexagon mark, and that the moving banner reading get to know Nightjar better shows the hexagon mark between repeats of its phrase"
+      cov: "C-FE-07, C-CN-01, C-FE-05, C-FE-11"
+    - kind: browser
+      do: "Open /#roadmapSection and verify the roadmap entry April 2024 Whitepaper v.0.1.0 developed is marked Delivered and the entry Q2 2026 Token sale is marked Missed, and that Delivered sits beside a check mark in the lime and Missed beside a hollow ring in grey, neither in red"
+      cov: "C-CF-169, C-CF-227 (earned: the step reads the Missed mark on the Q2 2026 token sale entry), C-UX-11 (earned: the step reads the check mark and word beside Delivered), C-UX-13 (earned: the step reads the hollow ring in grey beside Missed, not in red)"
+    - kind: pytest
+      test: test_output.py::test_skip_is_first_focus_and_deep_links_or_returning_visits_show_no_intro
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-145, C-CF-146, C-CF-147, C-CF-153 (earned: the step chooses About and presses Back to return to the token-sale address), C-CF-180 (earned: the first visit shows the Introduction region), C-CF-181 (earned: Enter on the skip control hides the introduction and the page scrolls), C-CF-182 (earned: the token sale section offset is read in view after the deep link), C-CF-239 (earned: the step follows the About link)"
+    - kind: pytest
+      test: test_output.py::test_page_without_scripts_shows_every_section_and_scrolls
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-148, C-CF-149, C-CF-213 (earned: each of the seven section ids is located)"
+    - kind: pytest
+      test: test_output.py::test_reduced_motion_shows_stills_and_a_still_banner_read_once
+      category: business_rule
+      weight: 3
+      cov: "C-CF-150, C-CF-151, C-CF-152, C-CF-236 (earned: the page scrolls under reduced motion)"
+    - kind: pytest
+      test: test_output.py::test_phone_intro_keeps_skip_on_screen_and_its_stage_labels_in_one_row
+      category: presentation
+      weight: 1
+      cov: "C-FE-09 (earned: at 390 by 844 the step reads the skip control inside the viewport and the six stage labels on one row without widening the page)"
+    - kind: pytest
+      test: test_output.py::test_first_public_page_load_stays_inside_the_byte_budget
+      category: business_rule
+      weight: 3
+      cov: "C-TR-01, C-TR-02, C-TR-03, C-TR-04, C-FE-01, C-FE-02, C-CN-02 (earned: every request of the first load is checked against the app origin)"
+
+- id: simultaneous_waitlist_requests_send_one_email_or_invalid_is_refused
+  purpose: "The waitlist mails exactly one confirmation to the requester alone and refuses invalid, bot and extra-field requests, beside the not-found page, alt text and sitemap"
+  substeps:
+    - kind: browser
+      do: "Open /#subscribeSection and verify the subscribe form states inside the form that the address is used only to send Nightjar news, is shared with nobody, is kept until removed, and that every email has a removal link, and verify the checkbox I agree to receive Nightjar news by email is not ticked"
+      cov: "C-CF-155, C-CF-230 (earned: the step reads the consent checkbox unticked)"
+    - kind: browser
+      do: "Open /no-such-page-for-nightjar and verify the page reads Page not found with a Back to Nightjar link, then choose that link and verify the public page opens"
+      cov: "C-CF-165"
+    - kind: pytest
+      test: test_output.py::test_waitlist_confirmation_email_reaches_only_the_requester
+      critical: true
+      category: notification
+      weight: 5
+      cov: "C-CF-159, C-CF-160, C-CF-162 (earned: the step opens the confirmation link twice and reads the already-used line), C-CF-191 (earned: the accepted response message is matched), C-CF-192 (earned: the body's first line is read for the confirm link), C-CF-193 (earned: the body is searched for the removal link), C-CF-194 (earned: the confirm page text is matched), C-CF-195 (earned: the removal page text is matched)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_waitlist_requests_send_one_confirmation_email
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-161, C-CF-197 (earned: a seventh request after the burst still leaves one mail)"
+    - kind: pytest
+      test: test_output.py::test_waitlist_refuses_extra_fields_missing_consent_and_a_filled_decoy
+      category: validation
+      weight: 3
+      cov: "C-CF-156, C-CF-157, C-CF-158, C-CF-196 (earned: a request with not-an-address is refused)"
+    - kind: pytest
+      test: test_output.py::test_invalid_signup_email_is_named_inline_and_stores_no_account
+      category: validation
+      weight: 3
+      cov: "C-CF-163, C-CF-02, C-UF-15 (earned: the Create account button submits the form)"
+    - kind: pytest
+      test: test_output.py::test_public_images_carry_alternative_text_or_declare_decoration
+      category: presentation
+      weight: 1
+      cov: "C-CF-164, C-CF-183 (earned: every unlabelled svg must be aria-hidden or presentational)"
+    - kind: pytest
+      test: test_output.py::test_floating_navigation_has_an_opaque_backing_and_legible_labels
+      category: presentation
+      weight: 1
+      cov: "C-FE-06 (earned: an opaque computed background sits behind the labels and each label reads at a contrast of at least 4.5 to 1 against it), C-CF-239 (earned: all five labels must be present on the bar)"
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_and_the_sitemap_lists_public_routes
+      category: presentation
+      weight: 1
+      cov: "C-CF-166, C-CF-167, C-CF-168, C-DC-03, C-DC-01 (earned: every request in this step goes to the public app address), C-DC-02 (earned: the health route is fetched under the api prefix on the page origin), C-CF-198 (earned: robots.txt is matched for a Disallow of /app)"
+
+- id: used_wallet_challenge_is_denied
+  purpose: "A wallet challenge signs in once, for its own address, purpose and expiry, and the two sign-in paths reach one account"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, and verify that a dialog says This key is the only way into your account. Nobody can restore it, including us. and that the workspace opens only once the checkbox I understand that nobody can restore this key is ticked before Continue is pressed"
+      cov: "C-CF-15 (earned: signing up sets up the first device and the step meets the key warning before the workspace), C-CF-16, C-RL-06"
+    - kind: pytest
+      test: test_output.py::test_used_wallet_challenge_is_denied_a_second_session
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-06, C-CF-11, C-CF-05 (earned: the step signs the exact message a sign_in challenge returned before it expires)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_wallet_verifications_issue_one_session
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-07, C-DC-12 (earned: every simultaneous answer is required to be below 500)"
+    - kind: pytest
+      test: test_output.py::test_wallet_challenge_is_bound_to_address_purpose_and_expiry
+      category: security
+      weight: 5
+      cov: "C-CF-08, C-CF-09, C-CF-10, C-TR-07 (earned: a signature over an altered message is refused while the stored message verifies), C-DM-04 (earned: the step expires a challenge by its wallet_challenges expires_at row)"
+    - kind: pytest
+      test: test_output.py::test_connected_wallet_signs_into_the_same_account_and_its_trial_is_not_repeated
+      category: business_rule
+      weight: 3
+      cov: "C-CF-12, C-CF-13, C-CF-14, C-CF-235 (earned: after the detach a wallet sign-in creates a new account)"
+    - kind: pytest
+      test: test_output.py::test_signing_out_ends_only_that_session
+      category: security
+      weight: 5
+      cov: "C-CF-03, C-CF-04, C-CF-01 (earned: the step signs up with a valid email and a long password and uses the returned access_token), C-DC-04 (earned: the signup response's access_token authenticates the calls that follow)"
+
+- id: pending_device_cannot_approve_itself
+  purpose: "Only an active device approves a new device, the key directory lists active devices only, removal revokes, and an unapproved device opens nothing"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as member2@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/devices, and verify each device is listed with its state, when it was added and when it was last active"
+      cov: "C-UF-04, C-RL-11 (earned: the step signs in as member2@example.com)"
+    - kind: pytest
+      test: test_output.py::test_pending_device_cannot_approve_itself_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-20, C-CF-17, C-CF-18, C-CF-21, C-TR-06 (earned: the approving request carries an active device token as its bearer token), C-CF-176 (earned: a device of another account approving is refused and the device stays pending), C-CF-234 (earned: an account access_token that is no device token is refused)"
+    - kind: pytest
+      test: test_output.py::test_key_directory_lists_only_active_devices
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-26, C-CF-27, C-CF-32 (earned: the step posts an envelope sealed to a pending device and expects refusal), C-CF-33 (earned: the step counts envelope rows for the refused client_id)"
+    - kind: pytest
+      test: test_output.py::test_removed_device_token_is_refused_and_every_epoch_advances
+      category: security
+      weight: 5
+      cov: "C-CF-24, C-CF-25"
+    - kind: pytest
+      test: test_output.py::test_unapproved_device_cannot_open_messages_until_approved
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-19, C-CF-22, C-CF-23, C-CF-206 (earned: the second device waits for the pending notice), C-CF-207 (earned: the approve button for Device 2 is used), C-CF-208 (earned: the button named Approve Device 2 is clicked)"
+
+- id: sealed_message_text_never_reaches_the_relay
+  purpose: "Two members exchange a message sealed in the browser that neither the traffic nor the database can read, retries store one row, and history follows the sender's clock"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, press New conversation, and verify the wizard moves through three steps at /app/conversations/new, /app/conversations/new/people and /app/conversations/new/name"
+      cov: "C-UF-01"
+    - kind: browser
+      do: "Leave the wizard without creating anything, open /app, and verify the conversation queue reads No conversations yet."
+      cov: "C-UF-08"
+    - kind: pytest
+      test: test_output.py::test_message_text_is_sealed_in_the_browser_and_a_tampered_copy_will_not_open
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-OV-01, C-OV-02, C-CF-28, C-CF-29, C-CF-30, C-DM-02 (earned: the step alters the stored envelopes ciphertext base64 and reads the result), C-CF-209 (earned: the Message field and Send button carry every sent message), C-UF-14 (earned: both browsers sign in through the Email, Password and Sign in controls)"
+    - kind: pytest
+      test: test_output.py::test_retried_send_stores_one_envelope_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-35, C-CF-36, C-TR-08, C-DC-06 (earned: the step compares the envelope_id each send returns)"
+    - kind: pytest
+      test: test_output.py::test_history_orders_by_clock_and_flags_gaps_when_read
+      category: business_rule
+      weight: 3
+      cov: "C-CF-37, C-CF-38 (earned: the step reads gap_before over an envelope whose preceding sender_seq is missing), C-CF-39 (earned: the step sends the missing envelope late and reads the flag cleared), C-CF-177 (earned: two envelopes share clock 40 and are ordered by sender device id)"
+
+- id: envelope_sealed_to_a_removed_member_is_denied
+  purpose: "The relay refuses anything sealed to someone outside the membership, and history, epochs and sync follow each period of membership"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, create a private group through New conversation with the contact code NJ-MEMBER23 and any name, open its settings, press Remove beside NJ-MEMBER23, verify the confirmation says They keep what they already received. That's on their device and we can't reach it. and then cancel"
+      cov: "C-RL-12 (earned: the step adds contact code NJ-MEMBER23 to the group), C-CF-48, C-UX-08 (earned: the step presses Remove and meets the confirmation before anything is removed)"
+    - kind: pytest
+      test: test_output.py::test_envelope_sealed_to_a_removed_member_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-31"
+    - kind: pytest
+      test: test_output.py::test_history_follows_each_period_of_membership
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-43, C-CF-44 (earned: the envelope sent after the second removal is absent from the removed member history), C-CF-45, C-CF-46 (earned: an account outside the group is denied its history)"
+    - kind: pytest
+      test: test_output.py::test_stale_epoch_envelope_is_refused_with_the_current_epoch
+      category: business_rule
+      weight: 3
+      cov: "C-CF-34, C-DC-05 (earned: the step reads reason and current_epoch from the refusal body)"
+    - kind: pytest
+      test: test_output.py::test_offline_member_syncs_both_changes_and_a_removed_member_nothing_after
+      category: business_rule
+      weight: 3
+      cov: "C-CF-49, C-CF-50, C-CF-42 (earned: the step expects the synced membership epochs to rise by one per change), C-DC-07 (earned: the step walks the sync feed by items, next_cursor and has_more), C-CF-237 (earned: the offline member's sync carries the envelope sealed to it)"
+    - kind: pytest
+      test: test_output.py::test_non_owner_cannot_remove_a_member_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-47, C-RL-04"
+
+- id: channel_subscriber_post_is_forbidden
+  purpose: "Channels take posts from broadcasters only, private shapes refuse join requests, receipts need both people, and a closed group keeps its history"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, open /app/explore, choose Open Relay Commons, verify the line Anyone can join this group, so treat it as public. Encryption hides it from the relays, not from members. is shown before joining, press Join, and verify the same line is shown above the composer"
+      cov: "C-CF-51, C-CF-52, C-DM-12"
+    - kind: browser
+      do: "On /app/explore choose Relay Bulletins, subscribe to it, and verify the composer is replaced by a line saying only broadcasters post in this channel"
+      cov: "C-CF-54, C-DM-13"
+    - kind: pytest
+      test: test_output.py::test_channel_subscriber_post_is_forbidden
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-53, C-DM-13 (earned: explore lists Relay Bulletins and a subscriber post to it is refused)"
+    - kind: pytest
+      test: test_output.py::test_private_group_and_chat_refuse_join_requests
+      category: business_rule
+      weight: 3
+      cov: "C-CF-55, C-CF-56"
+    - kind: pytest
+      test: test_output.py::test_read_receipt_needs_both_reader_and_author_opted_in
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-40, C-CF-41"
+    - kind: pytest
+      test: test_output.py::test_closed_group_refuses_posts_and_keeps_history
+      category: business_rule
+      weight: 3
+      cov: "C-CF-57, C-CF-58"
+
+- id: task_readers_follow_live_group_membership
+  purpose: "A task is a conversation whose readers follow the live membership of its groups, and renaming the task renames its chat"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, open /app/boards, create a board named Launch Plan with the columns To do, Doing and Done, create a task titled Draft relay notice in To do, rename it Publish relay notice, open its chat, and verify the chat is named Publish relay notice"
+      cov: "C-UF-02, C-UF-03"
+    - kind: browser
+      do: "Press New board on /app/boards and verify the wizard shows its first step at /app/boards/new and its second step, the columns, at /app/boards/new/columns, then leave it"
+      cov: "C-UF-09"
+    - kind: pytest
+      test: test_output.py::test_member_added_to_a_shared_group_later_reads_the_task
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-60"
+    - kind: pytest
+      test: test_output.py::test_unsharing_one_group_keeps_readers_granted_by_another
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-62, C-CF-63"
+    - kind: pytest
+      test: test_output.py::test_member_removed_from_a_shared_group_cannot_be_sealed_task_messages
+      category: security
+      weight: 5
+      cov: "C-CF-61, C-CF-178 (earned: the task epoch is read one higher after the reader change)"
+    - kind: pytest
+      test: test_output.py::test_renaming_a_task_renames_its_conversation
+      category: business_rule
+      weight: 3
+      cov: "C-CF-59"
+
+- id: concurrent_board_placements_converge
+  purpose: "Board placements converge on one order whatever order they arrive in, and an offline task replayed is stored once"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, create a board named Keyboard Board with the columns To do and Done, create a task titled First card in To do, then using only the keyboard focus the card, open its Move menu, choose Done, and verify the card now sits in Done"
+      cov: "C-CF-68"
+    - kind: pytest
+      test: test_output.py::test_placement_with_the_higher_clock_wins_in_either_arrival_order
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-64"
+    - kind: pytest
+      test: test_output.py::test_equal_clocks_resolve_by_device_and_equal_positions_by_client_id
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-65, C-CF-66"
+    - kind: pytest
+      test: test_output.py::test_task_replayed_with_its_client_id_is_stored_once
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-67"
+    - kind: pytest
+      test: test_output.py::test_phone_workspace_swaps_the_sidebar_for_a_menu_and_pages_board_columns
+      category: presentation
+      weight: 1
+      cov: "C-UX-09 (earned: at 390 by 844 the sidebar link is hidden until Menu is pressed), C-UX-07 (earned: the three column headings sit on one row), C-UF-17 (earned: the column starts are at least 234 pixels apart at 390 pixels wide), C-UF-18 (earned: pressing Menu reveals the boards link), C-CF-232 (earned: the board is made through Board name, Next and Create board and shows To do, Doing and Done)"
+
+- id: file_names_never_reach_the_relay_within_the_quota_limit
+  purpose: "Files are sealed with their names before upload, padded to size classes, held to the quota under contention, and links and membership grant access independently"
+  substeps:
+    - kind: browser
+      do: "Sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, open /app/storage, and verify a line shows the storage used against the total followed by New files will be refused at the limit."
+      cov: "C-CF-74"
+    - kind: browser
+      do: "On /app/storage verify the page states that padding pieces to size classes costs bandwidth and hides each file's size"
+      cov: "C-CF-170"
+    - kind: browser
+      do: "On /app/storage choose any small text file with Choose file, press Upload, press Delete beside the uploaded file, confirm if asked, and verify the page says Removed from your storage. Pieces already distributed can't be recalled."
+      cov: "C-CF-233, C-FE-10 (earned: the step reads the deletion notice word for word)"
+    - kind: pytest
+      test: test_output.py::test_uploaded_file_name_and_contents_are_sealed_before_upload
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-69, C-CF-70, C-DM-05 (earned: the step reads the stored length of every file_pieces row of the uploaded file), C-CF-225 (earned: the page is read for the uploaded file's name), C-CF-226 (earned: the upload goes through Choose file and Upload)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_file_creations_cannot_exceed_the_quota
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-72 (earned: the step reads quota_bytes and used_bytes after the contention), C-CF-73, C-CF-240 (earned: used_bytes is read as piece_size times piece_count for the accepted file)"
+    - kind: pytest
+      test: test_output.py::test_piece_of_a_non_standard_length_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-71, C-CF-212 (earned: a piece_size of 50000 is refused)"
+    - kind: pytest
+      test: test_output.py::test_file_missing_a_piece_reads_unavailable
+      category: business_rule
+      weight: 3
+      cov: "C-CF-75"
+    - kind: pytest
+      test: test_output.py::test_revoking_a_link_keeps_member_access_and_removal_keeps_the_link
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-76 (earned: the revoked link is refused with reason revoked), C-CF-78, C-CF-79, C-CF-80"
+    - kind: pytest
+      test: test_output.py::test_expired_link_is_refused_with_the_expiry_message
+      category: business_rule
+      weight: 3
+      cov: "C-CF-77, C-DM-06 (earned: the step expires the link through its file_links expires_at row)"
+
+- id: direct_call_route_needs_both_participants
+  purpose: "A call goes direct only when both people in a chat chose it, group calls always relay, and rings are counted once"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as member3@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/calls, verify the text Route privately, slower. Or connect directly, faster, and share your network address with them. is shown with Private selected, choose Direct, reload the page, and verify Direct is still selected"
+      cov: "C-CF-82, C-UF-05"
+    - kind: pytest
+      test: test_output.py::test_direct_route_requires_both_participants_to_choose_it
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-81 (earned: a new account reads call_route private in its settings), C-CF-83, C-CF-85 (earned: peer_address is read on the relayed and the direct call)"
+    - kind: pytest
+      test: test_output.py::test_group_call_always_relays_without_a_peer_address
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-84"
+    - kind: pytest
+      test: test_output.py::test_repeated_ring_rings_once_and_a_late_ring_is_refused
+      category: business_rule
+      weight: 3
+      cov: "C-CF-86, C-CF-87"
+
+- id: expired_quote_payment_is_requoted_at_the_block_rate
+  purpose: "Quotes need a fresh rate, payments are decided once by their block time and depth from signed watcher events, and shortfalls follow the half per cent rule"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as member2@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/membership, and verify it states a month costs $2.25 paying in NJR and $3.50 on the other four rails, and that trials are limited per account and per wallet, which stops one wallet collecting trial after trial without asking for personal data and does not stop someone making new accounts"
+      cov: "C-CF-99, C-CF-100, C-CF-174"
+    - kind: pytest
+      test: test_output.py::test_quote_is_refused_while_the_rate_is_stale
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-101"
+    - kind: pytest
+      test: test_output.py::test_amount_due_rounds_up_to_the_rail_base_unit
+      category: business_rule
+      weight: 3
+      cov: "C-CF-102, C-CF-103, C-CF-99, C-DC-10 (earned: the step reads amount_due from each quote), C-CF-221 (earned: an app_store quote reads amount_due 350)"
+    - kind: pytest
+      test: test_output.py::test_block_time_decides_the_rate_of_a_late_reported_payment
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-106, C-CF-107"
+    - kind: pytest
+      test: test_output.py::test_unsigned_or_forged_watcher_events_are_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-104, C-TR-05 (earned: only the event signed by the pinned watcher key settles), C-CF-223 (earned: a fresh account reads state trial before paying), C-TR-09 (earned: the accepted event carries its signature in X-Watcher-Signature)"
+    - kind: pytest
+      test: test_output.py::test_payment_below_its_depth_grants_nothing
+      category: business_rule
+      weight: 3
+      cov: "C-CF-105, C-CF-210 (earned: njr is reported at 11 then 12 confirmations), C-CF-211 (earned: xmr is reported at 9 then 10 confirmations)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_depth_reports_extend_membership_once
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-108, C-CF-109, C-CF-112 (earned: the step reads paid_until as block time plus thirty days after one settled payment), C-CF-184 (earned: paid_until equals block time plus thirty days for an account with no paid time)"
+    - kind: pytest
+      test: test_output.py::test_half_per_cent_shortfall_rule_decides_settled_or_underpaid
+      category: business_rule
+      weight: 3
+      cov: "C-CF-110, C-CF-111, C-CF-219 (earned: a one unit top-up settles the short quote), C-CF-220 (earned: paying 16100000 reads credit 28571)"
+
+- id: lapsed_membership_suspends_and_deletes_nothing
+  purpose: "A lapsed member keeps history, devices and conversations but cannot send until paying again, and a sponsor learns nothing about the recipient"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as member3@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, and verify the workspace shows Membership expired. Nothing has been deleted. Sending stops until you renew."
+      cov: "C-CF-118, C-RL-09"
+    - kind: browser
+      do: "Sign out, then sign up at /signup with a new email address of your choosing and the password deku-demo-pw-2026, tick I understand that nobody can restore this key and press Continue, open /app/membership, and verify it shows Free trial followed by the number of days left"
+      cov: "C-CF-171"
+    - kind: pytest
+      test: test_output.py::test_lapsed_member_reads_history_but_sending_is_refused
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-113, C-CF-114, C-CF-115, C-CF-116, C-DM-03 (earned: the step lapses the account through its memberships paid_until and trial_ends_at), C-CF-224 (earned: creating a file while suspended is refused)"
+    - kind: pytest
+      test: test_output.py::test_renewal_after_lapse_restores_sending_with_devices_intact
+      category: business_rule
+      weight: 3
+      cov: "C-CF-117"
+    - kind: pytest
+      test: test_output.py::test_sponsor_sees_only_the_recipient_code_and_state
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-119 (earned: the recipient membership reads active with the sponsor code after a sponsored payment settles), C-CF-120"
+    - kind: pytest
+      test: test_output.py::test_declining_a_sponsorship_ends_the_sponsored_time
+      category: business_rule
+      weight: 3
+      cov: "C-CF-121, C-CF-222 (earned: a sponsored payment after the decline reads credited)"
+
+- id: duplicate_settlement_runs_pay_each_relay_once
+  purpose: "Closed epochs settle from their frozen snapshot by exact rounded-down shares, once, however settlement is started, and only the treasurer may run it"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as treasurer@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/epochs, and verify epoch 1 is listed as closed and the last epoch listed is open"
+      cov: "C-UF-06, C-RL-07"
+    - kind: browser
+      do: "Open /app/epochs/1 and verify that Kestrel, Heron, Osprey and Plover each show their answered rounds by tier, a weight of 150, 40, 105 and 0, and a share of 47.457626 NJR, 12.655367 NJR, 33.220338 NJR and 0 NJR, and that the remainder reads 0.000001 NJR"
+      cov: "C-CF-132, C-CF-173, C-CF-238 (earned: the step reads each seeded weight and share), C-UF-16 (earned: the step reads the shares and the remainder in whole NJR with trailing zeros dropped)"
+    - kind: browser
+      do: "Sign out, then sign in at /signin as member2@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/treasury/whitelist, and verify the page says Only the treasurer can open this page. and shows no application data"
+      cov: "C-UF-11"
+    - kind: pytest
+      test: test_output.py::test_audit_of_epoch_two_shows_the_seeded_inputs
+      category: business_rule
+      weight: 3
+      cov: "C-CF-131, C-CF-123 (earned: the audit contributions match the dollar-rail conversion at each receipt's NJR rate), C-CF-124 (earned: the audit weights match rounds at the tier held per round), C-DM-08, C-DM-09, C-DC-08, C-CF-214 (earned: pool_micro is compared with eighty per cent of contributions rounded down), C-CF-215 (earned: epoch 2 includes an njr receipt paid short of its amount due), C-DC-11 (earned: the audit is read field by field by the pinned names)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_settlement_runs_pay_epoch_two_once
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-129, C-OV-03, C-DM-01 (earned: the treasurer and operator sessions sign in with the seeded password), C-RL-08 (earned: the operator's token ledger is read by signing in as member4@example.com), C-CF-217 (earned: epoch 2 is read as settled after the runs)"
+    - kind: pytest
+      test: test_output.py::test_batched_settlement_of_epoch_three_pays_from_the_snapshot_after_a_withdrawal
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-127, C-CF-130, C-DC-09 (earned: the step reads paid and remaining from each settlement run), C-CF-216 (earned: epoch 3 is read as settling after the first run)"
+    - kind: pytest
+      test: test_output.py::test_settling_epoch_four_twice_pays_rounded_down_shares_once
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-125, C-CF-126 (earned: the step reads remainder_micro and checks the ledger totals the pool less that remainder), C-CF-128"
+    - kind: pytest
+      test: test_output.py::test_member_cannot_run_treasury_actions_forbidden
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-01 (earned: a visitor with no token is denied /api/me), C-RL-02 (earned: a member token is refused on every treasurer endpoint), C-RL-03 (earned: epoch 1, the open epoch and the token event are read unchanged afterwards)"
+    - kind: pytest
+      test: test_output.py::test_seeded_relays_and_epochs_are_stored_once
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-07, C-DM-11 (earned: every seeded relay, epoch, account and schedule row is counted exactly once after all restarts)"
+
+- id: duplicate_probe_answers_count_nothing
+  purpose: "Uptime counts only fresh answers to server-issued probes at the tier held per round, the floor holds, a missed round falls a group back to open routing, and receipts after a close join the next epoch"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as member4@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/relay, press Start relay mode, verify the notice Other people's encrypted traffic will pass through your connection while this runs. is shown with Start and Cancel, and press Cancel"
+      cov: "C-CF-96"
+    - kind: browser
+      do: "Open /network-limits and verify it states that no stake is slashed and that the network does not attempt to resist an observer who can see the whole network"
+      cov: "C-CF-97, C-CF-98"
+    - kind: browser
+      do: "Open /app/relay again and verify Kestrel, Heron, Osprey, Plover, Wren, Tern, Avocet and Sanderling are each listed with a tier"
+      cov: "C-UF-10"
+    - kind: pytest
+      test: test_output.py::test_duplicate_foreign_or_superseded_probe_answers_count_nothing
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-91, C-CF-92, C-CF-93, C-RL-05 (earned: a member who does not operate the relay is denied its probe)"
+    - kind: pytest
+      test: test_output.py::test_earnings_follow_the_tier_held_when_each_round_was_issued
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-124, C-CF-89 (earned: a 20000 stake after withdrawal reads tier level-1 and earns 15 per round), C-CF-185 (earned: unstaking to 20000 reads tier level-1 at once), C-CF-186 (earned: adding stake to 150000 reads tier master at once)"
+    - kind: pytest
+      test: test_output.py::test_stake_below_the_floor_is_refused_and_heartbeats_change_nothing
+      category: business_rule
+      weight: 3
+      cov: "C-CF-88, C-CF-90 (earned: withdrawing 10001 of a 20000 stake is refused and the stake stays 20000), C-CF-94"
+    - kind: pytest
+      test: test_output.py::test_core_node_that_missed_the_latest_round_falls_back
+      category: business_rule
+      weight: 3
+      cov: "C-CF-95, C-CF-179 (earned: routing reads core_node again after the latest round is answered)"
+    - kind: pytest
+      test: test_output.py::test_payment_settling_after_close_belongs_to_the_next_epoch
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-122, C-CF-218 (earned: closing answers the next epoch as opened)"
+
+- id: simultaneous_token_claims_transfer_once
+  purpose: "Vesting claims are computed fresh from the token event, transfer once under contention and total the allocation, and one wallet files one whitelist application"
+  substeps:
+    - kind: browser
+      do: "Open /whitepaper and verify it lists eleven vesting schedules and states an event supply of 16400000 NJR"
+      cov: "C-CF-134, C-CF-135"
+    - kind: browser
+      do: "Sign in at /signin as member@example.com with the password deku-demo-pw-2026, ticking I understand that nobody can restore this key and pressing Continue if that dialog appears, open /app/token, and verify a Visioners Round position of 40000 NJR is listed"
+      cov: "C-DM-10, C-RL-10 (earned: the step signs in as member@example.com)"
+    - kind: browser
+      do: "Open /whitelist and verify the stepper states in the form why the email and the amount are collected, that only the treasurer reads them, and that they are deleted a year after the sale closes"
+      cov: "C-CF-172, C-CF-228 (earned: the step reads that only the treasurer reads the details), C-CF-229 (earned: the step reads that the details are deleted a year after the sale closes)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_claims_transfer_the_claimable_balance_once
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-139"
+    - kind: pytest
+      test: test_output.py::test_claims_across_token_event_corrections_total_the_allocation
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-140, C-CF-138, C-CF-187 (earned: a claim after moving the event later transfers zero)"
+    - kind: pytest
+      test: test_output.py::test_cliff_accrues_and_releases_in_a_lump_for_every_schedule
+      category: business_rule
+      weight: 3
+      cov: "C-CF-136 (earned: at day 89 a Visioners position shows only its event part claimable), C-CF-137 (earned: at day 91 the accrued linear lump is claimable at once), C-CF-188 (earned: team claimable is read either side of its cliff), C-CF-189 (earned: liquidity claimable is its whole allocation), C-CF-190 (earned: community claimable is read after its one month cliff)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_whitelist_applications_from_one_wallet_file_one_and_email_once
+      critical: true
+      category: notification
+      weight: 5
+      cov: "C-CF-143, C-CF-144, C-RL-13 (earned: the treasurer lists the applications from the wallet), C-CF-199 (earned: the mail subject prefix is matched), C-CF-200 (earned: the mail body is read for the not-an-allocation line), C-CF-201 (earned: a later application from the same wallet is refused)"
+    - kind: pytest
+      test: test_output.py::test_whitelist_stepper_back_keeps_entries_and_applies
+      category: business_rule
+      weight: 3
+      cov: "C-CF-141, C-UF-07 (earned: pressing Apply shows the not-an-allocation line), C-CF-175 (earned: the shown message is read for the no-funds sentence), C-CF-202 (earned: the step waits for the details and review addresses), C-CF-203 (earned: the wallet step controls are found by their labels), C-CF-204 (earned: Email, Amount in USD and Continue are found by their labels on the details step), C-CF-205 (earned: Apply submits the application)"
+    - kind: pytest
+      test: test_output.py::test_whitelist_amount_outside_the_cheque_limits_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-142"

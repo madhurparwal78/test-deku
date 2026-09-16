@@ -1,0 +1,394 @@
+- id: cash_on_delivery_invoiced_only_at_delivery
+  purpose: A guest's cash on delivery order needs a verified phone and is invoiced once, only when delivered
+  substeps:
+  - kind: browser
+    do: Open /products/stridewell-road-runner, choose UK 8 and press Add to cart, and confirm the bag opens listing stridewell road runner in UK 8 with its line total and a meter saying how far the bag
+      is from the next offer
+    cov: C-UF-04
+  - kind: browser
+    do: With that bag, open /checkout, give a new ten digit phone, an email at example.com and an address in the postal code 560001, choose cash on delivery, and confirm the page reads We sent a 6-digit
+      code to followed by that phone before any order is placed
+  - kind: pytest
+    test: test_output.py::test_cash_on_delivery_order_needs_a_verified_phone
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_cash_on_delivery_invoice_appears_only_at_delivery_and_only_once
+    critical: true
+    category: core_outcome
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_placed_email_states_the_amount_due_to_the_courier
+    category: notification
+    weight: 3
+- id: duplicate_placement_makes_one_prepaid_order
+  purpose: A prepaid order is invoiced at placement, and one key makes one order however it is repeated
+  substeps:
+  - kind: browser
+    do: Put stridewell road runner in UK 9 in the bag, complete /checkout as a guest with a new ten digit phone, an email at example.com and an address in 560001, paying prepaid, and confirm a full page
+      confirmation at /orders/ followed by an order number beginning PF- shows the items and the total
+    cov: C-UF-08
+  - kind: browser
+    do: On that confirmation page confirm there is one action to track the order
+  - kind: pytest
+    test: test_output.py::test_prepaid_order_is_invoiced_at_placement_for_the_total
+    critical: true
+    category: core_outcome
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_replayed_placement_is_the_same_order_with_no_second_invoice
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_simultaneous_placements_under_one_key_make_one_order
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_one_key_with_another_bag_is_refused_and_a_placed_bag_is_closed
+    category: validation
+    weight: 3
+- id: concurrent_bags_hold_the_last_unit_once
+  purpose: Racing bags, ended holds and placements after a recount never sell a unit twice
+  substeps:
+  - kind: browser
+    do: Open /products/stridewell-road-runner and confirm UK 11 is shown struck through and disabled with a reason rather than hidden
+    cov: C-FE-17
+  - kind: browser
+    do: Open /products/kinetra-compact-mini-massage-gun, raise the quantity stepper as far as it goes, and confirm it stops at 5
+    cov: C-FE-18
+  - kind: pytest
+    test: test_output.py::test_two_bags_racing_for_the_last_unit_hold_it_once
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_hold_ends_on_time_and_returns_its_unit_exactly_once
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_placements_needing_more_than_on_hand_sell_it_once
+    critical: true
+    category: data_integrity
+    weight: 5
+- id: stale_total_conflict_recomputed_by_the_server
+  purpose: Prices, totals, stock and the address are decided by the server at placement
+  substeps:
+  - kind: browser
+    do: Put ascendo scalp massager in the bag, open the bag drawer, and confirm the line shows its image, its title, a quantity stepper and its line total, with a subtotal beneath the lines
+  - kind: browser
+    do: With the bag drawer open, press Escape and confirm the drawer closes, then reopen the drawer, choose to remove the line, and confirm the page asks before removing the line
+    cov: C-UX-07, C-UX-10
+  - kind: pytest
+    test: test_output.py::test_a_price_change_shows_at_the_line
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_a_stale_total_is_refused_with_the_differences_then_accepted
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_the_order_keeps_its_own_copy_of_the_address
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_line_sold_out_before_placement_is_named_and_nothing_is_taken
+    critical: true
+    category: data_integrity
+    weight: 5
+- id: promotions_measure_the_subtotal
+  purpose: Threshold offers, the code and the meter all read the merchandise subtotal, and discounts split to the paisa
+  substeps:
+  - kind: browser
+    do: Starting from an empty bag, put one ascendo scalp massager in the bag, open the bag drawer, and confirm the meter reads Add 1,700 more for a free gift
+    cov: C-FE-19
+  - kind: browser
+    do: Add stridewell road runner in UK 10 to the same bag and confirm a peakfit shaker bottle appears in the bag at no charge
+  - kind: pytest
+    test: test_output.py::test_threshold_discounts_never_stack_and_read_the_subtotal_before_discounts
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_code_takes_only_its_eligible_lines
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_the_meter_counts_from_the_merchandise_subtotal
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_an_order_discount_is_split_across_lines_to_the_paisa
+    critical: true
+    category: data_integrity
+    weight: 5
+- id: cash_on_delivery_rechecked_at_placement
+  purpose: Payment on delivery is refused by postal code, cap and product at placement, and large orders take an advance
+  substeps:
+  - kind: browser
+    do: Open /products/kinetra-compact-mini-massage-gun, enter 110001 in the delivery check, and confirm it reads This postal code is prepaid only.
+    cov: C-FE-15
+  - kind: browser
+    do: In the same delivery check enter 560001 and confirm it reads Delivering to 560001 by followed by a date, and Cash on delivery available here
+    cov: C-FE-16
+  - kind: browser
+    do: Open /products/kinetra-vibration-plate, enter 560001 in the delivery check, and confirm it does not say Cash on delivery available here
+  - kind: pytest
+    test: test_output.py::test_a_prepaid_only_postal_code_refuses_cash_on_delivery_at_placement
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_cash_on_delivery_is_refused_above_the_cap_and_for_an_ineligible_product
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_partial_advance_is_invoiced_at_placement_and_the_rest_at_delivery
+    critical: true
+    category: core_outcome
+    weight: 5
+- id: duplicate_or_unsigned_carrier_events_rejected
+  purpose: Carrier events need a fresh signature, apply once, never go backwards and restore stock once
+  substeps:
+  - kind: browser
+    do: Open /track, enter the order number PF-100002 with the digits 0011, and confirm a timeline of statuses with their times ends in delivered
+  - kind: browser
+    do: On that tracking result confirm no address, no name and no phone number is shown
+  - kind: pytest
+    test: test_output.py::test_an_unsigned_or_stale_carrier_event_changes_nothing
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_repeated_carrier_event_applies_once
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_stale_event_never_moves_an_order_backwards
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_refused_parcel_returns_its_units_to_stock_exactly_once
+    critical: true
+    category: data_integrity
+    weight: 5
+- id: cross_customer_order_access_denied
+  purpose: Customers cancel only their own unpacked orders and reach no merchant route
+  substeps:
+  - kind: browser
+    do: Open /account without signing in and confirm the page asks for a phone to sign in and shows no password field
+    cov: C-UF-09
+  - kind: browser
+    do: Open /merchant without signing in and confirm the not-found page reading That page does not exist. renders instead of any console
+  - kind: browser
+    do: On /account read the header's search, account and bag icon controls in the page's accessibility snapshot and confirm each one carries an accessible name
+    cov: C-UX-08
+  - kind: pytest
+    test: test_output.py::test_a_customer_cancels_before_packing_and_the_units_return
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_cancelling_after_packing_is_refused_and_the_order_is_unchanged
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_another_customer_cannot_read_or_cancel_an_order
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_customer_is_denied_every_merchant_route
+    critical: true
+    category: security
+    weight: 5
+- id: tracking_limit_after_wrong_digits
+  purpose: Tracking shows a timeline and nothing else, gives nothing away to a wrong guess, and locks after five
+  substeps:
+  - kind: browser
+    do: Open /track, enter PF-100003 with the digits 1234 and note the answer, then enter PF-999999 with the digits 1234, and confirm both answers read the same
+  - kind: pytest
+    test: test_output.py::test_tracking_returns_the_timeline_and_nothing_else
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_wrong_digits_answer_exactly_as_an_unknown_order
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_tracking_stops_answering_after_five_wrong_attempts
+    category: security
+    weight: 5
+- id: expired_return_window_rejected_and_refund_what_was_paid
+  purpose: A return refunds the line's paid amount within seven days of delivery, for a listed reason, once
+  substeps:
+  - kind: browser
+    do: Open /pages/returns and confirm the seven day window, what is excluded, who pays return shipping and how long a refund takes appear in that order above any other prose
+    cov: C-FE-23
+  - kind: pytest
+    test: test_output.py::test_a_return_refunds_what_the_line_actually_paid
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_return_after_seven_days_is_refused
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_return_before_delivery_or_with_an_unlisted_reason_is_refused
+    category: validation
+    weight: 3
+- id: honest_prices_and_badges
+  purpose: Compare prices come from price history, never from input, and stock badges count held units
+  substeps:
+  - kind: browser
+    do: Open /products/kinetra-compact-mini-massage-gun and confirm the price block shows ₹1,899 as the selling price, ₹3,499 struck through and a saving of 45%
+  - kind: browser
+    do: Open /collections/bestsellers and confirm every card shows the selling price, the original struck through and the saving as a percentage
+  - kind: browser
+    do: On a desktop width, hover the EQUIPMENTS department tab and confirm the menu shows real products under PULL UP BAR, RESISTANCE BANDS, MASSAGERS and YOGA, each product card with a picture and a live
+      price, and a View More link
+    cov: C-OV-08, C-FE-04
+  - kind: pytest
+    test: test_output.py::test_a_merchant_cannot_type_a_struck_through_price
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_the_struck_through_price_follows_the_price_history
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_low_stock_badge_counts_units_held_in_bags
+    category: business_rule
+    weight: 3
+- id: reused_or_crossed_codes_rejected_and_bags_merge
+  purpose: Codes go to the email on file, verify once for their phone, resend slowly, and signing in sums the bags
+  substeps:
+  - kind: browser
+    do: Open /account, enter a new ten digit phone with an email at example.com, ask for a code, and confirm the page offers Not received? Resend in followed by a count of seconds rather than an immediate
+      resend
+    cov: C-FE-21
+  - kind: pytest
+    test: test_output.py::test_a_code_for_a_known_phone_goes_only_to_the_email_on_file
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_code_is_single_use_and_belongs_to_its_phone
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_second_code_request_inside_thirty_seconds_is_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_a_guest_bag_merges_into_the_account_bag_by_summing
+    critical: true
+    category: data_integrity
+    weight: 5
+- id: delivery_confidence_bands
+  purpose: Delivery history decides the band, blocks payment on delivery but never prepaid, and no score is exposed
+  substeps:
+  - kind: browser
+    do: With a product in the bag, open /checkout, give a new ten digit phone, an email at example.com and an address in 110001, and confirm cash on delivery is not offered while prepaid is
+  - kind: pytest
+    test: test_output.py::test_two_delivered_orders_are_confirmed_at_once
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_postal_history_alone_never_puts_a_first_order_below_medium
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_blocked_band_refuses_cash_on_delivery_but_takes_prepaid
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_low_band_order_cannot_be_packed_before_confirmation
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_no_confidence_score_reaches_a_customer_or_the_merchant
+    critical: true
+    category: security
+    weight: 5
+- id: listing_and_reviews
+  purpose: Listings filter before paging and keep sold out products, and only delivered orders earn a review
+  substeps:
+  - kind: browser
+    do: Open /collections/under-999, choose the discount filter above 50%, and confirm the address now carries the filter and a reload keeps it applied
+    cov: C-FE-24
+  - kind: browser
+    do: Search for zzqxv from the header search field and confirm the results read Nothing matched "zzqxv" with a shelf of best sellers
+    cov: C-FE-20
+  - kind: pytest
+    test: test_output.py::test_a_review_needs_a_delivered_order_of_that_product
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_ratings_count_published_reviews_only
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_filters_and_price_sort_apply_before_paging
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_out_of_stock_products_stay_listed
+    category: business_rule
+    weight: 3
+- id: public_launch_surface
+  purpose: Unknown addresses, privacy, images, previews, secrets and the price sentence hold on the public site
+  substeps:
+  - kind: browser
+    do: Open /no-such-peakfit-page and confirm the page shows 404, That page does not exist., a search field and best sellers, with the address still /no-such-peakfit-page
+  - kind: browser
+    do: Open /pages/privacy and confirm it lists what Peakfit records about a customer, phone, email, addresses and orders among them, and how long each is kept
+  - kind: browser
+    do: Open / and press Tab once, and confirm a Skip to content link appears
+    cov: C-FE-22
+  - kind: pytest
+    test: test_output.py::test_an_unknown_address_renders_the_not_found_page
+    critical: true
+    category: presentation
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_the_privacy_page_is_linked_from_every_footer
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_every_content_image_carries_alternative_text
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_every_public_route_declares_its_own_social_preview
+    critical: true
+    category: presentation
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_no_credential_reaches_the_browser
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_price_block_reads_as_one_sentence
+    category: presentation
+    weight: 1

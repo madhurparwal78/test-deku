@@ -1,0 +1,504 @@
+- id: analyst_role_denied_at_the_api
+  purpose: An analyst is refused every write at the API and the rows aimed at stay untouched
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as analyst@example.com with the password deku-demo-pw-2026, then open the Northlake approvals queue and confirm requests are listed with no control to approve, reject
+      or execute them
+  - kind: browser
+    do: Still signed in as the analyst, open /northlake/atlas-editor/production/usage and confirm the meters are listed to read, with no control that changes a plan or an entitlement
+  - kind: browser
+    do: Open /northlake/audit and confirm entries are listed, each showing an actor, an action and an outcome
+  - kind: pytest
+    test: test_output.py::test_analyst_role_denied_approval_row_untouched
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_analyst_denied_every_write_nothing_stored
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_end_user_token_cannot_reach_console_routes_denied
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_cross_tenant_resource_denied_same_as_nonexistent
+    category: security
+    weight: 5
+- id: requester_cannot_approve_own_request
+  purpose: Self approval is refused in the policy layer and the recorded approval carries the canonical argument hash
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as developer@example.com with the password deku-demo-pw-2026, open /northlake/approvals/new/action, choose the action room.default_access_public and continue to the
+      arguments step
+  - kind: browser
+    do: Choose the Atlas Editor production environment and the room doc-bramble-notes, write a reason, continue to the review step, and confirm it shows an impact summary before any control that submits
+  - kind: pytest
+    test: test_output.py::test_requester_cannot_approve_own_request_denied
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_approval_records_canonical_argument_hash_stored
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_two_approver_action_needs_two_distinct_admins
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_approval_requested_email_reaches_each_eligible_approver_except_requester
+    category: notification
+    weight: 3
+- id: approval_execution_conflict_guards
+  purpose: Unapproved arguments, grown impact and expiry each stop an execution
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open the Northlake approvals queue filtered to the pending state, and confirm the request to revoke Northlake
+      Contractors is listed as pending
+  - kind: browser
+    do: Open that pending request and confirm the page shows when the request expires
+  - kind: pytest
+    test: test_output.py::test_execute_with_unapproved_arguments_conflict_nothing_stored
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_impact_growth_returns_request_to_pending
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_impact_growth_renotifies_eligible_approvers_by_email
+    category: notification
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_expired_request_reads_expired_and_execution_conflict
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_expiry_email_reaches_requester_exactly_once
+    category: notification
+    weight: 3
+- id: directory_group_revocation_ends_live_connections
+  purpose: Executing an approved revocation ends the group's connections, sessions, credentials and grants
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open /northlake/groups and open Northlake Reviewers, and confirm the group is marked as sourced from the directory
+      with no control to edit its members
+  - kind: browser
+    do: Open /northlake/members and confirm each member row shows a role and a status
+  - kind: pytest
+    test: test_output.py::test_revocation_terminates_every_live_connection_of_the_group
+    critical: true
+    category: core_outcome
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_revocation_revokes_member_sessions_token_denied
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_revocation_retires_member_credentials_and_group_grants_stored
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_revocation_impact_counts_and_outsider_connection_untouched
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_executed_revocation_sends_no_transition_email
+    category: notification
+    weight: 3
+- id: admin_approves_seeded_revocation_in_console
+  purpose: An administrator approves and executes the seeded revocation through the console
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin2@example.com with the password deku-demo-pw-2026, then open the Northlake approvals queue
+  - kind: browser
+    do: Open the pending request raised by developer@example.com to revoke the group Northlake Contractors and confirm the page shows an impact summary counting rooms, connections, end users, members and
+      credentials
+  - kind: browser
+    do: Approve the request, then execute it, and confirm the request now reads executed
+  - kind: browser
+    do: Open the Northlake Contractors group and confirm developer2@example.com is shown as deprovisioned
+  - kind: pytest
+    test: test_output.py::test_seeded_revocation_executed_in_console_record
+    critical: true
+    category: core_outcome
+    weight: 5
+- id: room_grant_precedence_and_live_permission_denied
+  purpose: Grant layers resolve by replacement and a withdrawn grant binds on the next operation
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/rooms, open the room doc-cadence-roadmap, and confirm the inspector
+      offers storage, presence, threads and versions
+  - kind: browser
+    do: Open the room doc-sundial-intake and confirm the inspector refuses to show the room and explains that access must be granted first
+  - kind: pytest
+    test: test_output.py::test_user_grant_narrows_group_grant_write_denied
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_grant_layers_resolve_by_replacement_across_every_combination
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_removed_write_access_denied_on_next_operation_connection_stays_open
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_removed_read_access_closes_the_connection
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_comment_write_separable_from_room_write_permission
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_group_membership_change_denied_within_five_seconds
+    category: security
+    weight: 5
+- id: entitlement_change_moves_every_consumer
+  purpose: One entitlement row drives admission, the pricing matrix, the warning threshold and the invoice
+  substeps:
+  - kind: browser
+    do: Open /pricing and confirm the comparison matrix row for simultaneous connections per room reads 10, 10, 50 and 100 across Free, Pro, Team and Enterprise
+  - kind: browser
+    do: Choose Annual on the pricing page and confirm the Pro plan reads $25 with a Save 17% badge
+  - kind: browser
+    do: Go to /auth/login and sign in as owner@example.com with the password deku-demo-pw-2026, open /northlake/billing, and confirm an invoice is shown with its line items and a total
+  - kind: pytest
+    test: test_output.py::test_connection_past_ceiling_refused_others_undisturbed_count
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_entitlement_change_moves_pricing_matrix_cell
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_entitlement_change_moves_capacity_warning_threshold
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_entitlement_change_moves_invoice_seat_line_record
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_downgrade_breaching_entitlement_accepted_and_scheduled
+    category: business_rule
+    weight: 3
+- id: metering_counts_rooms_not_participants
+  purpose: Collaboration minutes accrue per room, levels bill their highest sample and the invoice reconciles
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/usage for the period 2026-09, and confirm six meters are listed, each
+      with a quantity, a unit rate and a charge
+  - kind: pytest
+    test: test_output.py::test_collaboration_minutes_accrue_per_room_only_with_two_connections
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_six_participants_bill_one_room_window_record
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_level_meter_bills_highest_sample_not_sum_stored
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_invoice_total_equals_sum_of_visible_lines_record
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_money_amounts_are_integer_minor_units
+    category: business_rule
+    weight: 3
+- id: usage_interval_duplicate_and_concurrent_writes
+  purpose: Replayed and simultaneous writes leave a single winner and no second side effect
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/rooms, and confirm the room list shows each room identifier with its
+      last connection and its active connections
+  - kind: pytest
+    test: test_output.py::test_concurrent_identical_usage_intervals_store_one_row
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_duplicate_usage_interval_with_different_quantity_conflict
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_idempotent_room_creation_single_winner_one_event_stored
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_idempotency_key_reused_with_different_body_conflict
+    category: validation
+    weight: 3
+- id: audit_chain_detects_tampering
+  purpose: The record chains, reports a tampered row, stays gapless and resists its own application
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner@example.com with the password deku-demo-pw-2026, open /northlake/audit, use the control that verifies the record, and confirm the result is reported on the
+      page
+  - kind: browser
+    do: Filter the audit entries by the denied outcome and confirm every entry still listed shows the outcome denied
+  - kind: pytest
+    test: test_output.py::test_audit_chain_hashes_recompute_and_verify_record
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_tampered_audit_row_reported_at_its_sequence
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_audit_sequence_gapless_under_concurrent_writes_count
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_denials_and_inspector_reads_audited_with_request_id
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_application_credential_cannot_update_audit_rows
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_legal_hold_refuses_owner_deletion_everywhere
+    category: business_rule
+    weight: 3
+- id: production_secret_and_rotation_cannot_leak
+  purpose: Production secrets show once, rotation keeps two valid keys and regulated rooms need a bounded grant
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as developer@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/development/keys, and confirm the Contractor sandbox key is listed with its
+      prefix, its label and its status
+  - kind: browser
+    do: Open /northlake/atlas-editor/production/keys and confirm each key row shows a prefix and a status and no key row shows a full secret
+  - kind: pytest
+    test: test_output.py::test_production_secret_shown_once_never_stored_in_clear
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_development_secret_reveal_repeatable_each_audited
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_rotation_keeps_two_valid_keys_then_retire_closes_its_connections_token
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_environment_kind_and_region_immutable_second_production_conflict
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_jit_grant_opens_regulated_inspector_then_access_expires
+    category: security
+    weight: 5
+- id: outbound_delivery_signature_and_retry_ladder
+  purpose: Deliveries are signed over the timestamp, retried on the ladder and collapsed per room
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner2@example.com with the password deku-demo-pw-2026, open /pagewise/tetrad-canvas/production/webhooks, and confirm the page offers a control to add an endpoint
+  - kind: pytest
+    test: test_output.py::test_webhook_signature_covers_timestamp_and_body_record
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_private_or_plaintext_destinations_refused_invalid
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_retry_ladder_and_replay_keep_event_identifier
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_document_change_events_collapse_per_room_not_globally
+    category: business_rule
+    weight: 3
+- id: cursor_pagination_under_concurrent_inserts
+  purpose: A cursor walk returns every row once while rows are inserted
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/rooms, type doc-c into the filter, and confirm the list narrows to
+      rooms whose identifier starts with doc-c
+  - kind: pytest
+    test: test_output.py::test_cursor_walk_returns_every_room_once_during_concurrent_inserts
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_paginated_response_shape_and_limit_bounds
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_request_id_echoed_in_header_and_error_body
+    category: business_rule
+    weight: 3
+- id: break_glass_denied_without_second_factor
+  purpose: Break glass needs a mailed second factor, announces itself and leaves a review item
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner@example.com with the password deku-demo-pw-2026, open the Northlake approvals area, start the break glass action without completing it, and confirm it asks
+      for a second factor code
+  - kind: pytest
+    test: test_output.py::test_break_glass_without_fresh_second_factor_denied
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_break_glass_second_factor_code_arrives_by_email_and_executes
+    critical: true
+    category: notification
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_break_glass_notifies_every_owner_and_approver_by_email
+    category: notification
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_break_glass_review_item_stays_outstanding_until_justified
+    category: business_rule
+    weight: 3
+- id: public_surface_not_found_and_enquiry_limit
+  purpose: The public site answers unknown addresses, declares its favicon, stays readable and refuses bot enquiries
+  substeps:
+  - kind: browser
+    do: Open /pricing, choose Monthly, and confirm the Pro plan reads $30 and the address now carries the chosen period, then open a made up address such as /no-such-roomstack-page and confirm the product's own not-found page offers a way back home
+  - kind: browser
+    do: Open /security and confirm the page carries the headings Organisational security, Cloud security, Access security and Vendor and risk management, then open /contact and confirm the enquiry form labels First name, Last name, Work email, Company size, Role and What are you interested in
+  - kind: pytest
+    test: test_output.py::test_unknown_address_renders_not_found_page_with_404
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_favicon_served_and_declared_in_every_head
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_content_images_carry_alternative_text
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_body_text_contrast_and_narrow_viewport_hold
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_no_credential_in_anything_the_browser_downloads
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_analyst_and_stranger_cannot_open_page_view_log_owner_only
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_enquiry_decoy_too_fast_and_rate_limit_nothing_stored
+    critical: true
+    category: data_integrity
+    weight: 5
+
+- id: concurrent_executions_and_decisions_cannot_double_apply
+  purpose: One approved request run twice at once changes the world once, and two approvals landing together are both kept
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open /northlake/approvals, and confirm each row shows the action, the requester, the state as a word, the impact counts and the time remaining before expiry
+  - kind: pytest
+    test: test_output.py::test_two_executions_of_one_approved_request_arriving_together_run_it_once
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_two_approvals_landing_together_are_both_recorded
+    critical: true
+    category: data_integrity
+    weight: 5
+
+- id: admission_limit_holds_under_contention_and_per_environment
+  purpose: Connections arriving together never exceed a room's ceiling, and a room is looked up only in its token's environment
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as admin@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/rooms, open the room doc-almanac-brief, and confirm the inspector shows the room's presence, threads and versions
+  - kind: pytest
+    test: test_output.py::test_simultaneous_admissions_at_the_ceiling_admit_exactly_the_ceiling
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_admission_resolves_the_room_in_the_token_environment
+    critical: true
+    category: security
+    weight: 5
+
+- id: meters_key_by_environment_and_round_half_up_once
+  purpose: A usage interval is keyed by its environment, and a meter line rounds half up once on its period quantity
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/usage, and confirm one chart is drawn per meter with the credit allowance shown as a horizontal reference
+  - kind: pytest
+    test: test_output.py::test_one_interval_start_in_two_environments_is_two_intervals
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_meter_charges_round_half_up_once_per_line_in_minor_units
+    critical: true
+    category: business_rule
+    weight: 5
+
+- id: legal_hold_cannot_be_walked_around_by_approval_or_break_glass
+  purpose: An approved deletion and a break glass deletion of a held room are both refused, and a second factor serves only its own member
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner@example.com with the password deku-demo-pw-2026, open /northlake/atlas-editor/production/rooms, open the room doc-hollow-dispute, try to delete it, and confirm the product refuses and names the legal hold hold-hollow-2026
+  - kind: pytest
+    test: test_output.py::test_an_approved_deletion_of_a_held_room_is_refused_when_executed
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_break_glass_cannot_delete_a_held_room
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_second_factor_code_only_serves_the_member_it_was_mailed_to
+    critical: true
+    category: security
+    weight: 5
+
+- id: stale_writes_foreign_cursors_and_reused_identifiers_are_rejected
+  purpose: A stale version, a cursor from another filter and a recently deleted room identifier are refused, and idempotency keys never cross credentials
+  substeps:
+  - kind: browser
+    do: Go to /auth/login and sign in as owner2@example.com with the password deku-demo-pw-2026, open /pagewise/tetrad-canvas/production/rooms, and confirm no Northlake room such as doc-almanac-brief is listed
+  - kind: pytest
+    test: test_output.py::test_a_stale_version_marker_is_refused_with_the_current_room
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_cursor_reused_under_another_filter_or_order_is_rejected
+    critical: true
+    category: validation
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_a_deleted_room_identifier_is_not_reused_within_a_day
+    critical: true
+    category: validation
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_one_idempotency_key_in_two_organisations_is_two_writes
+    critical: true
+    category: security
+    weight: 5

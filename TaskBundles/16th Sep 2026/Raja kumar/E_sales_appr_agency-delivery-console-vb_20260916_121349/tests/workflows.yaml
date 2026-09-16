@@ -1,0 +1,514 @@
+- id: client_approval_releases_one_draft_invoice
+  purpose: An Aeroline client approver approves the current version of a shared deliverable, its milestone releases exactly one draft invoice, and finance issues it under the next France number
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as brand1@aeroline.example.com with the password deku-demo-pw-2026, and confirm the portal opens at /portal with a block titled Needs you at the top of the page
+    cov: C-OV-04, C-UF-03, C-UF-04, C-FE-28
+  - kind: browser
+    do: Verify the portal sidebar offers Approvals and Invoices, and that choosing Approvals opens /portal/approvals
+    cov: C-UF-06
+  - kind: pytest
+    test: test_output.py::test_client_approval_releases_one_draft_invoice_issued
+    critical: true
+    category: core_outcome
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_login_returns_access_token_principal_kind
+    category: security
+    weight: 5
+- id: invoice_numbers_gapless_concurrent_issue
+  purpose: Simultaneous issues of France drafts take contiguous numbers, a refused issue takes none, each entity keeps its own sequence, and totals come from the lines with tax rounded once
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as billing@aeroline.example.com with the password deku-demo-pw-2026, open /portal/invoices, and confirm invoice PXF-2026-00002 is listed with its status
+    cov: C-RL-12, C-FE-32
+  - kind: pytest
+    test: test_output.py::test_concurrent_issues_take_contiguous_numbers_stored_once
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_refused_issue_consumes_no_number
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_entity_sequences_independent_numbers
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_issued_invoice_totals_from_lines_rounded_once
+    category: business_rule
+    weight: 3
+- id: reverse_charge_invalid_vat_refused
+  purpose: A reverse charge is never applied on an invalid VAT number or on a validation older than ninety days while the register is unreachable, and each seeded client gets its stated treatment and note
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as billing@aeroline.example.com with the password deku-demo-pw-2026, open /portal/invoices, open invoice PXF-2026-00002, and confirm the invoice page states its tax treatment in words rather than only as a rate
+    cov: C-FE-30
+  - kind: browser
+    do: Go back to /portal/invoices and confirm each listed invoice shows a due date
+    cov: C-FE-29
+  - kind: pytest
+    test: test_output.py::test_invalid_vat_reverse_charge_issue_refused_draft_row_untouched
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_stale_vies_validation_issue_refused
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_recent_vies_validation_reverse_charge_note
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_same_country_valid_vat_domestic_treatment
+    category: business_rule
+    weight: 3
+- id: public_sector_missing_po_refused_credit_note
+  purpose: A public sector invoice without a PO is refused and keeps no number, the e-invoicing channel follows the client profile, and a credit note takes its own sequence while the original keeps its number
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as finance.fr@parallax.example.com with the password deku-demo-pw-2026, open /portal/agency/invoicing, and confirm the invoicing screen shows a queue of draft invoices, empty or not, inside the back office sidebar layout
+    cov: C-UF-07, C-FE-41
+  - kind: pytest
+    test: test_output.py::test_public_sector_without_po_issue_refused_no_number_stored
+    critical: true
+    category: validation
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_einvoice_channel_by_client_profile
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_credit_note_own_sequence_voids_original_keeps_number
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_credit_note_on_draft_refused_not_issued
+    category: validation
+    weight: 3
+- id: invoice_issue_lower_role_forbidden
+  purpose: Issuing is denied at the API to a project manager, to another entity's finance admin, to an anonymous caller and to a session that has not stepped up, and the draft stays untouched
+  substeps:
+  - kind: browser
+    do: Without signing in, go to /portal/invoices and confirm the page shows a sign in panel in place and no invoice number such as PXF-2026-00002 appears anywhere on it
+    cov: C-UF-08, C-UF-09
+  - kind: browser
+    do: Sign in on that panel as pm.fr@parallax.example.com with the password deku-demo-pw-2026, then open /portal/agency and confirm the agency day view renders beside a sidebar of sections
+    cov: C-OV-05, C-UF-10, C-FE-40
+  - kind: pytest
+    test: test_output.py::test_project_manager_issue_denied_invoice_row_untouched
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_login_alone_is_not_step_up_issue_forbidden
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_other_entity_finance_admin_issue_forbidden
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_unauthenticated_invoice_list_denied
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_signup_closed_and_wrong_password_denied
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_role_table_never_cells_denied_at_api
+    category: security
+    weight: 5
+- id: uploader_cannot_approve_own_version
+  purpose: The principal who uploaded the version under review is refused a decision on it, a rejection needs a comment, and a rejection ends the approval without releasing an invoice
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as owner@verdane.example.com with the password deku-demo-pw-2026, open /portal/approvals, and confirm the page renders an empty state that says nothing is waiting rather than a blank area
+    cov: C-UF-15
+  - kind: pytest
+    test: test_output.py::test_uploader_decision_denied_separation_of_duties_row_unchanged
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_rejection_without_comment_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_rejection_ends_approval_changes_requested
+    category: business_rule
+    weight: 3
+- id: approval_superseded_by_new_version_conflict
+  purpose: Uploading a new version cancels the pending approval, a decision naming the old version is refused with the current version, and the reshared version approves the milestone
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as owner@aeroline.example.com with the password deku-demo-pw-2026, open /portal/projects, and confirm Aeroline brand site is listed while Verdane storefront is not
+    cov: C-FE-39
+  - kind: pytest
+    test: test_output.py::test_decision_on_superseded_version_refused_current_version
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_new_version_cancels_pending_approval_state
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_share_without_version_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_reshared_version_approves_milestone
+    category: business_rule
+    weight: 3
+- id: concurrent_final_stage_decisions_one_invoice
+  purpose: A high value Aeroline approval runs two stages, the all of stage waits for both assignees however often one repeats, simultaneous final decisions release one draft invoice, and only current stage assignees are emailed
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as owner@aeroline.example.com with the password deku-demo-pw-2026, open /portal/settings/organisation, and confirm it lists Aeroline users including brand1@aeroline.example.com and procurement@aeroline.example.com
+    cov: C-FE-36
+  - kind: pytest
+    test: test_output.py::test_high_value_approval_uses_two_stage_policy
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_all_of_stage_waits_for_every_assignee_counted_once
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_concurrent_all_of_final_decisions_one_draft_invoice_row
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_stage_assignees_notified_by_email_only_current_stage
+    critical: true
+    category: notification
+    weight: 5
+- id: approver_threshold_exceeded_denied
+  purpose: An approver whose threshold is below the value, an assignee of a later stage and a collaborator are each refused a decision and the approval stays unchanged
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as brand1@aeroline.example.com with the password deku-demo-pw-2026, open /portal/settings/organisation, and confirm the page says Not found, or you do not have access
+    cov: C-UF-20, C-FE-37
+  - kind: pytest
+    test: test_output.py::test_approver_below_value_threshold_denied_unchanged
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_later_stage_assignee_cannot_decide_current_stage
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_client_collaborator_decision_forbidden
+    category: security
+    weight: 5
+- id: cross_tenant_reads_not_found_denied
+  purpose: Another client organisation's project, invoice and approval answer exactly as missing records, and every list a client reads is scoped to its own organisation
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as owner@verdane.example.com with the password deku-demo-pw-2026, open /portal/tickets, and confirm ticket PX-2026-000142 Storefront returns 502 is listed while PX-2026-000150 is not
+    cov: C-FE-35
+  - kind: browser
+    do: Open /portal/sites and confirm https://verdane.example.com is listed and aeroline.example.com appears nowhere on the page
+    cov: C-FE-33
+  - kind: pytest
+    test: test_output.py::test_other_tenant_project_denied_as_not_found
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_other_tenant_invoice_and_approval_not_found
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_org_and_project_lists_scoped_to_tenant
+    category: security
+    weight: 5
+- id: margin_hidden_cannot_read_cost
+  purpose: Margin and cost price are absent from a proposal for a project manager and a client, and present for the account director
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as owner@aeroline.example.com with the password deku-demo-pw-2026, open /portal/invoices, open invoice PXF-2026-00002, and confirm the invoice page offers a Dispute action
+    cov: C-FE-31
+  - kind: pytest
+    test: test_output.py::test_project_manager_proposal_margin_absent_denied
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_client_owner_sees_sent_proposal_without_cost
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_account_director_sees_margin_from_stored_lines
+    category: business_rule
+    weight: 3
+- id: vault_reveal_single_use_denied_reuse
+  purpose: A secret is revealed only through an approved request bound to an open ticket of its organisation, after a step-up, once, and the read is logged
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as dev.fr@parallax.example.com with the password deku-demo-pw-2026, open /portal/agency/vault, and confirm Verdane secrets are listed by label, including Production CMS admin, Hosting control panel and DNS registrar, with no value beginning vlt- shown anywhere
+    cov: C-FE-42
+  - kind: browser
+    do: Verify the vault screen states that access to secrets is recorded
+    cov: C-FE-44
+  - kind: browser
+    do: Start a request for access to DNS registrar and confirm a slide-over opens with a justification field and a ticket field, then press Escape and confirm it closes without creating a request and keyboard focus returns to the control that opened it
+    cov: C-UF-14, C-UX-08, C-UX-22, C-FE-45, C-FE-56
+  - kind: pytest
+    test: test_output.py::test_access_request_requires_open_ticket_same_org
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_access_request_ttl_above_limit_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_requester_self_approval_forbidden
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_reveal_needs_step_up_then_single_use_access
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_reveal_with_request_for_other_secret_denied
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_reveal_appends_read_log_entry_record
+    category: data_integrity
+    weight: 5
+- id: break_glass_second_approver_denied_same
+  purpose: A break-glass request needs two different eligible approvers before any reveal, and an approver from outside the organisation's authority approves nothing
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as security@parallax.example.com with the password deku-demo-pw-2026, open /portal/agency/vault, and confirm Aeroline's Production CMS admin is listed with no secret value shown
+    cov: C-FE-42
+  - kind: browser
+    do: Verify the vault screen offers no control that exports or downloads every secret at once
+    cov: C-FE-46
+  - kind: pytest
+    test: test_output.py::test_break_glass_needs_two_different_approvers_access
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_break_glass_awaiting_second_reveal_refused
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_ineligible_vault_approver_forbidden
+    category: security
+    weight: 5
+- id: vault_log_append_only_cannot_rewrite
+  purpose: The vault access log is a hash chain from sixty four zeros, a rewritten entry is reported at its sequence, the application's own credential cannot alter it, exports are refused and logged, and no plaintext secret sits in the database
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as security@parallax.example.com with the password deku-demo-pw-2026, open /portal/agency/vault, and confirm each listed secret shows its type and its rotation status
+    cov: C-FE-43
+  - kind: pytest
+    test: test_output.py::test_bulk_export_denied_and_logged
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_log_chain_links_from_zero_hash
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_tampered_log_entry_verify_reports_broken_at
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_app_credential_cannot_update_or_delete_log_row
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_database_holds_no_plaintext_secret_stored
+    critical: true
+    category: security
+    weight: 5
+- id: grant_expired_access_denied
+  purpose: A grant needs an end and a step-up, and a contractor is denied the very next request once the grant ends or is revoked
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as freelance@kite-studio.example.com with the password deku-demo-pw-2026, open /portal/projects, and confirm no project is listed
+    cov: C-CN-03
+  - kind: pytest
+    test: test_output.py::test_grant_without_expiry_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_grant_needs_step_up_forbidden
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_expired_grant_denied_on_next_request
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_revoked_grant_denied_immediately
+    critical: true
+    category: security
+    weight: 5
+- id: concurrent_change_orders_value_reconciled
+  purpose: Simultaneously approved change orders all land in the contract value, a decision outside review conflicts, a project manager cannot decide, and a rejection leaves the value
+  substeps:
+  - kind: browser
+    do: Go to /portal/login, sign in as owner@institut-lumiere.example.com with the password deku-demo-pw-2026, open /portal/documents, and confirm contract PXF-CT-2026-003 is listed
+    cov: C-FE-38
+  - kind: pytest
+    test: test_output.py::test_concurrent_change_order_approvals_value_stored_sum
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_change_order_decision_outside_review_conflict
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_project_manager_cannot_decide_change_order
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_rejected_change_order_leaves_value
+    category: business_rule
+    weight: 3
+- id: lead_replay_duplicate_one_row_one_email
+  purpose: A replayed brief stores one lead and sends one confirmation from the entity that will handle it, a reused key with another body conflicts, a filled decoy is stored silently as spam, and invalid fields are refused by name
+  substeps:
+  - kind: browser
+    do: Go to /start-a-project/ and confirm the page has a heading and shows Step 1 of 6
+    cov: C-FE-24, C-FE-25
+  - kind: browser
+    do: Fill the first and last name and continue, give a company name and pick France as the country and continue, then enter a phone number and not-an-email as the email and move focus away, and confirm the text Oops, e-mail is not valid. appears beneath the email field
+    cov: C-UX-20, C-FE-26
+  - kind: browser
+    do: Correct the email to visitor.browser@example.com, continue, and confirm the budget choices are labelled 10K-20K, 20K-30K, 30K-60K and +60K
+    cov: C-FE-27, C-FE-61
+  - kind: pytest
+    test: test_output.py::test_concurrent_replayed_lead_one_row_one_confirmation_email
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_confirmation_email_from_routed_entity
+    critical: true
+    category: notification
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_french_site_confirmation_subject
+    category: notification
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_idempotency_key_reuse_other_body_conflict
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_honeypot_lead_stored_as_spam_no_email
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_invalid_lead_fields_refused_nothing_stored
+    category: validation
+    weight: 3
+- id: gclid_without_consent_denied_storage
+  purpose: A click identifier is stored only with marketing consent, and a visitor can refuse every non-essential purpose from the first screen
+  substeps:
+  - kind: browser
+    do: Go to / and confirm a cookie consent banner offers a choice to reject all non-essential purposes on its first screen
+    cov: C-FE-59
+  - kind: browser
+    do: Choose to reject all, confirm the banner closes, and confirm the footer carries a link to reopen cookie preferences
+    cov: C-FE-60
+  - kind: browser
+    do: Go to /start-a-project/ and complete all six steps as Camille Rousseau of Atelier Rousseau in France with phone +33612345678, email visitor.browser@example.com, budget 20K-30K, kind Website, a short message and the consent box, submit, and confirm the page shows a reference and an expected response time
+    cov: C-UF-19
+  - kind: pytest
+    test: test_output.py::test_gclid_not_stored_without_marketing_consent_row
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_gclid_stored_with_marketing_consent
+    category: business_rule
+    weight: 3
+- id: slug_change_legacy_redirects_conflict
+  purpose: A changed slug and every legacy address answer a permanent redirect, a stale edit conflicts, and language alternates come from the entry's own siblings
+  substeps:
+  - kind: browser
+    do: Go to /work/verdane/ and confirm the case study shows its client description, a list of service tags, a See live link and a next project link to Hello Marlo
+    cov: C-FE-19, C-FE-20, C-FE-21, C-FE-22
+  - kind: browser
+    do: Go to /fr/references/bellamy-associes/, use the language switcher to choose English, and confirm the browser lands on /work/bellamy-associes/ rather than the English home page
+    cov: C-FE-23
+  - kind: pytest
+    test: test_output.py::test_slug_change_old_path_permanent_redirect_stored_alias
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_stale_localisation_version_conflict
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_legacy_addresses_redirect_permanently
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_hreflang_alternates_derived_from_siblings
+    category: business_rule
+    weight: 3
+- id: noindex_landing_sitemap_forbidden_secrets
+  purpose: Thin landing pages stay noindex and out of the sitemap, robots, favicon and privacy pages are served, and no served document carries a secret
+  substeps:
+  - kind: browser
+    do: Go to / and confirm the page heading reads The agency that covers your digital needs in a creative and efficient way and the page carries sections headed Our projects and They trust us
+    cov: C-FE-16, C-FE-17, C-FE-18
+  - kind: browser
+    do: Scroll to the footer, follow its privacy link, and confirm the page at /privacy/ is headed Privacy policy and says how long lead records are kept
+    cov: C-TR-173
+  - kind: browser
+    do: Go to /fr/, follow the footer privacy link, and confirm the page at /fr/confidentialite/ is headed Politique de confidentialité
+    cov: C-TR-172
+  - kind: pytest
+    test: test_output.py::test_below_threshold_landing_noindex_excluded_from_sitemap
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_robots_disallows_portal_api_names_sitemap
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_favicon_linked_and_served
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_privacy_pages_linked_from_footers
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_served_assets_hold_no_secret_access_values
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_home_page_skip_links_first_images_carry_alt
+    category: presentation
+    weight: 1

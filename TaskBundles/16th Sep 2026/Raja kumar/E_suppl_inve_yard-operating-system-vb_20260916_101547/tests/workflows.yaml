@@ -1,0 +1,451 @@
+- id: concurrent_dock_bookings_never_oversell
+  purpose: Haulier bookings for one Dallas half hour arriving together confirm only as many as there are free capable doors
+  substeps:
+  - kind: browser
+    do: Go to /carrier/login and sign in as bookings@redline.example.com with the password deku-demo-pw-2026, open /carrier/book, pick Dallas Crossdock, an inbound dry van and a date a week ahead, and confirm the carrier booking page shows only open windows for the chosen site with no door numbers or occupancy counts
+    cov: C-UF-01
+  - kind: browser
+    do: Book the first open window on that carrier booking page and confirm a toast confirms the completed carrier booking
+    cov: C-UF-02
+  - kind: pytest
+    test: test_output.py::test_concurrent_portal_bookings_confirm_only_free_doors
+    critical: true
+    category: core_outcome
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_concurrent_reefer_bookings_single_door_one_confirmed
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_no_capacity_refusal_offers_alternative_windows
+    category: business_rule
+    weight: 3
+- id: door_window_overlap_conflict
+  purpose: A Dallas door holds one confirmed booking for any overlapping moment, adjacent windows both confirm, and each door constraint refuses with its own code
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as manager.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock Appointments surface, and confirm the door calendar lists the Dallas doors D01 to D06 with time running across the day
+  - kind: browser
+    do: On the same Dallas door calendar, confirm the closed periods before 06:00 and after 22:00 render as unavailable rather than empty
+    cov: C-TR-76
+  - kind: browser
+    do: From the Dallas door calendar start a new booking and confirm the booking form opens on its own address ending in /appointments/new rather than in a dialog over the calendar
+  - kind: pytest
+    test: test_output.py::test_overlapping_window_same_door_conflict_door_unavailable
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_adjacent_half_open_windows_both_confirmed
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_out_of_service_door_booking_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_incapable_door_asset_type_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_stale_version_appointment_update_version_conflict
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_unentitled_module_booking_module_not_entitled
+    category: business_rule
+    weight: 3
+- id: concurrent_moves_one_open_move_per_asset
+  purpose: Moves arriving together for one trailer or one free spot leave exactly one, and a cancelled move frees its spot
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as dispatch.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock Map surface, and confirm the map draws stale trailers such as TRL-4471 faded with a dashed edge
+    cov: C-UF-05
+  - kind: pytest
+    test: test_output.py::test_concurrent_moves_same_asset_single_open_move
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_concurrent_moves_same_destination_single_reservation
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_cancelled_move_frees_destination_reservation
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_incompatible_destination_move_refused
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_manually_completed_move_frees_destination
+    category: business_rule
+    weight: 3
+- id: stale_position_move_invalid
+  purpose: A move for a trailer whose position is past the staleness threshold is refused and raises a confirmation task
+  substeps:
+  - kind: browser
+    do: Still signed in as dispatch.dal@tidewater.example.com, open the Dallas Crossdock Dispatch surface and confirm the dispatch board shows unassigned, in flight and attention columns beside a map
+    cov: C-TR-75
+  - kind: pytest
+    test: test_output.py::test_stale_position_move_refused_position_confirmation_task
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_fresh_position_move_accepted_open_state
+    category: business_rule
+    weight: 3
+- id: placed_move_verified_only_by_observation
+  purpose: A placed move becomes verified only when an observation shows its trailer at the destination
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as dispatch.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock Map surface, click the trailer TRL-5820, and confirm the inspector opens showing that trailer's identity, state and position with its age
+  - kind: pytest
+    test: test_output.py::test_move_transition_to_verified_illegal_transition
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_observation_at_destination_verifies_placed_move
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_observation_elsewhere_leaves_move_placed
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_assignment_needs_spotter_on_shift
+    category: validation
+    weight: 3
+- id: release_override_self_approval_denied
+  purpose: A held lorry is released only through an approval its requester cannot give, and an eligible site manager admits it
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as gate.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock Gate surface, and confirm the Dallas lane board shows the held Oakridge lorry with plate OK-77-TRK and a pending release request
+    cov: C-UF-03
+  - kind: browser
+    do: Sign out, sign in as manager.dal@tidewater.example.com with the password deku-demo-pw-2026, open the pending release approval for plate OK-77-TRK from the Dallas Crossdock Workflows surface, approve the release, and confirm the visit reading changes to admitted
+    cov: C-UF-04
+  - kind: pytest
+    test: test_output.py::test_requester_self_approval_denied_visit_stays_held
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_eligible_site_manager_approval_admits_visit
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_decided_approval_second_decision_already_decided
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_denied_decision_recorded_in_audit
+    category: security
+    weight: 5
+- id: site_scoped_role_approval_forbidden
+  purpose: A role counts only at its own site, so a Reno manager and a Dallas gate operator are refused a Dallas release decision
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as dual@tidewater.example.com with the password deku-demo-pw-2026, open the site switcher, and confirm both Dallas Crossdock and Reno Distribution are listed
+  - kind: pytest
+    test: test_output.py::test_dual_role_gate_operator_scope_approval_forbidden
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_gate_operator_approval_forbidden_request_pending
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_dispatcher_approval_forbidden_request_pending
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_security_administrator_and_analyst_operational_write_forbidden
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_approver_eligibility_read_at_decision_time
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_spotter_cannot_accept_move_assigned_to_another_spotter
+    category: security
+    weight: 5
+- id: revoked_grant_denied_on_same_session
+  purpose: Grants are read on every request, so a revoked grant stops working on the same session, and unreachable sites answer as missing
+  substeps:
+  - kind: browser
+    do: Without signing in, open /console/admin/members and confirm a sign in panel renders in place of the page with no member or grant shown
+    cov: C-UF-10
+  - kind: browser
+    do: Go to /console/login and sign in as orgadmin@tidewater.example.com with the password deku-demo-pw-2026, open /console/admin/members, and confirm each member is listed with the grants that member holds
+  - kind: pytest
+    test: test_output.py::test_revoked_grant_denied_same_token_next_request
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_elevated_role_grant_without_expiry_expiry_required
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_cross_organisation_site_not_found_for_member
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_ungranted_site_same_organisation_not_found
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_member_session_login_access_token
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_unauthenticated_console_call_unauthenticated
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_signup_closed_in_both_spaces_no_account_created
+    category: security
+    weight: 5
+- id: portal_other_company_booking_forbidden
+  purpose: The haulier portal answers another company's booking and an unauthorised site as missing, and availability reveals only windows
+  substeps:
+  - kind: browser
+    do: Go to /carrier/login and sign in as desk@bluecrest.example.com with the password deku-demo-pw-2026, open /carrier/book, and confirm Dallas Crossdock is offered while Atlanta Yard is absent
+  - kind: browser
+    do: Sign out, sign in at /carrier/login as team@oakridge.example.com with the password deku-demo-pw-2026, open /carrier/book, and confirm Dallas Crossdock is absent from the sites offered
+  - kind: browser
+    do: Sign out, sign in at /carrier/login as desk@bluecrest.example.com with the password deku-demo-pw-2026, open /carrier/book, pick Dallas Crossdock, an inbound dry van and a date ten days ahead, and confirm each offered window shows only its start and end time with no door or count of doors
+  - kind: pytest
+    test: test_output.py::test_other_company_booking_not_found_same_as_nonexistent
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_unauthorised_site_booking_not_found_same_as_nonexistent
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_availability_windows_expose_only_start_end
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_member_token_on_portal_principal_kind_mismatch
+    category: security
+    weight: 5
+- id: federated_report_small_aggregate_suppressed
+  purpose: A customer of the tenant with fewer than five loads in a period sees suppression, and each customer lists only its own loads
+  substeps:
+  - kind: pytest
+    test: test_output.py::test_customer_fewer_than_five_loads_report_suppressed
+    critical: true
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_customer_six_loads_report_counts_loads
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_customer_loads_list_only_own_references
+    category: security
+    weight: 5
+- id: custody_chain_tamper_detected_append_only
+  purpose: Custody events form a verifiable chain that only grows, and no connection the application holds can rewrite a row
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as dock.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock Dock surface, and confirm the dock board shows one column per door with idle doors showing the time since last use
+  - kind: pytest
+    test: test_output.py::test_app_credential_cannot_rewrite_custody_event_row
+    critical: true
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_custody_chain_tamper_detected_broken_at_sequence
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_custody_correction_new_event_original_unchanged
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_custody_chain_hashes_link_prior_event
+    category: data_integrity
+    weight: 5
+- id: booking_confirmation_email_duplicate_replay
+  purpose: One portal booking sends one confirmation mail naming no load, a reused key with another body is refused, and the visit link dies on cancellation
+  substeps:
+  - kind: browser
+    do: Go to /carrier/login and sign in as bookings@redline.example.com with the password deku-demo-pw-2026, open /carrier/book, book the first open window at Dallas Crossdock for an inbound dry van eight days ahead, then open /carrier and confirm the upcoming visits list shows that window at Dallas Crossdock with its state
+  - kind: pytest
+    test: test_output.py::test_booking_confirmation_email_once_on_idempotent_replay
+    critical: true
+    category: notification
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_booking_confirmation_email_names_no_load_reference
+    category: notification
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_idempotency_key_reused_different_body_conflict
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_visit_link_revoked_after_booking_cancelled
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_visit_view_exposes_no_load_reference
+    category: security
+    weight: 5
+- id: approval_requested_email_eligible_approvers_only
+  purpose: A release request mails every member eligible to decide it and nobody else
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as manager2.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock exception inbox, and confirm it either groups open exceptions by kind with a count for each kind or shows an empty state with the action that ends it
+  - kind: pytest
+    test: test_output.py::test_approval_request_email_reaches_eligible_site_managers
+    category: notification
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_approval_request_email_skips_requester_ineligible_member
+    critical: true
+    category: notification
+    weight: 5
+- id: watchlist_expired_entry_not_matched
+  purpose: An active watchlist plate is refused at the gate, an expired entry matches nothing, and a suspended haulier is held
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as security@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock Security surface, and confirm the watchlist lists the plate TX-9KR-221 with the reason cargo_theft_report and an expiry
+  - kind: pytest
+    test: test_output.py::test_active_watchlist_plate_visit_refused
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_expired_watchlist_plate_visit_not_refused
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_suspended_haulier_visit_held_authorisation_check
+    category: security
+    weight: 5
+- id: shift_duration_across_daylight_saving
+  purpose: A Dallas shift crossing a daylight saving change lasts its real elapsed time with instants in the site's offset
+  substeps:
+  - kind: browser
+    do: Go to /console/login and sign in as manager.dal@tidewater.example.com with the password deku-demo-pw-2026, open the Dallas Crossdock site home, and confirm the site bar shows the site switcher beside a live clock in the Dallas site's own zone
+  - kind: browser
+    do: Open the Dallas Crossdock Appointments surface and confirm the door calendar carries a live now marker at the current Dallas time
+  - kind: pytest
+    test: test_output.py::test_shift_duration_across_fall_back_daylight_saving
+    critical: true
+    category: business_rule
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_shift_duration_across_spring_forward_daylight_saving
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_shift_instants_carry_site_offset
+    category: business_rule
+    weight: 3
+- id: unknown_address_not_found_public_surface
+  purpose: The public site answers unknown addresses with its own not-found page, serves terms and headers, and its calculator reproduces the measured figures
+  substeps:
+  - kind: browser
+    do: Open an address that is not a route, such as /no-such-yard-route, and confirm the not-found document shows the code 404 in lime, the title Page not found and a BACK TO HOME action, then open /terms and confirm the page heading reads Terms of use
+    cov: C-FE-01
+  - kind: browser
+    do: Open /yard-efficiency-calculator and, with default inputs left unchanged, confirm the calculator shows Labor Savings of 255,528, Spotter Savings of 193,248, Detention & Demurrage Savings of 192,850, a total of 641,626 and Est. Savings of 23%
+    cov: C-TR-68, C-TR-69, C-TR-70, C-TR-71, C-TR-72
+  - kind: browser
+    do: On the calculator change Check-ins per day from 45 to 90 and confirm Labor Savings now shows 511,056, following thirty nine minutes saved per check-in, while Spotter Savings still shows 193,248
+    cov: C-TR-73
+  - kind: pytest
+    test: test_output.py::test_unknown_path_answers_404_not_found_document
+    critical: true
+    category: presentation
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_terms_page_answered_with_footer_terms_link
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_security_headers_on_every_response
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_console_api_responses_cache_control_no_store
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_unknown_api_path_not_found_code
+    category: presentation
+    weight: 1
+  - kind: pytest
+    test: test_output.py::test_health_route_returns_200
+    category: presentation
+    weight: 1
+- id: contact_form_bot_submission_limit
+  purpose: The contact form refuses a bot by its decoy field and by repetition, writing nothing, and stores a real submission
+  substeps:
+  - kind: browser
+    do: Open /contact and confirm the contact form shows Full Name, Role or position, Phone number, Email, Company name and How Can We Help? with the submit control disabled until the form is valid
+  - kind: browser
+    do: On /contact type an invalid address into the Email field, leave the field, and confirm an error appears beneath the Email field
+  - kind: pytest
+    test: test_output.py::test_contact_decoy_field_rejected_submission_nothing_stored
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_contact_fourth_submission_rate_limited_nothing_stored
+    category: validation
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_contact_valid_submission_stored_form_submission_row
+    category: data_integrity
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_contact_replayed_submission_id_stored_once_single_row
+    critical: true
+    category: data_integrity
+    weight: 5
+- id: page_view_log_publisher_only_forbidden
+  purpose: A public page view is recorded and the log is readable by the content publisher alone
+  substeps:
+  - kind: browser
+    do: Open /technical-index and confirm the technical index lists content routes grouped by family, each with a title
+  - kind: browser
+    do: Open /resources and confirm the resources hub shows the heading Viewpoints for a smarter yard with one carousel per resource category
+  - kind: pytest
+    test: test_output.py::test_page_view_log_denied_to_analyst
+    category: security
+    weight: 5
+  - kind: pytest
+    test: test_output.py::test_page_view_recorded_for_public_route_read_by_publisher
+    critical: true
+    category: business_rule
+    weight: 5
+- id: grader_report_claimed_score_invalid
+  purpose: The security report is recomputed from the answers, never from a claimed number, and routes the visitor to the weakest layer's fix
+  substeps:
+  - kind: browser
+    do: Open /yard-security-grader, grade the yard choosing the strongest option for every question except the three Load Verification questions, which take the weakest option, and confirm the result shows the band Sealed yard with every security layer row stating Exposed, Partial or Covered beside its colour
+    cov: C-FE-06
+  - kind: browser
+    do: On that result choose see how this is fixed and confirm the fix action for the weak Load Verification layer opens its module route at /modules/load-verification
+    cov: C-FE-05
+  - kind: pytest
+    test: test_output.py::test_grader_report_recomputes_score_ignoring_claimed_score
+    category: business_rule
+    weight: 3
+  - kind: pytest
+    test: test_output.py::test_grader_full_marks_fix_route_yard_security
+    critical: true
+    category: business_rule
+    weight: 5

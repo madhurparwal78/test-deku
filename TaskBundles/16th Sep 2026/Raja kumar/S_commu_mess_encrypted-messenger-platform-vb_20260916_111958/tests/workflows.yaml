@@ -1,0 +1,343 @@
+- id: visitor_reads_privacy_promise_on_home
+  purpose: A visitor reads the prerendered home and every band while no request leaves Beacon's origin
+  substeps:
+    - kind: browser
+      do: "Open `/` and verify the hero shows the headline `Speak Freely`, its lead paragraph and the `Get Beacon` button beside the two phone renders"
+      cov: C-FE-16
+    - kind: browser
+      do: "Scroll `/` to the footer and verify the `Share Without Insecurity` statement, the four feature cards `Say Anything`, `Speak Freely`, `Make Privacy Stick` and `Get Together with Groups`, the `No ads. No trackers. No kidding.` band, the `Free for Everyone` band and the footer with its Organization, Download, Social and Help link columns"
+      cov: C-FE-20, C-FE-22
+    - kind: pytest
+      test: test_output.py::test_home_documents_arrive_prerendered_with_lang_and_direction
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_marketing_pages_request_nothing_from_other_origins
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_home_copy_deck_strings_render_exactly
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_type_scale_phone_tilt_and_self_hosted_fonts
+      category: presentation
+      weight: 1
+
+- id: visitor_switches_language_from_dialog
+  purpose: A visitor opens the language dialog, keeps keyboard focus inside it and switches the home into German
+  substeps:
+    - kind: browser
+      do: "On `/`, open the language control in the top bar and verify a dialog titled `Select your language` lists twelve language names including English, Deutsch and العربية"
+      cov: C-CF-164
+    - kind: browser
+      do: "In the language dialog choose `Deutsch` and verify the address becomes `/de` while the top bar language control shows its own name `Deutsch`"
+      cov: C-CF-163
+    - kind: pytest
+      test: test_output.py::test_language_dialog_traps_focus_and_restores_control
+      critical: true
+      category: business_rule
+      weight: 5
+
+- id: narrow_viewport_visitor_uses_menu_button
+  purpose: A phone-width visitor reaches the links through the menu button, with reduced motion, alternative text and contrast honoured
+  substeps:
+    - kind: browser
+      do: "Open `/` and verify the top bar links read Get Beacon, Help, Blog, Developers, Careers and Donate in that order beside the language control"
+      cov: C-FE-09
+    - kind: pytest
+      test: test_output.py::test_phone_viewport_menu_button_reveals_links
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reduced_motion_stops_shared_transition
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_home_images_named_and_text_meets_contrast
+      category: presentation
+      weight: 1
+
+- id: visitor_finds_privacy_page_and_sitemap
+  purpose: A visitor finds the privacy table from the footer and the declared pages, and the sitemap names every public route
+  substeps:
+    - kind: browser
+      do: "From the footer of `/`, open `Terms & Privacy Policy` and verify the `/terms` privacy page states the service never holds any plaintext message, call audio, or attachment"
+      cov: C-CF-171
+    - kind: browser
+      do: "Open `/get` and verify the page offers Android, iPhone and iPad store listings with Windows, Mac and Linux downloads under Beacon's top bar"
+      cov: C-CF-169, C-CN-02
+    - kind: pytest
+      test: test_output.py::test_terms_privacy_table_linked_from_marketing_footers
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_public_routes_and_robots_names_it
+      category: business_rule
+      weight: 3
+
+- id: visitor_donates_and_receives_one_receipt_email
+  purpose: A visitor gives a gift, sees the banner, exactly one receipt email and one row exist even when the request is repeated, and a malformed gift is refused inline with nothing stored
+  substeps:
+    - kind: browser
+      do: "Open `/donate`, choose the `$25` amount rather than a custom dollar amount, enter a valid email address of your own choosing and press Donate"
+      cov: C-CF-142
+    - kind: browser
+      do: "Verify an inline banner on `/donate` reads `Thank you. Your gift of $25.00 was received.`"
+      cov: C-CF-144
+    - kind: pytest
+      test: test_output.py::test_donation_receipt_email_reaches_donor_only
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_donation_row_stored_in_minor_units
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_donation_replay_same_key_stores_one_row_one_email
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: "On `/donate`, enter the custom amount `0.50` with a valid email address, press Donate, and verify an inline refusal names the amount field while no thank-you banner appears"
+      cov: C-CF-150
+    - kind: pytest
+      test: test_output.py::test_invalid_donation_stores_nothing_and_sends_no_email
+      critical: true
+      category: validation
+      weight: 5
+
+- id: person_signs_in_and_registers_first_browser
+  purpose: A seeded person signs in, the browser becomes the first device, and account rules hold at the API
+  substeps:
+    - kind: browser
+      do: "Before signing in, open `/chats` and verify Beacon redirects to `/login`"
+      cov: C-UF-01
+    - kind: browser
+      do: "Sign in at `/login` as the seeded account `user@example.com` with the seeded password listed in `/app/USER_README.md`, which is `deku-demo-pw-2026`, entering the same password whenever `/unlock` asks, and verify the sign-in lands on `/chats` showing `No conversations yet`"
+      cov: C-RL-07, C-UF-06, C-DC-05
+    - kind: browser
+      do: "Open `/settings/devices`, verify the seeded account now lists exactly one linked device, issue a link code and verify an eight-character code appears"
+      cov: C-CF-118, C-DM-07
+    - kind: browser
+      do: "Open `/settings/recovery`, save the recovery PIN `482915` and verify `Recovery PIN saved` appears"
+      cov: C-CF-121
+    - kind: pytest
+      test: test_output.py::test_signup_stores_only_password_hash_and_refuses_duplicates
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sign_in_refused_after_five_wrong_passwords
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_malformed_device_keys_rejected_nothing_stored
+      category: validation
+      weight: 3
+
+- id: second_device_cannot_register_without_link_code
+  purpose: A later device joins only with a one-time link code from the same account and then sees both sides of the conversation
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_second_device_registration_denied_without_link_code
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_linked_browser_receives_both_sides_of_conversation
+      category: business_rule
+      weight: 3
+
+- id: unlinked_device_is_denied_everywhere
+  purpose: An unlinked or replaced device is cut off, and a recovery record dies after ten wrong guesses
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unlinked_device_token_denied_and_its_queue_deleted
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replace_existing_revokes_every_older_device
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_recovery_record_destroyed_after_tenth_wrong_guess
+      critical: true
+      category: security
+      weight: 5
+
+- id: sealed_message_reaches_the_recipient_devices_only
+  purpose: A person sends a sealed message that only the recipient's device receives, while the service holds only ciphertext
+  substeps:
+    - kind: browser
+      do: "Sign in at `/login` as `user2@example.com` with password `deku-demo-pw-2026`, entering the same password whenever `/unlock` asks, open the New chat dialog, start a conversation with the exact username `nova`, send `Hello from Juniper`, and verify the outgoing bubble moves from sending to `Sent`"
+      cov: C-RL-08, C-CF-96
+    - kind: browser
+      do: "Open `/chats` and verify the row for `nova` previews the last message `Hello from Juniper`"
+      cov: C-CF-93
+    - kind: pytest
+      test: test_output.py::test_message_roundtrip_leaves_no_plaintext_in_requests_or_rows
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sealed_send_needs_access_key_and_envelope_names_no_sender
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_identified_send_to_another_account_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_envelopes_reach_only_their_own_device
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_browser_store_holds_no_readable_text_and_asks_to_unlock
+      category: security
+      weight: 5
+
+- id: nudge_email_names_no_sender_or_content
+  purpose: The recipient gets one contentless nudge email, never a second while messages wait, never for own or refused sends
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_nudge_email_reaches_recipient_only_without_sender_or_content
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_second_nudge_email_while_envelopes_wait
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_no_nudge_email_for_own_rejected_or_repeated_send
+      category: notification
+      weight: 3
+
+- id: send_with_missing_device_is_rejected
+  purpose: A send that does not name exactly the active devices, or carries a malformed envelope, is rejected whole
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_send_with_missing_or_extra_device_rejected_nothing_stored
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_own_device_sync_send_names_other_devices_only
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invalid_ciphertext_or_guid_rejected_nothing_queued
+      category: validation
+      weight: 3
+
+- id: acknowledged_envelope_is_deleted_and_never_redelivered
+  purpose: Acknowledgement deletes the ciphertext, duplicates and resends never deliver twice, and the queue stays bounded
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_acknowledgement_deletes_ciphertext_row_other_copy_remains
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_resend_after_acknowledgement_is_not_redelivered
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_guid_sends_store_one_envelope
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_device_queue_keeps_newest_thousand_envelopes
+      category: business_rule
+      weight: 3
+
+- id: concurrent_prekey_fetches_share_no_key
+  purpose: Simultaneous key-bundle fetches never share a one-time pre-key, exhaustion still returns a bundle, and fetches are limited
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_bundle_fetches_never_share_a_one_time_prekey
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_exhausted_one_time_prekeys_still_return_bundle
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_key_bundle_fetches_refused_past_limit_per_device
+      category: security
+      weight: 5
+
+- id: tampered_or_replayed_message_is_never_trusted
+  purpose: Tampered, replayed and reordered messages are handled safely, safety numbers agree and change, and timed messages vanish
+  substeps:
+    - kind: browser
+      do: "Sign in at `/login` as `user3@example.com` with password `deku-demo-pw-2026`, entering the same password whenever `/unlock` asks, open `/chats/nova`, open the safety number and verify sixty digits appear in twelve groups of five"
+      cov: C-RL-09, C-CF-134
+    - kind: browser
+      do: "In the conversation with `nova`, set the disappearing-message timer to 1 hour and verify the conversation header shows the timer"
+      cov: C-CF-139, C-CF-137
+    - kind: pytest
+      test: test_output.py::test_tampered_ciphertext_dropped_with_notice_never_shown
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replayed_reordered_and_delayed_messages_show_once_in_order
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_safety_numbers_match_and_identity_change_blocks_send
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_disappearing_timer_removes_message_from_both_browsers
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_photo_video_and_file_attachments_arrive_sealed
+      category: business_rule
+      weight: 3
+
+- id: group_membership_conflict_admits_one_change
+  purpose: A group is created in the browser, and at the API exactly one of two simultaneous changes wins and only current members receive messages
+  substeps:
+    - kind: browser
+      do: "Sign in at `/login` as `user4@example.com` with password `deku-demo-pw-2026`, entering the same password whenever `/unlock` asks, open the New group dialog, create the group `Weekend Hike` from the name with the username `nova`, and verify the group conversation lists two members"
+      cov: C-RL-10, C-CF-97
+    - kind: browser
+      do: "In `Weekend Hike`, open the composer sticker picker, send the `Wave` sticker from the built-in pack and verify a new message for the `Wave` sticker appears in the conversation"
+      cov: C-CF-106
+    - kind: pytest
+      test: test_output.py::test_simultaneous_same_revision_group_changes_admit_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_group_message_reaches_current_members_only
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_member_who_is_not_admin_denied_removing_others
+      category: security
+      weight: 5
+
+- id: person_calls_from_group_and_conversation_then_signs_out
+  purpose: A person starts a group voice call and a one-to-one video call, the called side rings and closes, then signs out
+  substeps:
+    - kind: browser
+      do: "Sign in at `/login` as `user4@example.com` with password `deku-demo-pw-2026`, entering the same password whenever `/unlock` asks, open the `Weekend Hike` group, start a voice call from the group conversation header and verify the call screen opens with a hang-up control, hang up, then open `/chats/nova`, start a video call from the conversation header and verify the call screen opens naming `nova`"
+      cov: C-CF-88, C-CF-112, C-CF-113
+    - kind: browser
+      do: "Open `/settings/devices`, sign out, confirm when asked for confirmation, and verify Beacon returns to `/login`"
+      cov: C-CF-120, C-UX-12
+    - kind: pytest
+      test: test_output.py::test_voice_message_call_ringing_and_read_receipt
+      category: business_rule
+      weight: 3

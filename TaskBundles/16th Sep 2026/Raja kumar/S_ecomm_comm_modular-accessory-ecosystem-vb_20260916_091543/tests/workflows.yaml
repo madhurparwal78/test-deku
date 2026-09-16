@@ -1,0 +1,541 @@
+- id: listing_pages_only_published_products
+  purpose: "A model listing fills every page with published products, reports honest totals and pages by page number"
+  substeps:
+    - kind: browser
+      do: "Open /list/arbor/arbone-16-pro and confirm the heading reads ARBOR ARBONE 16 PRO PHONE CASES with a chip reading Model: Arbone 16 Pro under the filter bar"
+      cov: "C-UF-01, C-FE-06"
+    - kind: browser
+      do: "Open / as a first time visitor, answer the cookie question, reload the page, and confirm the cookie question is not asked again"
+      cov: "C-CF-61"
+    - kind: browser
+      do: "On / scroll down past the header and confirm the header scrolls away rather than sticking, and that the hero title alone is set in the wide display face"
+      cov: "C-FE-01, C-UX-10"
+    - kind: browser
+      do: "On / choose the Bags chip under SHOP BY CATEGORY and confirm the rail beneath changes while the address stays on /, and that the active hero bullet fills like a timer"
+      cov: "C-FE-02, C-FE-03"
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+      cov: "C-DC-03, C-DC-01 (earned: the health route answers at the public app address), C-DC-04 (earned: the health route answers from the started image without any step taken by hand), C-DC-05 (earned: the health route answers after the session that started the server has ended), C-DC-06 (earned: the health route answers from outside the app's own loopback interface)"
+    - kind: pytest
+      test: test_output.py::test_listing_first_page_is_full_after_unpublished_are_excluded
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-17, C-TR-02 (earned: a full first page with no unpublished handle is what selecting before paging produces)"
+    - kind: pytest
+      test: test_output.py::test_listing_total_count_and_next_page_on_every_page
+      category: data_integrity
+      weight: 5
+      cov: "C-TR-03, C-CF-24 (earned: three pages of twenty four, twenty four and twelve are the page size observed), C-DM-05 (earned: the model case listing is walked page by page to 60 products in 24, 24 and 12)"
+    - kind: pytest
+      test: test_output.py::test_listing_newest_sort_orders_by_sequence
+      category: business_rule
+      weight: 3
+      cov: "C-CF-23"
+    - kind: pytest
+      test: test_output.py::test_generated_basics_rows_match_the_rule
+      category: business_rule
+      weight: 3
+      cov: "C-DM-01, C-DM-02"
+    - kind: pytest
+      test: test_output.py::test_published_catalogue_counts_across_categories
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-03, C-DM-04 (earned: the phone-cases category total is asserted to be 399 across the category sweep)"
+    - kind: pytest
+      test: test_output.py::test_seeding_twice_duplicates_no_product_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-14"
+    - kind: pytest
+      test: test_output.py::test_api_prefix_serves_json_on_the_app_origin
+      category: presentation
+      weight: 1
+      cov: "C-DC-02, C-DC-08 (earned: the device models list endpoint is asserted to carry its rows under items)"
+
+- id: feature_filter_excludes_products_without_features
+  purpose: "A feature filter matches only products carrying that feature, and every other facet narrows or widens honestly"
+  substeps:
+    - kind: browser
+      do: "On /list/arbor/arbone-16-pro open Filters, choose the magnetic feature, and confirm exactly four cases remain"
+      cov: "C-UF-06"
+    - kind: browser
+      do: "On /list/arbor/arbone-16-pro filter by the magnetic feature together with the Cypress colour and confirm the grid reads Nothing here fits that combination with a Clear all filters button"
+      cov: "C-CF-27"
+    - kind: browser
+      do: "At a phone width on /list/arbor/arbone-16-pro press Filters and confirm the filters rise as a bottom sheet from the lower edge"
+      cov: "C-FE-26"
+    - kind: pytest
+      test: test_output.py::test_feature_filter_excludes_products_that_carry_no_features
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-19, C-DM-06"
+    - kind: pytest
+      test: test_output.py::test_colour_facet_matches_any_colourway
+      category: business_rule
+      weight: 3
+      cov: "C-CF-18"
+    - kind: pytest
+      test: test_output.py::test_clearing_the_model_widens_the_listing
+      category: business_rule
+      weight: 3
+      cov: "C-CF-25, C-CF-16"
+    - kind: pytest
+      test: test_output.py::test_retired_model_listing_still_resolves
+      category: business_rule
+      weight: 3
+      cov: "C-CF-26"
+    - kind: pytest
+      test: test_output.py::test_price_band_filters_on_lowest_live_price
+      category: business_rule
+      weight: 3
+      cov: "C-CF-20"
+    - kind: pytest
+      test: test_output.py::test_search_matches_titles_and_redirects_an_exact_model_name
+      category: business_rule
+      weight: 3
+      cov: "C-CF-56"
+
+- id: price_sort_uses_the_lowest_colourway_price
+  purpose: "Price sorts rank a product by its cheapest colourway, and a card swatch swaps in place"
+  substeps:
+    - kind: browser
+      do: "On /list/arbor/arbone-16-pro press the sort button and confirm the sheet lists Recommended, Newest first, Price: low to high, Price: high to low, Discount and Best selling"
+      cov: "C-FE-05"
+    - kind: browser
+      do: "On /list/arbor/arbone-16-pro select the Cinnabar swatch on the Umber Latch Clear Phone Case Cover for Arbone 16 Pro card and confirm its title and price change while the address does not"
+      cov: "C-FE-04"
+    - kind: browser
+      do: "On /product/latch-clear-phone-case-arbone-16-pro confirm the live price and the struck list price sit on one baseline at the same size"
+      cov: "C-UX-02"
+    - kind: pytest
+      test: test_output.py::test_price_low_high_sorts_by_lowest_colourway_live_price
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-21"
+    - kind: pytest
+      test: test_output.py::test_price_high_low_sorts_on_the_same_lowest_price
+      category: business_rule
+      weight: 3
+      cov: "C-CF-21"
+    - kind: pytest
+      test: test_output.py::test_discount_sort_uses_the_largest_percentage_off
+      category: business_rule
+      weight: 3
+      cov: "C-CF-22"
+
+- id: device_picker_navigates_and_keeps_unavailable_models
+  purpose: "The device picker lists every model, flags the ones without a cut, and navigates to the sibling in the right colourway"
+  substeps:
+    - kind: browser
+      do: "On /product/latch-phone-case-arbone-16-pro choose the Sage swatch and confirm the title changes to Sage while the page path stays /product/latch-phone-case-arbone-16-pro"
+      cov: "C-CF-14 (earned: choosing the Sage swatch is the colour choice, and the unchanged page path is the absence of navigation)"
+    - kind: browser
+      do: "On /product/latch-phone-case-arbone-16-pro in Amber open SELECT DEVICE, confirm Solarion S25 Ultra is shown with Not available for this model, then choose Arbone 17 Pro and confirm the page becomes the Basalt case at /product/latch-phone-case-arbone-17-pro"
+      cov: "C-UF-05, C-CF-15"
+    - kind: browser
+      do: "On /product/latch-phone-case-arbone-16-pro open Product Details and then Specifications and confirm only one accordion is open at a time"
+      cov: "C-FE-10"
+    - kind: browser
+      do: "On /product/latch-clear-phone-case-arbone-16-pro confirm the media pane shows the NEW! badge at its upper left with share and save glyphs at its upper right"
+      cov: "C-FE-11"
+    - kind: pytest
+      test: test_output.py::test_device_options_list_unavailable_models_and_skip_retired
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-11"
+    - kind: pytest
+      test: test_output.py::test_device_option_keeps_colourway_or_falls_back_to_first
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-13"
+    - kind: pytest
+      test: test_output.py::test_device_models_endpoint_excludes_retired
+      category: business_rule
+      weight: 3
+      cov: "C-CF-12, C-DM-07"
+    - kind: pytest
+      test: test_output.py::test_product_document_carries_variants_in_position_order
+      category: business_rule
+      weight: 3
+      cov: "C-CF-28, C-CF-29 (earned: the product document's title is compared to the pinned title), C-DM-08 (earned: the clear case document's variants are asserted as Umber then Cinnabar)"
+
+- id: build_panel_offers_ranked_published_modules
+  purpose: "The build panel offers only published modules its edges reach, by rank, at most four, in both directions"
+  substeps:
+    - kind: browser
+      do: "On /product/latch-phone-case-arbone-16-pro confirm BUILD YOUR LATCH lists Marigold Latch Phone Grip & Stand, Sage Latch Flex Stand, Cypress Latch Phone Wallet Stand and Amber Latch Phone Lanyard in that order"
+      cov: "C-UF-04"
+    - kind: browser
+      do: "On /product/latch-phone-case-arbone-16-pro press ADD on Sage Latch Flex Stand, confirm it reads ADDED, then open /cart and confirm the flex stand is in the cart without the case"
+      cov: "C-CF-34, C-OV-01"
+    - kind: browser
+      do: "Open /collection/latch and confirm eight rails appear in this order: LATCH PHONE CASE, LATCH CLEAR PHONE CASE, LATCH SIGNATURE PHONE CASE, LATCH PHONE GRIP & STAND, LATCH PHONE WALLET STAND, LATCH FLEX STAND, LATCH PHONE LANYARD, LATCH COLOUR PLATE"
+      cov: "C-FE-08"
+    - kind: pytest
+      test: test_output.py::test_build_panel_offers_four_published_modules_in_rank_order
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-30, C-DM-09 (earned: the panel order grip, flex, wallet, lanyard is the seeded edge ranks read back)"
+    - kind: pytest
+      test: test_output.py::test_maglock_case_is_offered_only_the_magnetic_stand
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-31"
+    - kind: pytest
+      test: test_output.py::test_case_without_edges_has_an_empty_panel
+      category: business_rule
+      weight: 3
+      cov: "C-CF-32"
+    - kind: pytest
+      test: test_output.py::test_module_panel_offers_compatible_cases_symmetrically
+      category: business_rule
+      weight: 3
+      cov: "C-CF-33"
+
+- id: unpublished_product_denied_by_every_route
+  purpose: "An unpublished product is denied by handle, cart, search, listing and wishlist for every caller"
+  substeps:
+    - kind: browser
+      do: "Open /product/latch-ring-mount and confirm the not found route shows 404 with Head Home, Discover New Collections, Contact Customer Service and Search Your Favorites"
+      cov: "C-CF-63"
+    - kind: browser
+      do: "From the footer on / open Terms Of Use and confirm the standing page reads as one narrow column under its headings"
+      cov: "C-FE-24"
+    - kind: pytest
+      test: test_output.py::test_unpublished_product_is_denied_by_handle
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-35"
+    - kind: pytest
+      test: test_output.py::test_unpublished_variant_is_denied_from_the_cart
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-37"
+    - kind: pytest
+      test: test_output.py::test_unpublished_product_is_absent_from_search_and_listings
+      category: security
+      weight: 5
+      cov: "C-CF-36"
+    - kind: pytest
+      test: test_output.py::test_unpublished_product_cannot_be_saved_to_a_wishlist
+      category: security
+      weight: 5
+      cov: "C-CF-58"
+
+- id: cart_prices_each_colourway_as_itself
+  purpose: "The cart prices each colourway as itself, holds stock limits, survives the session and warns about a lone module"
+  substeps:
+    - kind: browser
+      do: "Open /cart with nothing added and confirm YOUR SHOPPING CART IS EMPTY, Fill it with LatticeGoods and BROWSE PRODUCTS appear with no footer"
+      cov: "C-UF-07"
+    - kind: browser
+      do: "Open /checkout with an empty cart and confirm the address becomes /cart"
+      cov: "C-UF-03"
+    - kind: browser
+      do: "Add Umber Latch Clear Phone Case Cover for Arbone 16 Pro to the cart, open /cart, and confirm the line names Umber and Arbone 16 Pro separately under the title beside a plain Remove text button"
+      cov: "C-FE-14"
+    - kind: browser
+      do: "On /cart holding one unit of a line, confirm the stepper minus for that line is disabled"
+      cov: "C-FE-15"
+    - kind: pytest
+      test: test_output.py::test_cart_totals_two_colourways_at_their_own_prices
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-39"
+    - kind: pytest
+      test: test_output.py::test_catalogue_edit_after_ordering_leaves_the_order_lines_unchanged
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-69, C-DM-16"
+    - kind: pytest
+      test: test_output.py::test_cart_discount_is_list_total_minus_subtotal
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-40, C-TR-01 (earned: the discount is compared in integer paise)"
+    - kind: pytest
+      test: test_output.py::test_cart_quantity_above_stock_is_refused_and_unchanged
+      category: validation
+      weight: 3
+      cov: "C-CF-41"
+    - kind: pytest
+      test: test_output.py::test_cart_quantity_below_one_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-42"
+    - kind: pytest
+      test: test_output.py::test_cart_survives_with_the_same_cart_token
+      category: business_rule
+      weight: 3
+      cov: "C-CF-38, C-DC-11"
+    - kind: pytest
+      test: test_output.py::test_module_without_a_case_carries_the_compatibility_warning
+      category: business_rule
+      weight: 3
+      cov: "C-CF-43"
+
+- id: sign_in_code_cannot_be_reused
+  purpose: "A one time code is delivered by email to the address on file, works once, and is cancelled by a newer code"
+  substeps:
+    - kind: browser
+      do: "Open /login and confirm +91 is locked beside the Mobile* field, the consent line links Terms of Use and Privacy Policy, and CONTINUE stays disabled until ten digits are typed"
+      cov: "C-FE-17, C-UF-08"
+    - kind: pytest
+      test: test_output.py::test_sign_in_code_email_arrives_in_the_inbox
+      critical: true
+      category: notification
+      weight: 5
+      cov: "C-CF-04, C-DC-15"
+    - kind: pytest
+      test: test_output.py::test_sign_in_code_cannot_be_used_twice
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-05, C-DC-12 (earned: the first verification of the code is asserted to return access_token)"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_verifications_of_one_code_issue_one_session
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-64, C-TR-08"
+    - kind: pytest
+      test: test_output.py::test_newer_sign_in_code_cancels_the_older
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-06"
+    - kind: pytest
+      test: test_output.py::test_code_for_an_existing_phone_goes_only_to_the_email_on_file
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-02, C-DM-15 (earned: the code for the second seeded phone is asserted to reach shopper2@example.com)"
+    - kind: pytest
+      test: test_output.py::test_code_request_response_does_not_reveal_an_existing_phone
+      category: security
+      weight: 5
+      cov: "C-CF-03, C-RL-06 (earned: the known phone compared against a new one is the seeded 9876500001)"
+    - kind: pytest
+      test: test_output.py::test_new_phone_becomes_a_shopper_on_first_verify
+      category: business_rule
+      weight: 3
+      cov: "C-RL-05, C-CN-01 (earned: a new shopper is created from a phone and a code alone, with no password field in any request)"
+    - kind: pytest
+      test: test_output.py::test_sign_out_ends_the_session
+      category: security
+      weight: 5
+      cov: "C-CF-10"
+
+- id: code_entry_locks_after_six_invalid_codes
+  purpose: "Wrong codes count down, six lock the number even against the right code, and repeated requests are refused"
+  substeps:
+    - kind: browser
+      do: "Open /login, type the ten digit number 7000000001, press CONTINUE, and confirm the panel becomes Enter the code we sent you with a Change number button"
+      cov: "C-FE-18"
+    - kind: browser
+      do: "On / open SHOP BY ARBOR from the rail and confirm seven circular tiles read Arbone, Arbook, Arbor Watch, MagLock, Arpad, Arbuds and ArbTag"
+      cov: "C-FE-21"
+    - kind: pytest
+      test: test_output.py::test_six_wrong_codes_lock_the_phone_even_for_the_right_code
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-08"
+    - kind: pytest
+      test: test_output.py::test_a_burst_of_simultaneous_wrong_codes_still_locks_the_phone
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-66"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_code_requests_send_at_most_five_codes
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-67"
+    - kind: pytest
+      test: test_output.py::test_fourth_wrong_code_reports_two_attempts_left
+      category: validation
+      weight: 3
+      cov: "C-CF-07"
+    - kind: pytest
+      test: test_output.py::test_sixth_code_request_repeatedly_in_ten_minutes_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-09"
+    - kind: pytest
+      test: test_output.py::test_invalid_phone_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-01, C-DC-09"
+
+- id: concurrent_checkout_sells_the_last_unit_once
+  purpose: "Two simultaneous orders for scarce stock produce exactly one order, never negative stock, and a named conflict"
+  substeps:
+    - kind: browser
+      do: "Add Sage Basics Clear Case Cover No. 60 for Arbone 16 Pro to the cart, open /cart, and confirm the line reads Only 3 left"
+      cov: "C-FE-16"
+    - kind: pytest
+      test: test_output.py::test_concurrent_orders_for_the_last_unit_create_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-46, C-OV-02, C-DM-10 (earned: the Ochre race only has a single winner because the variant is seeded with one unit), C-TR-05"
+    - kind: pytest
+      test: test_output.py::test_contention_over_limited_stock_never_goes_negative
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-47, C-CF-48 (earned: the losing order's conflict body and its reduced cart line are both read in this race), C-DM-11 (earned: the Cerise race ends at one unit because the variant is seeded with three), C-DC-13 (earned: the conflict response body is asserted to carry the sku)"
+    - kind: pytest
+      test: test_output.py::test_a_refused_order_takes_no_stock_from_its_other_lines
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-68"
+    - kind: pytest
+      test: test_output.py::test_order_is_created_pending_and_empties_the_cart
+      category: business_rule
+      weight: 3
+      cov: "C-CF-45"
+    - kind: pytest
+      test: test_output.py::test_visitor_cannot_place_an_order
+      category: security
+      weight: 5
+      cov: "C-RL-01"
+    - kind: pytest
+      test: test_output.py::test_order_to_an_unserved_pincode_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-44"
+    - kind: pytest
+      test: test_output.py::test_order_lines_snapshot_title_and_prices
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-49, C-DM-13"
+
+- id: paid_order_invoices_the_exact_total_once
+  purpose: "Paying an order creates one Kill Bill invoice for the exact total and one confirmation email, and a replay creates neither again"
+  substeps:
+    - kind: browser
+      do: "On / open the search glyph, type Cinnabar, and confirm result rows appear each with a thumbnail, a title and a live price"
+      cov: "C-FE-20"
+    - kind: pytest
+      test: test_output.py::test_paid_order_invoice_in_kill_bill_matches_the_total
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-50, C-DC-14, C-CN-02, C-DC-07 (earned: the invoice is read from the Kill Bill service that was already running)"
+    - kind: pytest
+      test: test_output.py::test_idempotent_payment_replay_creates_no_second_invoice
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-52, C-TR-06"
+    - kind: pytest
+      test: test_output.py::test_simultaneous_payments_for_one_order_create_one_invoice
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-70"
+    - kind: pytest
+      test: test_output.py::test_paid_invoice_itemises_each_line_total_plus_paid_delivery
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-71"
+    - kind: pytest
+      test: test_output.py::test_paid_order_sends_exactly_one_confirmation_email
+      critical: true
+      category: notification
+      weight: 5
+      cov: "C-CF-53"
+    - kind: pytest
+      test: test_output.py::test_unpaid_order_sends_no_confirmation_email
+      category: notification
+      weight: 3
+      cov: "C-CF-54"
+    - kind: pytest
+      test: test_output.py::test_kill_bill_account_is_keyed_by_the_shopper_phone
+      category: business_rule
+      weight: 3
+      cov: "C-CF-51"
+
+- id: other_shoppers_order_is_denied
+  purpose: "One shopper's order is denied to every other caller, and the public surfaces around the account behave"
+  substeps:
+    - kind: browser
+      do: "Open /account/orders while signed out and confirm the address becomes /login"
+      cov: "C-UF-02"
+    - kind: browser
+      do: "Open /account/help while signed out and confirm HELP CENTER, HELP TOPICS and the Orders topic are readable, with REWARDS in the left column reading Coming soon"
+      cov: "C-UF-10, C-FE-25"
+    - kind: browser
+      do: "On /product/latch-phone-case-arbone-16-pro type 40005 and confirm CHECK stays disabled, then type 400050, press CHECK, and confirm the result reads Delivers in 3 to 5 days"
+      cov: "C-FE-12, C-FE-13"
+    - kind: browser
+      do: "From the footer on / open Privacy & Security Policy and confirm the page states the shop stores a shopper's phone, name, email, addresses, orders and saved products"
+      cov: "C-CF-62"
+    - kind: browser
+      do: "Open /stores, choose the Airport Outlets chip, and confirm only airport stores remain in the list"
+      cov: "C-FE-19"
+    - kind: pytest
+      test: test_output.py::test_other_shopper_is_denied_the_order
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-03, C-RL-04 (earned: the owner's order is read back still pending after the refused pay)"
+    - kind: pytest
+      test: test_output.py::test_a_code_presented_with_another_phone_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-65"
+    - kind: pytest
+      test: test_output.py::test_visitor_is_denied_the_order_history_and_wishlist
+      category: security
+      weight: 5
+      cov: "C-RL-02, C-DC-10"
+    - kind: pytest
+      test: test_output.py::test_order_history_limit_outside_the_band_is_refused
+      category: validation
+      weight: 3
+      cov: "C-TR-04"
+    - kind: pytest
+      test: test_output.py::test_shopper_saves_and_removes_a_wishlist_item
+      category: business_rule
+      weight: 3
+      cov: "C-CF-57"
+    - kind: pytest
+      test: test_output.py::test_delivery_check_follows_the_served_prefixes
+      category: business_rule
+      weight: 3
+      cov: "C-CF-55"
+    - kind: pytest
+      test: test_output.py::test_newsletter_answers_repeat_subscriptions_identically
+      category: security
+      weight: 5
+      cov: "C-CF-60"
+    - kind: pytest
+      test: test_output.py::test_store_directory_lists_active_stores_by_type_and_place
+      category: business_rule
+      weight: 3
+      cov: "C-CF-59, C-DM-12"
+    - kind: pytest
+      test: test_output.py::test_favicon_is_declared_and_served
+      category: presentation
+      weight: 1
+      cov: "C-TR-07"
