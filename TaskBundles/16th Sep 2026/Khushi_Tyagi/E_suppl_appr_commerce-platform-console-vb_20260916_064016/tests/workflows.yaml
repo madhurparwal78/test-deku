@@ -1,0 +1,251 @@
+- id: support_agent_refunds_inside_ceiling
+  purpose: A support agent refunds part of a paid order and the money leaves the store balance at once
+  substeps:
+    - kind: browser
+      do: Sign in as support@example.com and open the order queue at /store/oakleaf/orders
+    - kind: browser
+      do: Open order #2048 and use its refund action to refund a small part of the total
+    - kind: browser
+      do: Confirm the order page now shows an inline banner saying the refund is complete
+    - kind: pytest
+      test: test_output.py::test_refund_within_ceiling_is_stored_and_moves_the_balance
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_order_financial_status_records_the_partial_refund
+      category: business_rule
+      weight: 3
+
+- id: refund_above_ceiling_becomes_an_approval_request
+  purpose: A refund larger than the acting member's ceiling creates a pending request and moves nothing
+  substeps:
+    - kind: browser
+      do: Sign in as support@example.com and open order #2049 at /store/oakleaf/orders
+    - kind: browser
+      do: Confirm the refund panel states that this amount is above the ceiling and will be sent for approval
+    - kind: pytest
+      test: test_output.py::test_refund_above_ceiling_creates_a_pending_approval_request
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: pending_request_moves_no_money
+  purpose: While a refund request waits, no ledger entry exists and the order is still paid
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_pending_request_stores_no_ledger_entry_and_leaves_the_order_paid
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_approval_request_records_its_requester_and_its_expiry
+      category: business_rule
+      weight: 3
+
+- id: requester_cannot_approve_their_own_request
+  purpose: The member who raised a request is refused a decision on it, at the API, and the request stays pending
+  substeps:
+    - kind: browser
+      do: Sign in as support@example.com and open the approval queue at /store/oakleaf/approvals
+    - kind: browser
+      do: Confirm the decision controls on the agent's own request are present and disabled
+    - kind: pytest
+      test: test_output.py::test_support_agent_cannot_decide_their_own_request_denied_at_the_api
+      critical: true
+      category: security
+      weight: 5
+
+- id: finance_approval_executes_the_refund_once
+  purpose: A finance lead approves a pending refund and the money moves exactly once even on a duplicate decision
+  substeps:
+    - kind: browser
+      do: Sign in as finance@example.com and open the approval queue at /store/oakleaf/approvals
+    - kind: browser
+      do: Confirm the queue lists a pending request with its requester, its amount and its expiry
+    - kind: pytest
+      test: test_output.py::test_approval_executes_the_refund_exactly_once_on_a_duplicate_decision
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_approved_order_reads_refunded_and_names_its_decider
+      category: business_rule
+      weight: 3
+
+- id: duplicate_refund_key_records_one_refund
+  purpose: A repeated refund under one idempotency key returns the first result rather than refunding twice
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_refund_replay_of_one_idempotency_key_records_one_refund
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: refund_over_captured_amount_is_refused_as_invalid
+  purpose: A refund larger than what was captured is refused and the order row is untouched
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_refund_beyond_the_remaining_captured_amount_is_refused
+      category: validation
+      weight: 3
+
+- id: invalid_refund_bodies_are_refused
+  purpose: A negative amount, a misspelled field and a decimal amount are each refused before anything is written
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_negative_refund_amount_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_field_in_a_refund_request_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_decimal_money_on_the_refund_path_is_refused
+      category: validation
+      weight: 3
+
+- id: unauthenticated_caller_is_denied
+  purpose: An anonymous caller reaches no store data at all
+  substeps:
+    - kind: browser
+      do: Open /store/oakleaf/orders without signing in and confirm the sign-in surface is shown instead
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_order_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: cross_store_read_is_denied
+  purpose: A member of one store reaches nothing belonging to another, by identifier or by query
+  substeps:
+    - kind: browser
+      do: Sign in as mallard@example.com and confirm the order queue lists order #3001 and nothing else
+    - kind: pytest
+      test: test_output.py::test_a_member_of_another_store_cannot_read_a_foreign_order
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_store_context_is_not_taken_from_the_request_body
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_store_list_exposes_only_the_session_members_stores
+      category: security
+      weight: 5
+
+- id: adjustment_outside_the_actors_locations_is_denied
+  purpose: A stock adjustment from a member without the permission is refused and the level is unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_an_adjustment_at_an_unassigned_location_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: stock_levels_are_derived_and_recorded
+  purpose: The available quantity is computed from the stored columns and every change leaves a movement row
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com and open /store/oakleaf/products/inventory
+    - kind: browser
+      do: Confirm the stock table shows separate on hand, committed and available columns per location
+    - kind: pytest
+      test: test_output.py::test_available_quantity_is_derived_from_the_stored_level_columns
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_stock_adjustment_is_recorded_as_a_movement_row
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_purchase_of_the_last_unit
+  purpose: Two simultaneous purchases of the last unit produce exactly one success and never a negative level
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_two_concurrent_checkouts_for_the_last_unit_yield_one_success
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: seeded_orders_are_stored_as_pinned
+  purpose: The seeded order set carries the totals the brief pins and survives a fresh read
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_seeded_orders_are_stored_with_their_pinned_totals
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_delhi_and_pune_locations_are_seeded_and_scoped
+      category: data_integrity
+      weight: 5
+
+- id: order_status_axes_stay_independent
+  purpose: Financial status and fulfilment status are separate fields, so paid with unfulfilled is expressible
+  substeps:
+    - kind: browser
+      do: Sign in as manager@example.com and confirm the order queue shows a payment status column and a separate fulfilment status column
+    - kind: pytest
+      test: test_output.py::test_financial_and_fulfilment_status_are_independent_fields
+      category: business_rule
+      weight: 3
+
+- id: money_figures_come_from_the_ledger
+  purpose: The balance the finance surface shows reconciles with the refunds recorded on the orders
+  substeps:
+    - kind: browser
+      do: Sign in as finance@example.com and open /store/oakleaf/finances
+    - kind: pytest
+      test: test_output.py::test_balances_reconcile_with_the_refunds_recorded_on_the_orders
+      category: data_integrity
+      weight: 5
+
+- id: contract_surfaces_answer
+  purpose: The readiness probe answers and a list endpoint returns a top-level array
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_orders_listing_returns_a_top_level_array
+      category: presentation
+      weight: 1
+
+- id: unknown_address_renders_the_products_not_found_page
+  purpose: An unknown storefront address answers not found inside the product's own chrome with a way back
+  substeps:
+    - kind: browser
+      do: Open /in/this-route-does-not-exist and confirm the product's own not-found page renders with a link back
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_renders_the_products_own_not_found_page
+      category: presentation
+      weight: 1
+
+- id: public_routes_are_discoverable
+  purpose: Every public route carries its own title and description, the sitemap lists them and robots names the sitemap
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_every_public_route_carries_its_own_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_sitemap_lists_public_routes_and_robots_names_the_sitemap
+      category: presentation
+      weight: 1
+
+- id: no_broken_internal_links_on_public_routes
+  purpose: Every internal link on every public route resolves, and the privacy and terms pages are reachable from the footer
+  substeps:
+    - kind: browser
+      do: Open /in and confirm the footer carries a privacy link and a terms link
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_the_public_routes_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_privacy_and_terms_pages_are_reachable_from_the_footer
+      category: presentation
+      weight: 1

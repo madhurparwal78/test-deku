@@ -1,0 +1,559 @@
+- id: app_is_reachable_and_healthy
+  purpose: The deployed app answers on its public address and reports ready
+  substeps:
+    - kind: browser
+      do: Open the app's public address and confirm the landing page renders rather than an error page
+    - kind: browser
+      do: Watch the running product and confirm starts from the environment image with no manual step
+      cov: C-DC-06
+    - kind: browser
+      do: Watch the running product and confirm serves a production build behind a static or preview server
+      cov: C-DC-10
+    - kind: pytest
+      test: test_output.py::test_health_route_is_ready
+      critical: true
+      category: core_outcome
+      weight: 5
+- id: seeded_member_signs_in_and_works_the_table
+  purpose: A seeded sales rep signs in, edits a company in place and reads the value back after a reload
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com with the seeded password and open the Companies table
+    - kind: browser
+      do: Watch the running product and confirm keeps the table header row in place during a body scroll
+      cov: C-CF-90
+    - kind: browser
+      do: Watch the running product and confirm renders a skeleton of rows as the table loading state
+      cov: C-UF-13
+    - kind: browser
+      do: Edit the ARR cell of a company, press Enter, reload the page and read the same value back
+    - kind: browser
+      do: Watch the running product and confirm abandons a cell edit on Escape
+      cov: C-CF-94
+    - kind: browser
+      do: Watch the running product and confirm right-aligns a currency cell with thousands separators
+      cov: C-CF-92
+    - kind: pytest
+      test: test_output.py::test_login_returns_token_for_every_seeded_account
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cell_edit_survives_a_reload
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_companies_match_the_pinned_fixture
+      category: data_integrity
+      weight: 5
+- id: administrator_reshapes_the_schema_live
+  purpose: An administrator creates an object and it exists end to end at once
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the data model studio and create an object
+    - kind: browser
+      do: Watch the running product and confirm renders a Favorites group in the workspace rail
+      cov: C-CF-68
+    - kind: browser
+      do: Watch the running product and confirm renders the view bar record count beside the view name
+      cov: C-CF-70
+    - kind: browser
+      do: Confirm the new object appears in the workspace rail of a second signed-in session without a reload
+    - kind: browser
+      do: Watch the running product and confirm hosts a record preview in the right side panel
+      cov: C-CF-71
+    - kind: browser
+      do: Watch the running product and confirm changes the rail for every signed-in member within a second of an object rename
+      cov: C-CF-69
+    - kind: browser
+      do: Rename the object in settings and watch the rail label change in the other open session
+    - kind: browser
+      do: Watch the running product and confirm changes the rail for every signed-in member within a second of an object rename
+      cov: C-CF-69
+    - kind: pytest
+      test: test_output.py::test_new_object_is_addressable_at_once
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_objects_list_is_a_top_level_array
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_field_types_cover_the_stated_set
+      category: business_rule
+      weight: 3
+- id: schema_change_names_its_dependents_before_landing
+  purpose: A schema change lists every dependent view, trigger and rule before the change is confirmed
+  substeps:
+    - kind: browser
+      do: Delete a field a saved view and a workflow trigger both use, and read the dependent list before confirming
+    - kind: browser
+      do: Watch the running product and confirm lists every dependent view of a schema change before the change lands
+      cov: C-CF-82
+    - kind: pytest
+      test: test_output.py::test_dependents_are_listed_before_a_schema_change_lands
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_field_rename_preserves_stored_values
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_relation_is_navigable_from_both_sides
+      category: business_rule
+      weight: 3
+- id: invalid_field_type_change_is_refused
+  purpose: Converting a text field holding non-numeric rows is refused with the blocking count
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_field_type_change_refuses_and_counts_blocking_rows
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_currency_cell_refuses_a_non_numeric_value
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_value_on_a_unique_field_is_refused
+      category: validation
+      weight: 3
+- id: concurrent_schema_editors_leave_one_winner
+  purpose: Two administrators saving one piece of metadata at the same moment converge on a single winner
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_metadata_saves_leave_a_single_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_second_write_on_a_replayed_mutation
+      category: data_integrity
+      weight: 5
+- id: deal_moves_across_the_board_and_totals_recount
+  purpose: A rep drags a deal into another lane and both lane totals recount as it lands
+  substeps:
+    - kind: browser
+      do: Open the Opportunities board, drag a card into another lane and watch both lane totals recount
+    - kind: browser
+      do: Watch the running product and confirm renders a created-by cell for a workflow actor as a workflow chip
+      cov: C-CF-105
+    - kind: browser
+      do: Watch the running product and confirm offers a menu equivalent for every drag operation
+      cov: C-FE-18
+    - kind: pytest
+      test: test_output.py::test_board_lane_totals_reconcile_with_the_rows
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_card_move_writes_the_grouped_field_and_is_attributed
+      category: business_rule
+      weight: 3
+- id: record_page_shows_the_attributed_timeline
+  purpose: A record page carries every change as an attributed timeline entry
+  substeps:
+    - kind: browser
+      do: Open a company record page and read the timeline entries with their actor and age
+    - kind: browser
+      do: Watch the running product and confirm renders relation sections as chips carrying a detach control
+      cov: C-CF-114
+    - kind: browser
+      do: Watch the running product and confirm renders a timeline entry with an actor
+      cov: C-CF-115
+    - kind: browser
+      do: Edit the same record from another session and watch the open record page update with the other person's name
+    - kind: browser
+      do: Watch the running product and confirm shows a field edit on another person's open record page within a second
+      cov: C-CF-117
+    - kind: browser
+      do: Open the audit trail beside the timeline and confirm the same change appears in both with one actor
+    - kind: browser
+      do: Watch the running product and confirm derives the record timeline from the same event stream the audit trail reads
+      cov: C-CF-116
+    - kind: pytest
+      test: test_output.py::test_reconnecting_client_receives_missed_changes_in_order
+      category: business_rule
+      weight: 3
+- id: palette_and_search_reach_every_action
+  purpose: The command palette finds records, views and actions from the keyboard
+  substeps:
+    - kind: browser
+      do: Open the command palette from its keyboard shortcut and run the export action from the record selection group
+    - kind: browser
+      do: Watch the running product and confirm opens the palette from a keyboard shortcut anywhere in the workspace
+      cov: C-CF-118
+    - kind: browser
+      do: Watch the running product and confirm renders a key sequence in the mono face at the right edge of a palette row
+      cov: C-FE-13
+    - kind: browser
+      do: Use a two-key navigation chord to move between objects, then type in a text input and confirm no chord fires
+    - kind: browser
+      do: Watch the running product and confirm fires no navigation chord during typing in a text input
+      cov: C-CF-119
+    - kind: browser
+      do: Open an object holding no records and read the empty state naming what would fill the list
+    - kind: browser
+      do: Watch the running product and confirm names what would fill an empty list in every empty state
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_views_carry_their_own_filters_and_columns
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_object_returns_an_empty_array
+      category: business_rule
+      weight: 3
+- id: member_cannot_reach_another_members_rows
+  purpose: Each rep sees only their own companies at every door in the product
+  substeps:
+    - kind: browser
+      do: Sign in as each rep in turn and compare the Companies table, the board totals and the dashboard numbers
+    - kind: browser
+      do: Watch the running product and confirm computes every dashboard widget number after row filtering
+      cov: C-CF-176
+    - kind: browser
+      do: Watch the running product and confirm renders a dashboard widget grid over any object
+      cov: C-CF-174
+    - kind: browser
+      do: Watch the running product and confirm rearranges dashboard widgets by dragging
+      cov: C-CF-175
+    - kind: browser
+      do: Search a company name as the rep who does not own the company and read an empty result
+    - kind: browser
+      do: Watch the running product and confirm returns no permission-hidden row in a search result
+      cov: C-CF-123
+    - kind: pytest
+      test: test_output.py::test_records_list_is_permission_filtered_for_each_member
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_hidden_row_is_answered_as_not_found
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_hidden_row_is_absent_from_search_and_its_counts
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_hidden_row_moves_no_aggregate
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_masked_field_is_absent_from_every_read_path
+      category: security
+      weight: 5
+- id: member_is_denied_schema_and_settings_writes
+  purpose: A member calling an admin endpoint directly is refused and nothing changes
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_member_is_denied_schema_writes_at_the_api
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_member_cannot_read_keys_or_another_private_view
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_admin_is_denied_plan_and_billing_writes
+      category: security
+      weight: 5
+- id: unauthenticated_caller_is_denied
+  purpose: Every workspace resource refuses a caller with no session
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_request_is_refused
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_without_an_invitation_writes_no_membership
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_wrong_password_is_denied
+      category: security
+      weight: 5
+- id: expired_session_cannot_write
+  purpose: A signed-out token is refused and leaves the record it aimed at untouched
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_expired_token_is_refused_and_changes_nothing
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_second_factor_is_required_once_enrolled
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_revoked_key_is_refused_on_the_next_request
+      category: security
+      weight: 5
+- id: row_rule_creation_is_rejected_on_the_cheaper_plan
+  purpose: A row rule cannot be created on Pro and the downgrade locks rather than deletes
+  substeps:
+    - kind: browser
+      do: Open the pricing page, read the three plan cards and open a comparison matrix group
+    - kind: browser
+      do: Watch the running product and confirm opens one comparison matrix group at a time
+      cov: C-CF-61
+    - kind: browser
+      do: Watch the running product and confirm prices the `Pro` plan at `$9` per user per month
+      cov: C-CF-57
+    - kind: pytest
+      test: test_output.py::test_pro_plan_denies_a_row_rule_and_writes_nothing
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_plan_surface_reports_tier_seats_and_credits
+      category: business_rule
+      weight: 3
+- id: workflow_run_is_durable_and_audited
+  purpose: A stage change starts one audited run whose every node records input, output and outcome
+  substeps:
+    - kind: browser
+      do: Open the workflow run history and read the trigger, the version and each node's outcome
+    - kind: browser
+      do: Watch the running product and confirm records each workflow node input in the run history
+      cov: C-CF-127
+    - kind: browser
+      do: Open a failed run and read the node that failed together with the stored error
+    - kind: browser
+      do: Watch the running product and confirm records each workflow node outcome in the run history
+      cov: C-CF-128
+    - kind: pytest
+      test: test_output.py::test_workflow_run_records_every_node_and_pins_its_version
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_one_triggering_event_starts_exactly_one_run
+      critical: true
+      category: data_integrity
+      weight: 5
+- id: self_triggering_workflow_halts_at_the_limit
+  purpose: A workflow that edits its own trigger object halts at a depth limit with a visible entry
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_workflow_cycle_guard_halts_with_a_visible_entry
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credit_gate_refuses_a_run_past_the_allowance
+      category: business_rule
+      weight: 3
+- id: workflow_notifies_only_the_addressed_person
+  purpose: A workflow message lands in exactly the addressed inbox with the pinned subject prefix
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_workflow_email_reaches_only_the_addressed_inbox
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refused_run_sends_no_email
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invitation_email_carries_the_terms_link
+      category: notification
+      weight: 3
+- id: import_is_one_undoable_audited_batch
+  purpose: A CSV import maps, dry-runs, commits and undoes as one act
+  substeps:
+    - kind: browser
+      do: Upload a file, map its columns, read the flagged rows and run the dry run before committing
+    - kind: browser
+      do: Watch the running product and confirm previews the landing type of each mapped import column
+      cov: C-CF-161
+    - kind: browser
+      do: Watch the running product and confirm flags an import row that would fail with a reason
+      cov: C-CF-162
+    - kind: browser
+      do: Undo the committed batch from the import page and read the summary of what was reversed
+    - kind: browser
+      do: Watch the running product and confirm removes exactly the rows a committed import created when the batch is undone
+      cov: C-CF-165
+    - kind: pytest
+      test: test_output.py::test_import_dry_run_writes_nothing_then_commits_as_one_batch
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_export_records_an_audit_entry_and_hides_nothing_extra
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_trail_is_append_only_and_filterable
+      category: data_integrity
+      weight: 5
+- id: marketing_site_is_complete_and_its_mocks_are_live
+  purpose: Every public route renders with its own metadata and its mocks run the platform's fixtures
+  substeps:
+    - kind: browser
+      do: Walk every marketing route and confirm each band renders in the stated order with its pinned copy
+    - kind: browser
+      do: Watch the running product and confirm keeps the marketing header at the top of the page during a scroll
+      cov: C-CF-11
+    - kind: browser
+      do: Watch the running product and confirm folds the header centre links into a menu sheet at a narrow width
+      cov: C-CF-12
+    - kind: browser
+      do: Watch the running product and confirm renders four footer columns on every marketing page
+      cov: C-CF-14
+    - kind: browser
+      do: Watch the running product and confirm renders the eight landing bands in the stated order
+      cov: C-CF-18
+    - kind: browser
+      do: Watch the running product and confirm renders three numbered steps in the Solution band triptych
+      cov: C-CF-22
+    - kind: browser
+      do: Watch the running product and confirm renders three mock plates in the go-to-market band
+      cov: C-CF-23
+    - kind: browser
+      do: Watch the running product and confirm renders three case tiles in the in-production band
+      cov: C-CF-24
+    - kind: browser
+      do: Watch the running product and confirm renders a pager showing the current quotation position out of three
+      cov: C-CF-25
+    - kind: browser
+      do: Watch the running product and confirm opens one FAQ disclosure row at a time
+      cov: C-CF-26
+    - kind: browser
+      do: Watch the running product and confirm renders the fast-workspace trio on the product page
+      cov: C-CF-28
+    - kind: browser
+      do: Watch the running product and confirm renders metric pairs on the customers index cards
+      cov: C-CF-31
+    - kind: browser
+      do: Watch the running product and confirm opens four case pages from the customers index
+      cov: C-CF-32
+    - kind: browser
+      do: Watch the running product and confirm renders a region chip on every partner card
+      cov: C-CF-33
+    - kind: browser
+      do: Watch the running product and confirm renders dated entries on the releases page
+      cov: C-CF-35
+    - kind: browser
+      do: Watch the running product and confirm renders the positioning essay in a narrow reading column
+      cov: C-CF-36
+    - kind: browser
+      do: Watch the hero table assemble, the board deal its cards and the palette type its own query
+    - kind: browser
+      do: Watch the running product and confirm arms each marketing mock when a reader scrolls one into view
+      cov: C-CF-49
+    - kind: browser
+      do: Watch the running product and confirm renders every marketing mock in a finished state under a reduced-motion preference
+      cov: C-CF-50
+    - kind: browser
+      do: Watch the running product and confirm moves marketing mocks by shifting rather than by redrawing
+      cov: C-FE-06
+    - kind: browser
+      do: Watch the running product and confirm plays each marketing band choreography once
+      cov: C-FE-07
+    - kind: pytest
+      test: test_output.py::test_public_routes_each_carry_their_own_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_social_preview_is_declared_and_its_image_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_pinned_marketing_copy_is_served_verbatim
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_every_public_page_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_marketing_mock_data_comes_from_the_platform
+      category: business_rule
+      weight: 3
+- id: unknown_address_renders_the_products_own_not_found
+  purpose: An unmatched address answers not found and renders the product's own page
+  substeps:
+    - kind: browser
+      do: Open an address that matches no route and read the product's own not-found page with its way back
+    - kind: browser
+      do: Watch the running product and confirm renders the product's own not-found copy line for an unmatched address
+      cov: C-CF-37
+    - kind: browser
+      do: Watch the running product and confirm renders an error in place with a way back
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_anything_the_browser_downloads
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_external_services_are_not_reached_at_runtime
+      category: data_integrity
+      weight: 5
+- id: halftone_tool_renders_and_exports
+  purpose: The halftone generator renders its sources, scrubs live and exports a still
+  substeps:
+    - kind: browser
+      do: Open the halftone tool, change a source, move a control and watch the render update while the control moves
+    - kind: browser
+      do: Watch the running product and confirm offers fourteen named primitive sources in the halftone source control
+      cov: C-CF-53
+    - kind: browser
+      do: Watch the running product and confirm updates the halftone render during a control movement
+      cov: C-CF-54
+    - kind: browser
+      do: Watch the running product and confirm renders the halftone header line `Idle auto-rotate is active`
+      cov: C-CF-51
+    - kind: browser
+      do: Watch the running product and confirm renders three halftone control tabs reading `Design`, `Animations`, `Export`
+      cov: C-CF-52
+    - kind: browser
+      do: Export a still from the export tab and confirm the browser receives a file
+    - kind: browser
+      do: Watch the running product and confirm downloads a rendered still from the halftone export tab
+      cov: C-CF-55
+    - kind: browser
+      do: Watch the running product and confirm produces every site halftone plate at build time
+      cov: C-CF-56
+    - kind: browser
+      do: Open the AI side panel, ask a question the records can answer and read the cited records
+    - kind: browser
+      do: Watch the running product and confirm names the records a chat answer read
+      cov: C-CF-155
+    - kind: pytest
+      test: test_output.py::test_chat_answers_cite_records_or_refuse
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_webhook_deliveries_are_signed_and_retries_are_recorded
+      category: business_rule
+      weight: 3
+- id: workspace_stays_responsive_at_scale
+  purpose: A large view lists without loss and a filtered read stays inside its bound
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_ten_thousand_rows_list_without_loss
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_permission_filtered_read_stays_within_its_bound
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeding_is_idempotent
+      category: data_integrity
+      weight: 5
+- id: reserved_paths_and_credentials_are_present
+  purpose: The app root carries the credentials file and both reserved directories
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_app_contract_paths_exist_in_the_image
+      category: presentation
+      weight: 1

@@ -1,0 +1,264 @@
+- id: a_visitor_creates_a_free_account
+  purpose: A stranger reads the home page, crosses to the developer portal, copies the code sample and creates an account
+  substeps:
+    - kind: browser
+      do: Open / and confirm the hero fills the viewport with a dark tile carrying the line Building Real-World Intelligence
+    - kind: browser
+      do: Open the Dev item in the top bar, confirm a mega-menu panel of destinations drops, and follow it to /api-platform
+    - kind: browser
+      do: Confirm the code panel shows the text-to-video sample as selectable text beside a copy control
+    - kind: browser
+      do: Open /signup, submit an address and a password, and confirm the result is a full page naming the new account
+    - kind: pytest
+      test: test_output.py::test_signup_creates_an_account_that_can_then_sign_in
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_repeated_signup_under_one_idempotency_key_creates_one_account
+      category: data_integrity
+      weight: 5
+
+- id: an_author_drafts_an_item_with_a_poster
+  purpose: An author composes a news item, attaches a poster and the item is stored as a draft
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com and open /studio/news to the author's own items with their statuses
+    - kind: browser
+      do: Choose the create action and confirm a panel slides over the list while the list stays on screen behind it
+    - kind: browser
+      do: Enter a title, a dek, a body and alternative text, attach a poster, save, and confirm an inline banner reports the save
+    - kind: pytest
+      test: test_output.py::test_a_created_item_is_stored_as_a_draft_owned_by_its_author
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_draft_does_not_appear_on_the_public_listing
+      category: business_rule
+      weight: 3
+
+- id: a_draft_record_is_indistinguishable_from_a_missing_one
+  purpose: A signed-out reader asking for a draft gets exactly what a slug that never existed returns
+  substeps:
+    - kind: browser
+      do: Open /news signed out and confirm the draft titled for the media router preview is absent from the listing
+    - kind: pytest
+      test: test_output.py::test_an_anonymous_request_for_a_draft_matches_a_request_for_a_missing_slug
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_reader_session_gets_the_same_refusal_for_a_draft
+      critical: true
+      category: security
+      weight: 5
+
+- id: a_draft_poster_is_unfetchable_by_key
+  purpose: The exact object key the studio shows its author buys nothing without an entitled session
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com, open the draft in the studio and read the poster's stored key from the compose panel
+    - kind: browser
+      do: Sign out, request that exact key under the media route and confirm the response is the product's own not-found shell
+    - kind: pytest
+      test: test_output.py::test_a_draft_poster_key_is_refused_for_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_refused_media_fetch_leaves_the_object_in_the_store
+      category: data_integrity
+      weight: 5
+
+- id: uploaded_bytes_live_in_the_object_store
+  purpose: The poster's bytes are in the bucket at the pinned key scheme rather than on the application's disk
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com, attach a poster to a draft and confirm the compose panel shows the poster back on the item
+    - kind: pytest
+      test: test_output.py::test_an_uploaded_poster_exists_in_the_object_store_under_the_pinned_key_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_stored_object_key_carries_the_checksum_of_the_uploaded_bytes
+      category: data_integrity
+      weight: 5
+
+- id: publication_is_one_transaction
+  purpose: Publishing moves the item's status and its poster's visibility together, with no half state visible
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com, open the draft, publish it, and confirm the result is a full page rather than a banner
+    - kind: pytest
+      test: test_output.py::test_publishing_makes_the_item_readable_and_its_poster_fetchable_together
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unpublishing_hides_the_item_and_its_poster_together
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publishing_one_item_changes_no_other_items_status
+      category: data_integrity
+      weight: 5
+
+- id: alternative_text_gates_publication
+  purpose: An item whose poster carries empty alternative text cannot be published and the refusal names the field
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com, create an item whose poster carries no alternative text and attempt to publish it
+    - kind: browser
+      do: Confirm the refusal names the alternative-text field and the item is still listed as a draft
+    - kind: pytest
+      test: test_output.py::test_publishing_without_alternative_text_is_refused_and_names_the_field
+      critical: true
+      category: validation
+      weight: 5
+
+- id: an_author_cannot_reach_another_authors_draft
+  purpose: One author is refused the other author's draft exactly as an anonymous caller is
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_an_author_cannot_read_another_authors_draft
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_author_cannot_publish_another_authors_item
+      category: security
+      weight: 5
+
+- id: a_reader_is_denied_every_compose_endpoint
+  purpose: A reader session is refused every studio endpoint at the API, not merely in the interface
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com, open /studio/news, and confirm the refusal names the permission required
+    - kind: pytest
+      test: test_output.py::test_a_reader_session_is_refused_every_studio_endpoint
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_anonymous_caller_is_refused_every_studio_endpoint
+      category: security
+      weight: 5
+
+- id: invalid_bodies_and_a_duplicate_address_are_rejected
+  purpose: A malformed body, a duplicate address and an oversized upload are each refused before anything is written
+  substeps:
+    - kind: browser
+      do: Open /signup, submit the address of a seeded account and confirm the refusal names the field without saying whether the address is taken
+    - kind: pytest
+      test: test_output.py::test_a_duplicate_email_is_refused_without_confirming_the_address
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_short_password_is_refused_and_names_the_field
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_upload_whose_bytes_contradict_its_declared_type_is_refused
+      category: validation
+      weight: 3
+
+- id: the_model_catalog_is_comparable
+  purpose: One set of model records feeds the rail and the table with the same fields in the same order
+  substeps:
+    - kind: browser
+      do: Open /api-platform and confirm the model rail and the comparison table quote the same specs for Nova-4.5
+    - kind: browser
+      do: Advance the model rail with its circular arrow buttons and confirm each card lists its specs in one fixed order
+    - kind: pytest
+      test: test_output.py::test_every_model_record_carries_every_spec_field
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_seeded_model_prices_are_stored_in_minor_units_per_second
+      category: data_integrity
+      weight: 5
+
+- id: documents_arrive_complete_from_the_server
+  purpose: The home page, the portal and the connector all carry their content in the first response
+  substeps:
+    - kind: browser
+      do: Open /mcp and confirm the four accordion rows expand independently to their answers
+    - kind: browser
+      do: Open /api-platform and confirm the four capability columns read Access, Evaluate, Automate and Control
+    - kind: pytest
+      test: test_output.py::test_the_home_document_carries_its_hero_and_switcher_copy_as_text
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_portal_document_carries_every_capability_column_and_model_row
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_connector_document_carries_every_accordion_answer
+      category: business_rule
+      weight: 3
+
+- id: contract_surfaces_answer
+  purpose: The readiness probe reports both dependencies and a list endpoint returns a top-level array
+  substeps:
+    - kind: browser
+      do: Open / at a narrow viewport and confirm the sections stack to one column without the page sliding sideways
+    - kind: pytest
+      test: test_output.py::test_health_reports_the_database_and_the_store_separately
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_news_listing_returns_a_top_level_array
+      category: presentation
+      weight: 1
+
+- id: an_unknown_address_renders_the_not_found_shell
+  purpose: An unresolved address answers not found inside the product's own chrome with a way back
+  substeps:
+    - kind: browser
+      do: Open /this-route-does-not-exist and confirm the product's own shell renders with a pill leading home
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_renders_the_products_own_not_found_shell
+      category: presentation
+      weight: 1
+
+- id: public_routes_are_discoverable
+  purpose: Every public route carries its own title and description, the sitemap lists them and no draft address leaks
+  substeps:
+    - kind: browser
+      do: Open /news and confirm only published items are listed, newest first
+    - kind: pytest
+      test: test_output.py::test_every_public_route_carries_its_own_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_sitemap_lists_public_routes_and_omits_every_draft
+      category: presentation
+      weight: 1
+
+- id: links_resolve_and_no_secret_reaches_the_browser
+  purpose: Every internal link on every public route resolves, images carry alternative text and no credential ships
+  substeps:
+    - kind: browser
+      do: Open / and confirm the footer carries a privacy link and a terms link
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_the_public_routes_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_content_image_carries_alternative_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_store_credential_reaches_the_browser
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_public_responses_carry_the_declared_security_headers
+      category: security
+      weight: 5

@@ -1,0 +1,351 @@
+- id: guest_books_a_stay_end_to_end
+  purpose: A guest searches a place and dates, reads the whole price, and confirms a reservation that holds the nights
+  substeps:
+    - kind: browser
+      do: Open the home route, read the four inventory kinds on the category bar, type Portland into the Where segment, pick a two-night range in the When segment, set two adults in the Who segment over the one submit, and confirm the routes named in the route table resolve as a traveller searches for a place to stay while a host publishes one
+      cov: C-CF-06, C-CF-08, C-OV-01, C-OV-02, C-UF-01
+    - kind: browser
+      do: Switch the category bar to Experiences plus Services and confirm each inventory type carries its own route while no separate booking flow appears
+      cov: C-CN-03
+    - kind: browser
+      do: Open the Cedar Loft listing, read the booking panel itemising the whole price before the guest commits, with the cancellation policy, the house rules, the total and the rating sitting above the booking control
+      cov: C-CF-20, C-CF-24
+    - kind: pytest
+      test: test_output.py::test_guest_confirms_a_reservation_that_holds_the_nights
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_authorised_amount_equals_the_quote_total
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_quote_lines_sum_exactly_to_the_quote_total
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_confirms_leave_one_reservation
+  purpose: Two travellers pressing confirm at the same instant for one listing and one range leave exactly one reservation
+  substeps:
+    - kind: browser
+      do: Open Salt Marsh Cabin and confirm the one bookable window is open while every other night is blocked
+      cov: C-DM-10
+    - kind: browser
+      do: Open a listing whose nights were just booked and read the honest just-taken message rather than a checkout failure
+      cov: C-TR-10
+    - kind: pytest
+      test: test_output.py::test_concurrent_confirms_leave_exactly_one_reservation
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_listing_rows_are_persisted_and_not_duplicated
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_confirm_creates_at_most_one_reservation
+  purpose: A replayed idempotency key returns the original reservation rather than creating a second
+  substeps:
+    - kind: browser
+      do: Sign in as a guest, then reserve, message a host, wishlist a listing and open the trip receipt recorded at the documented credentials path
+      cov: C-RL-03, C-DC-05
+    - kind: pytest
+      test: test_output.py::test_replayed_idempotency_key_creates_one_reservation
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_maintenance_sweep_is_idempotent
+      category: business_rule
+      weight: 3
+
+- id: guest_cannot_read_another_guests_trip
+  purpose: A direct request for another traveller's reservation is refused by the server
+  substeps:
+    - kind: browser
+      do: Sign in as guest2@example.com and confirm a guest requesting another guest's reservation, thread, wishlist or receipt is refused by the server
+      cov: C-RL-04
+    - kind: browser
+      do: Save a listing to a wishlist and confirm the wishlist item stores the listing plus the dates the listing was saved under
+      cov: C-CF-56
+    - kind: pytest
+      test: test_output.py::test_guest_cannot_read_another_guests_reservation
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_host_cannot_read_another_hosts_reservations
+      critical: true
+      category: security
+      weight: 5
+
+- id: anonymous_confirm_is_denied
+  purpose: A confirm carrying no bearer token is denied and holds nothing
+  substeps:
+    - kind: browser
+      do: As an anonymous visitor open a protected route, confirm the app sends the visitor to sign-in and returns afterwards to the requested route
+      cov: C-UF-02
+    - kind: browser
+      do: Let a session expire mid-action and confirm the action is left unperformed with sign-in asked for again
+      cov: C-UF-03
+    - kind: pytest
+      test: test_output.py::test_anonymous_mutation_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_with_a_wrong_password_is_denied
+      category: security
+      weight: 5
+
+- id: unpublished_review_is_forbidden_to_the_host
+  purpose: A review with no publication stamp never leaves the server to anyone but its author
+  substeps:
+    - kind: browser
+      do: Sign in as host@example.com and confirm the rating aggregate counts published reviews only, averaging six subratings independently
+      cov: C-CF-59
+    - kind: browser
+      do: Open the accept-or-decline screen and confirm the screen shows no guest photograph and no guest name
+      cov: C-CF-63
+    - kind: pytest
+      test: test_output.py::test_unpublished_review_is_absent_from_the_response_body
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_contact_details_are_redacted_before_confirmation
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_exact_coordinates_are_withheld_before_confirmation
+      category: security
+      weight: 5
+
+- id: guest_prices_a_stay_correctly
+  purpose: Every priced line follows the fixed order of operations and the lines sum exactly to the total
+  substeps:
+    - kind: browser
+      do: Open Cedar Loft with no dates chosen and confirm the panel shows a from-price while showing no total
+      cov: C-CF-21
+    - kind: browser
+      do: Pick dates, then add the displayed price lines by hand in the browser and confirm the arithmetic came from the server-computed quote rather than from the browser
+      cov: C-TR-09
+    - kind: browser
+      do: Set the party to two adults, two children, one infant and one pet, counted as four separate classes, and read the breakdown
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_cleaning_fee_is_identical_on_a_long_stay
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_discount_reduces_the_nightly_subtotal_only
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_extra_guest_fee_excludes_infants
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pet_fee_is_charged_once_per_stay
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_per_date_prices_are_summed_across_the_range
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_tax_drops_to_zero_at_the_exemption_threshold
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_zero_minor_digit_currency_totals_are_whole_units
+      category: business_rule
+      weight: 3
+
+- id: host_accepts_a_request_to_book
+  purpose: A request to book holds the nights with the money authorised, and acceptance captures it
+  substeps:
+    - kind: browser
+      do: Open Harbour Cottage and confirm the page says request to book creates a pending hold instead of confirming on authorisation
+      cov: C-CF-23
+    - kind: browser
+      do: Sign in as host@example.com, confirm the host reads and writes only their own listings, calendars, reservations and payouts, then accept the request so the authorisation is captured
+      cov: C-RL-06, C-CF-68
+    - kind: pytest
+      test: test_output.py::test_request_to_book_authorises_without_capturing
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_host_acceptance_captures_the_authorisation
+      category: business_rule
+      weight: 3
+
+- id: declined_instrument_leaves_the_nights_free
+  purpose: A declined authorisation creates no reservation and releases the hold at once
+  substeps:
+    - kind: browser
+      do: Sign in with a seeded address and the corpus password and confirm the login returns a bearer token reaching a protected route
+      cov: C-CF-03
+    - kind: browser
+      do: Open the checkout route and confirm that before confirming the guest sees the charged currency named in words
+      cov: C-CF-46
+    - kind: browser
+      do: Read the same checkout page and confirm the cancellation policy, the house rules, the total and the rating sit above the booking control
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_declined_instrument_creates_no_reservation
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_challenge_instrument_answers_requires_action
+      category: business_rule
+      weight: 3
+
+- id: expired_hold_returns_the_nights
+  purpose: An abandoned pending request stops counting against availability once its deadline passes
+  substeps:
+    - kind: browser
+      do: Open the Harbour Cottage availability view and confirm the view carries three states per date, the third being bookable but not as an arrival
+      cov: C-CF-22
+    - kind: pytest
+      test: test_output.py::test_expired_pending_hold_frees_the_nights
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_policy_snapshot_survives_a_later_policy_edit
+      category: data_integrity
+      weight: 5
+
+- id: invalid_search_cursor_is_refused
+  purpose: A cursor issued against one query is refused when carried onto another
+  substeps:
+    - kind: browser
+      do: Run a search, scroll the results grid for a further page, and confirm every search parameter lives in the address so a copied address reproduces the same results
+      cov: C-CF-07
+    - kind: browser
+      do: Read the four distinct search states in turn: no results, over-narrow filters, the component unavailable, and a partial set
+      cov: C-CF-18
+    - kind: browser
+      do: Hover a result card and confirm the map pin label carries the total for the queried dates rather than the nightly rate
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_cursor_from_another_query_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_query_round_trips_through_the_address
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_dense_search_page_is_not_sparse
+      category: business_rule
+      weight: 3
+
+- id: calendar_rules_limit_a_range
+  purpose: Six availability rules gate a range, so a free date is not always a date a stay may start on
+  substeps:
+    - kind: browser
+      do: Open the Harbour Cottage availability view and confirm six availability rules plus the advance notice and the availability window all gate a range
+      cov: C-CF-38
+    - kind: pytest
+      test: test_output.py::test_closed_to_arrival_date_is_not_offered_as_a_check_in
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_range_shorter_than_min_stay_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_adjacent_stays_are_accepted_and_overlaps_refused
+      category: business_rule
+      weight: 3
+
+- id: host_manages_listings_and_calendar
+  purpose: A host edits availability and price on their own listing and unpublishing leaves existing reservations untouched
+  substeps:
+    - kind: browser
+      do: Sign in as host2@example.com and confirm a calendar edit appears in the row at once, reverting with a message naming the field on a failed save
+      cov: C-CF-66
+    - kind: browser
+      do: Import an external calendar feed arriving late over confirmed nights and confirm a conflict is raised for a person with nothing auto-cancelled
+      cov: C-CF-67
+    - kind: browser
+      do: Cancel a reservation as the host and confirm reservations, payments, payouts, refunds and cancellations are append-only so the correction is a new row
+      cov: C-CF-64
+    - kind: browser
+      do: Open the host earnings route and confirm scheduled payouts, released payouts and outstanding recoveries are listed, each payout following the check-in date in the listing's timezone after a hold period
+      cov: C-CF-69, C-CF-52
+    - kind: pytest
+      test: test_output.py::test_unpublishing_a_listing_keeps_its_reservations
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_approximate_circle_is_stable_across_requests
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_payment_event_changes_no_stored_row
+      category: data_integrity
+      weight: 5
+
+- id: public_surfaces_are_complete
+  purpose: The home route, the terms page and both error views are present with their pinned copy
+  substeps:
+    - kind: browser
+      do: Open the home route, read the link grid headed Inspiration for future getaways with its six named tabs plus Show more, and follow one city cell to its pre-applied search
+      cov: C-CF-72
+    - kind: browser
+      do: Confirm the skip link reads Skip to content and the home heading reads Havenn homepage
+      cov: C-CF-71
+    - kind: browser
+      do: Watch the network while every route loads and confirm the application makes no network call at run time to any outside service
+      cov: C-OV-03
+    - kind: browser
+      do: Follow the footer terms link to the terms page reachable from every footer, then resize to a narrow width and confirm the bottom bar carries Explore, Wishlists and Log in
+      cov: C-CF-76
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_two_hundred
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_route_answers_not_found_with_named_links
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_reachable
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_carry_distinct_titles_and_descriptions
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_link_grid_is_present_in_the_server_markup
+      category: presentation
+      weight: 1
+
+- id: new_guest_signs_up_and_sees_an_empty_trip_list
+  purpose: A fresh account can sign up, sees an empty trips list, and a duplicate address is refused
+  substeps:
+    - kind: browser
+      do: Confirm signup is open, that any visitor may create a guest account and any signed-in account may create a host profile, then read the empty state naming what would fill the trips list
+      cov: C-RL-08, C-UF-06
+    - kind: browser
+      do: Open the account route and confirm language, region and display currency are three independent account settings, with the application single tenant, one set of listings and no organisations
+      cov: C-CF-60, C-CN-01
+    - kind: browser
+      do: Confirm the four seeded accounts guest@example.com, guest2@example.com, host@example.com and host2@example.com each sign in
+      cov: C-RL-09
+    - kind: pytest
+      test: test_output.py::test_empty_trips_list_is_an_empty_array
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_refuses_a_duplicate_address
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_refund_quote_precedes_the_cancellation
+      category: business_rule
+      weight: 3

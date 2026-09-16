@@ -1,0 +1,282 @@
+- id: visitor_browses_a_family_and_resolves_a_variant
+  purpose: A visitor opens the first home panel, resolves a colourway with a capacity to exactly one variant, and the buy panel follows that resolution
+  substeps:
+    - kind: browser
+      do: Open the home route and press the first panel action, reading DISCOVER, to reach the flagship phone product route
+      cov: C-UF-01, C-CF-71
+    - kind: browser
+      do: Open the colourway selector, choose Midnight, and observe that the capacity 8 GB / 128 GB is shown yet cannot be chosen
+      cov: C-CF-72, C-CF-73
+    - kind: browser
+      do: Choose the capacity 12 GB / 256 GB and observe the address now carries the resolved variant while the thumbnail media swaps to that colourway
+      cov: C-CF-74, C-CF-75
+    - kind: pytest
+      test: test_output.py::test_families_endpoint_lists_the_four_families
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_variant_resolution_returns_one_row
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_resolved_variant_persisted_row_matches_the_api
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_impossible_capacity_pair_is_refused
+      category: business_rule
+      weight: 3
+
+- id: visitor_follows_the_handoff_buy_route
+  purpose: A handed off variant renders a real outbound anchor naming the retailer and the click is recorded as an outbound click rather than as a sale
+  substeps:
+    - kind: browser
+      do: Open the second phone product route, choose the colourway Chalk, and read the action label naming SHOP ON Bazaario as a real anchor carrying a real address
+      cov: C-CF-76, C-CF-77
+    - kind: browser
+      do: Inspect the handed off anchor and observe it announces an external destination to assistive technology while carrying the resolved variant identifier
+      cov: C-FE-01, C-CF-78
+    - kind: pytest
+      test: test_output.py::test_handoff_variant_exposes_outbound_route_not_a_cart_add
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_handoff_variant_stores_no_price
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_outbound_click_row_is_recorded_without_an_order
+      category: data_integrity
+      weight: 5
+
+- id: visitor_adds_a_direct_variant_to_the_cart
+  purpose: A direct variant is added to a cart the site holds and the cart survives a reload
+  substeps:
+    - kind: browser
+      do: Open the headphones product route, choose the colourway Black, and press the action reading ADD TO CART so that the cart drawer opens
+      cov: C-CF-79, C-CF-80
+    - kind: browser
+      do: Open the cart route on an empty cart and read the one full width action reading CONTINUE SHOPPING beside the checkout action, a real anchor to the separate payment origin
+      cov: C-CF-81, C-CF-82
+    - kind: pytest
+      test: test_output.py::test_direct_variant_add_creates_a_cart_line
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cart_line_persists_across_a_fresh_session
+      category: data_integrity
+      weight: 5
+
+- id: visitor_filters_and_sorts_a_family_listing
+  purpose: A family listing shows one card per variant and its facet with sort state lives in the address
+  substeps:
+    - kind: browser
+      do: Open the phones family listing at its collections route and narrow the result by colourway so that the facet state appears in the query string
+      cov: C-UF-02, C-CF-83
+    - kind: browser
+      do: Change the sort order so that the sort state appears in the query string, then press the browser back button and watch the facet changes step back one at a time
+      cov: C-CF-84, C-CF-85
+    - kind: pytest
+      test: test_output.py::test_listing_shows_one_card_per_variant
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_listing_facets_intersect_across_axes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_listing_sort_newest_orders_by_release_date
+      category: business_rule
+      weight: 3
+
+- id: empty_family_listing_carries_no_products
+  purpose: A family holding no products renders the empty listing surface rather than a not found
+  substeps:
+    - kind: browser
+      do: Open the wearables family listing and read the empty listing surface naming the family and offering a control clearing every facet, with card shaped placeholders at the card width while it loads
+      cov: C-UF-03, C-UF-04
+    - kind: pytest
+      test: test_output.py::test_empty_family_listing_is_not_a_not_found
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_variant_matrix_is_stored_as_fourteen_rows
+      category: data_integrity
+      weight: 5
+
+- id: invalid_address_answers_not_found
+  purpose: An address matching no route renders the product's own not found surface and answers not found
+  substeps:
+    - kind: browser
+      do: Open an address that matches no route and read the not found surface carrying the numeral 404, the heading Page Not Found, and the action reading BACK TO HOME returning to the home route
+      cov: C-CF-86, C-CF-87, C-CF-88
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_family_slug_is_not_found
+      category: business_rule
+      weight: 3
+
+- id: owner_registers_a_device
+  purpose: A signed in owner registers a device by serial number and the registration is stored against that account
+  substeps:
+    - kind: browser
+      do: Open the account route and sign in as owner@example.com with the seeded password deku-demo-pw-2026 taken from the credentials file at the application root
+      cov: C-UF-05, C-RL-08, C-RL-09, C-DC-16
+    - kind: browser
+      do: Open the support centre route, open the registration panel, enter the unregistered serial and observe the panel naming the product that serial resolves to before confirmation
+      cov: C-UF-06, C-CF-89
+    - kind: pytest
+      test: test_output.py::test_registration_is_persisted_and_survives_a_reread
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_device_registration_sends_no_mail
+      category: notification
+      weight: 3
+
+- id: owner_files_a_support_request
+  purpose: An owner opens a support request against a registration they hold and one acknowledgement is delivered
+  substeps:
+    - kind: browser
+      do: Open the support request route, open to an owner only, choose the registration, choose the category Battery, and write a body
+      cov: C-UF-07, C-CF-90
+    - kind: browser
+      do: Submit the request, read the reference returned, then open the owner device route, open to an owner only, and find the request listed there
+      cov: C-CF-91, C-UF-08
+    - kind: pytest
+      test: test_output.py::test_support_request_delivers_one_confirmation_email
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_support_requests_listing_is_scoped_to_the_signed_in_owner
+      category: security
+      weight: 5
+
+- id: duplicate_support_request_sends_no_second_confirmation
+  purpose: Submitting the same support request twice returns the original reference and sends exactly one acknowledgement
+  substeps:
+    - kind: browser
+      do: Submit the identical request form a second time, carrying the idempotency key issued when the form was opened, and observe the original reference returned with every typed field kept
+      cov: C-CF-92, C-UF-09
+    - kind: pytest
+      test: test_output.py::test_duplicate_support_request_sends_no_second_confirmation_email
+      category: data_integrity
+      weight: 5
+
+- id: anonymous_registration_is_denied
+  purpose: An anonymous caller cannot register a device and the attempt is refused by the server
+  substeps:
+    - kind: browser
+      do: Sign out, open the owner-only support request route, and observe the visitor is sent to the account route then returned to the route asked for once signed in
+      cov: C-UF-10, C-UF-11
+    - kind: pytest
+      test: test_output.py::test_anonymous_registration_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: cross_account_support_request_is_forbidden
+  purpose: An owner cannot open a support request against a registration belonging to another account
+  substeps:
+    - kind: browser
+      do: Sign in as the second owner and confirm the first owner's registration is absent, with authorization enforced on the server and the account read from the session rather than from the request body
+      cov: C-RL-10, C-RL-11
+    - kind: pytest
+      test: test_output.py::test_cross_account_support_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_registrations_listing_is_scoped_to_the_signed_in_owner
+      category: security
+      weight: 5
+
+- id: serial_already_held_cannot_be_registered
+  purpose: A serial already registered to another account is refused without naming the holder
+  substeps:
+    - kind: browser
+      do: As the first owner, enter the serial already held by the second owner and read the error shown beside the field causing the error, revealing nothing about which account holds it
+      cov: C-UF-12, C-RL-12
+    - kind: pytest
+      test: test_output.py::test_duplicate_serial_across_accounts_is_refused_without_naming_the_holder
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_serial_is_refused
+  purpose: A malformed or unknown serial is refused as invalid and nothing is written
+  substeps:
+    - kind: browser
+      do: Enter a malformed serial on the request form and read the error shown beside the field causing the error, stated in words rather than by a change of border colour alone
+      cov: C-UF-13, C-UF-14
+    - kind: pytest
+      test: test_output.py::test_malformed_serial_is_refused_and_writes_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_serial_is_refused_and_writes_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_support_request_with_an_empty_body_is_refused
+      category: validation
+      weight: 3
+
+- id: article_vote_is_updated_per_visitor
+  purpose: A second helpfulness vote from the same visitor updates the stored answer rather than adding a second one
+  substeps:
+    - kind: browser
+      do: Open a support article, answer the pinned helpfulness question, and watch both controls replaced by an acknowledgement in place
+      cov: C-CF-93, C-CF-94
+    - kind: browser
+      do: Return to the support centre bar carrying the four product families, the community forum and support itself, and open each of the seven support categories
+      cov: C-CF-95, C-CF-96
+    - kind: pytest
+      test: test_output.py::test_article_vote_updates_rather_than_inserts
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_failure_wording_does_not_distinguish_the_two_causes
+      category: security
+      weight: 5
+
+- id: launch_surface_is_served
+  purpose: The sitemap, the robots file, the favicon and the per route metadata are all served
+  substeps:
+    - kind: browser
+      do: Open the sitemap, the robots file and the favicon addresses in turn, then open each standing page route, confirming a production build is served rather than a development server
+      cov: C-UF-15, C-UF-16, C-DC-17
+    - kind: browser
+      do: Open the reading routes for the brand story, the software release and the grant programme, then open the cart route
+      cov: C-UF-17, C-UF-18
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_answers_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_and_robots_are_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_carry_distinct_titles_and_descriptions
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_social_preview_is_declared_on_every_public_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_what_the_browser_downloads
+      category: security
+      weight: 5
