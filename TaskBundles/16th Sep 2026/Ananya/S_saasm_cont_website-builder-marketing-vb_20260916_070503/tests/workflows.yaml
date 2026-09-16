@@ -1,0 +1,349 @@
+- id: visitor_reads_the_long_home_route
+  purpose: A visitor opens the home route and finds the seventeen bands, the fixed chrome and the copy deck
+  substeps:
+    - kind: browser
+      do: Open the home route and confirm the product is a public marketing surface joined to a sign-up surface, plus a small console for whoever owns a site, and that Orb is not a page editor, not a shop, not an analytics product
+      cov: C-OV-01, C-OV-03
+    - kind: browser
+      do: Confirm a visitor reads every marketing route without signing in, and that the home route renders seventeen bands stacked in one column in the stated order
+      cov: C-RL-01, C-CF-04
+    - kind: browser
+      do: Confirm nine home bands repeat the standard band header, and that the home route renders the measured copy deck string for string, headline for headline
+      cov: C-FE-17
+    - kind: browser
+      do: Confirm the header stays fixed at full strength at every scroll position, never shrinking, and that the footer carries six columns above a legal row reading Terms of Use, Privacy Policy, plus the copyright line
+      cov: C-FE-12, C-FE-16, C-CF-63
+    - kind: browser
+      do: Sign out from the console and confirm signing out returns to the home route, clearing the session
+      cov: C-UF-03
+    - kind: browser
+      do: Confirm ten named routes answer, beside the nine aliases, beside the catch-all
+      cov: C-UF-01
+    - kind: browser
+      do: Confirm the wordmark is three letters over a solid ground rectangle of the box dimensions, that three header items open a full-width panel of four columns over a promotional strip, that all three panels sit in the document at first paint hidden by state, and that a panel closes on pointer leave, on Escape, on focus leaving its subtree
+      cov: C-FE-11, C-FE-13, C-FE-14, C-FE-15
+    - kind: browser
+      do: Scroll the home route and confirm three groups change with scroll position while nothing else moves, and that placeholder pictures are drawn from a seed rather than downloaded
+      cov: C-FE-19, C-FE-25
+    - kind: browser
+      do: Confirm full keyboard navigation in document order reaches every control under a visible focus indicator, that body text meets WCAG AA contrast against its ground, and that at a narrow viewport nothing overflows sideways with every navigation target staying reachable
+      cov: C-UX-12, C-UX-13, C-UX-14
+    - kind: pytest
+      test: test_output.py::test_alias_paths_serve_the_home_document
+      category: presentation
+      weight: 1
+- id: visitor_searches_a_domain_then_opens_a_free_account
+  purpose: The end-to-end outcome, from the domain field to a draft site standing in the owner console
+  substeps:
+    - kind: browser
+      do: Scroll to the domain band, type a label into the field, press Search, and confirm the domain result region announces itself politely when the answer arrives with a normalised label, an exact result, ranked suggestions and a partial flag
+      cov: C-UF-07, C-CF-21
+    - kind: browser
+      do: Confirm a visitor reaches an account from the home route by the header pill, an in-page primary button, the domain field, or the login link, and that each page leads with one primary action distinct from every secondary control
+      cov: C-OV-02, C-UX-11
+    - kind: browser
+      do: Open the sign-up form, confirm the form links to the terms page before an account can be created, then submit an address with a password
+      cov: C-CF-38
+    - kind: browser
+      do: Confirm sign-up success lands on a full-page confirmation naming the new site, naming its free address, and that the owner console lists the signed-in owner's sites as a table of rows
+      cov: C-CF-40, C-CF-41
+    - kind: pytest
+      test: test_output.py::test_signup_creates_account_workspace_and_draft_site
+      critical: true
+      category: core_outcome
+      weight: 5
+- id: owner_publishes_a_draft_site_with_a_picture
+  purpose: An owner uploads a picture to a draft site, publishes, and the site plus its picture answer publicly
+  substeps:
+    - kind: browser
+      do: Sign in as the first seeded owner with the seeded password written into the credential file, landing on the console
+      cov: C-RL-06, C-DM-02, C-DC-05 (earned: the browser signs in with exactly the credentials the app writes to the credential file, which is the only observable consequence of writing it)
+    - kind: browser
+      do: Open the seeded draft site, upload a picture, give the picture alternative text supplied by the owner, then press publish
+      cov: C-CF-49
+    - kind: browser
+      do: Confirm the row status reads published, then open the public address and confirm the published site answers at its public address to anybody
+      cov: C-CF-53
+    - kind: pytest
+      test: test_output.py::test_publish_makes_site_and_media_file_public
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_media_upload_stores_object_in_the_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_media_upload_file_key_follows_the_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_media_upload_leaves_one_file
+      category: data_integrity
+      weight: 5
+- id: anonymous_request_for_a_draft_picture_is_denied
+  purpose: A draft site's picture is unreadable to a stranger, whatever address is tried
+  substeps:
+    - kind: browser
+      do: With no session at all, request a draft site's picture address and confirm a visitor cannot read a site nobody has published
+      cov: C-RL-03
+    - kind: pytest
+      test: test_output.py::test_draft_media_file_is_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_site_public_read_is_not_found
+      category: security
+      weight: 5
+- id: second_owner_is_forbidden_from_the_first_owners_site
+  purpose: Cross-workspace isolation holds on read and on upload
+  substeps:
+    - kind: browser
+      do: Sign in as the second seeded owner, request the first owner's site, and confirm an owner opening another owner's site sees the product's own refusal page
+      cov: C-UF-04
+    - kind: pytest
+      test: test_output.py::test_second_owner_cannot_read_first_owner_site
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_media_upload_is_denied_to_second_owner
+      critical: true
+      category: security
+      weight: 5
+- id: visitor_cannot_open_the_owner_console
+  purpose: The console is closed to a visitor at the interface as well as in the interface
+  substeps:
+    - kind: browser
+      do: Signed in as the seeded visitor, open the console address and confirm an unauthenticated request for the console lands on the sign-in route
+      cov: C-UF-02
+    - kind: pytest
+      test: test_output.py::test_visitor_cannot_list_owner_sites
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wrong_password_is_denied
+      category: security
+      weight: 5
+- id: owner_adds_a_site_as_an_inline_row
+  purpose: A site is created inside the table without leaving the page
+  substeps:
+    - kind: browser
+      do: On the console press the control at the head of the table and confirm a site is added as a new row opened inside the table, saved without leaving the page
+      cov: C-CF-43
+    - kind: browser
+      do: Confirm every list carries an empty state rather than an error for an owner holding no sites
+      cov: C-UF-05
+    - kind: browser
+      do: Type a slug already taken by a seeded site into the new row, confirm the field is named inline with nothing written, then confirm a deferred media block reserves its space so nothing moves on arrival
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_sites_row_is_persisted_for_owner_only
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_slug_conflict_is_refused
+      category: validation
+      weight: 3
+- id: unknown_address_renders_the_not_found_page
+  purpose: An address the router does not know is answered honestly
+  substeps:
+    - kind: browser
+      do: Open an address the router does not know and confirm the product's own not-found page renders, carrying the same header, the same footer, as every other route
+      cov: C-CF-15, C-CF-18
+    - kind: browser
+      do: Confirm the not-found route carries six loose primitives in saturated flat colour beside one primary action back to the origin
+      cov: C-FE-22 (earned: the point of sale comparison band is the only other route carrying loose ambient shapes, checked here in the same pass)
+    - kind: browser
+      do: Follow a chrome destination outside the named routes and confirm every such destination resolves to an honest placeholder carrying the chrome
+      cov: C-CN-08
+    - kind: pytest
+      test: test_output.py::test_not_found_route_answers_with_not_found_status
+      category: presentation
+      weight: 1
+- id: visitor_filters_the_template_rail
+  purpose: The chip filter replaces the rail without a navigation
+  substeps:
+    - kind: browser
+      do: Press a category chip and confirm the seven category chips form one single-select group moved through by arrow keys, selecting a chip replaces the rail content with no page navigation
+      cov: C-CF-09, C-CF-10
+    - kind: browser
+      do: Confirm the template rail shows thirty-five template links beside seven category links
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_templates_listing_carries_facets_and_cap
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_templates_library_holds_thirty_three_rows
+      category: data_integrity
+      weight: 5
+- id: visitor_opens_the_accordions_and_the_galleries
+  purpose: The four accordions and the two galleries behave as one single-select and two scroll regions
+  substeps:
+    - kind: browser
+      do: Open an accordion row and confirm exactly one row of an accordion is open at a time, so opening a row closes whichever was open, with the first solutions row open on load while every questions row is closed
+      cov: C-CF-05, C-CF-06
+    - kind: browser
+      do: Scroll a horizontal gallery sideways and confirm the gallery scrolls inside a region of its own, never capturing page scroll, reachable and operable from the keyboard
+      cov: C-CF-07, C-CF-08
+    - kind: browser
+      do: Confirm every questions answer sits in the document at first paint rather than arriving when a row opens
+      cov: C-CF-11
+    - kind: browser
+      do: Confirm the assistant heading exists twice, with the cycling copy hidden from assistive technology, and that the marquee pauses on hover
+      cov: C-CF-12
+- id: point_of_sale_route_inverts_on_the_dark_band
+  purpose: The product route shares the design system and inverts its primary button on a dark ground
+  substeps:
+    - kind: browser
+      do: Open the point of sale route and confirm the route sets its headline left aligned, rendering the measured copy deck string for string
+      cov: C-CF-13, C-FE-18
+    - kind: browser
+      do: Scroll to a dark band and confirm the primary button inverts to a near-white ground under an ink label at the same size, the same radius
+      cov: C-CF-14
+    - kind: pytest
+      test: test_output.py::test_route_titles_and_descriptions_are_distinct
+      category: presentation
+      weight: 1
+- id: domain_answers_are_stable_and_an_empty_label_is_invalid
+  purpose: A registered name, a free name and a repeated query each answer the same way twice, and an empty label is refused
+  substeps:
+    - kind: browser
+      do: Press Search with an empty domain field and confirm the field is named, with the label recorded nowhere against whoever typed it
+      cov: C-CF-28
+    - kind: pytest
+      test: test_output.py::test_domain_query_empty_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_domain_query_normalises_padding_and_case
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Search a registered name, then a free name, and confirm one answers as unavailable while the other quotes a yearly price
+      cov: C-CF-22 (earned: the browser reads the rendered answer while the pytest check reads the registry status field behind it)
+    - kind: pytest
+      test: test_output.py::test_domain_availability_answers_registered_name
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_domain_availability_answers_free_name_price
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_domain_suggestions_are_stable_across_two_calls
+      category: business_rule
+      weight: 3
+- id: duplicate_signup_creates_no_second_tenant
+  purpose: A replayed sign-up inside the window returns the first answer and writes nothing new
+  substeps:
+    - kind: browser
+      do: Submit the sign-up form twice with one address inside the window and confirm one account, one workspace, one draft site result
+      cov: C-CF-34 (earned: the browser observes the single resulting site while the pytest check counts the rows behind it)
+    - kind: pytest
+      test: test_output.py::test_signup_replay_creates_no_second_account
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_short_password_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_decoy_field_submission_is_refused
+      category: validation
+      weight: 3
+- id: concurrent_publish_leaves_one_live_revision
+  purpose: Two simultaneous publishes of one site resolve to exactly one winner
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_leaves_one_live_revision
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rollback_returns_site_to_draft
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_rollback_keeps_one_stored_row_per_site
+      category: data_integrity
+      weight: 5
+- id: interface_conventions_hold_on_every_endpoint
+  purpose: Errors, request identifiers, seeded rows, the favicon, the social preview image and the terms page all behave as stated
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_invalid_call_is_rejected_as_client_error
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_response_carries_a_request_identifier
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_sites_stored_rows_match_the_brief
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_owner_login_returns_access_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_credentials_in_browser_downloads
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_empty_owner_sites_returns_empty_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_templates_unknown_category_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Open the terms page from the footer of the not-found route and confirm a terms page is reachable from the footer of every route, beside a privacy page stating what the product records about a visitor
+      cov: C-CF-61, C-CF-62
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_social_preview_image_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_reachable
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_is_ready
+      category: presentation
+      weight: 1
+- id: platform_claims_ship_without_the_platform
+  purpose: The copy sells an editor, a shop, automations and analytics, and none of them ships behind the sign-up
+  substeps:
+    - kind: browser
+      do: Open the console and confirm no page editor ships, with no node tree, no session protocol, no undo, and that no site generation ships anywhere behind the sign-up
+      cov: C-CN-01, C-CN-02
+    - kind: browser
+      do: Confirm no commerce ships, with no catalogue, no cart, no payment, no ledger, and that no automation engine, no analytics pipeline, no extension runtime ships
+      cov: C-CN-03, C-CN-04
+    - kind: browser
+      do: Search a domain and confirm no custom domain is registered, delegated, pointed or certificated, and that the journey completes with no external network call happening at run time
+      cov: C-CN-05, C-CN-07
+    - kind: browser
+      do: Complete a sign-up and confirm no outbound email of any kind is sent, the confirmation standing on its own
+      cov: C-CN-06
+    - kind: browser
+      do: Confirm the home document arrives server-rendered, hydrating without re-rendering the tree, carrying the hero headline, the sub-headline and the primary button in the first response of a production build served behind a static or preview server rather than a dev server
+      cov: C-TR-02, C-DC-07
+    - kind: browser
+      do: Drive the app through the browser and record the run
+      cov: C-DC-06 (earned: the browser channel writes into the reserved screenshot directory at the app root during this very run, so the directory existing and starting empty is what the run itself observes), C-DC-11 (earned: the compose file this run brings up is the one the bundle ships, and it declares no edge function, no fixed container name and no custom network for the app)

@@ -1,0 +1,291 @@
+- id: visitor_reads_the_home_route
+  purpose: A signed out visitor reads the whole home route from the hero to the closing action
+  substeps:
+    - kind: browser
+      do: Open / as a signed out visitor and read the thirteen full-width sections in order from the hero to the closing call to action
+      cov: C-CF-55
+    - kind: pytest
+      test: test_output.py::test_home_route_carries_the_thirteen_sections_in_order
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_home_route_copy_deck_renders_in_full
+      category: presentation
+      weight: 1
+
+- id: visitor_starts_a_free_trial
+  purpose: A visitor submits the trial form and lands on a confirmation carrying the team site address
+  substeps:
+    - kind: browser
+      do: Open the trial form at /trial/, type a team name and a sector, submit, and land on /trial/started/ where the team site address is read back
+      cov: C-CF-108, C-UF-08
+    - kind: pytest
+      test: test_output.py::test_trial_row_is_stored_with_the_derived_team_slug
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_route_is_served_to_an_anonymous_visitor
+      category: core_outcome
+      weight: 5
+
+- id: author_publishes_a_comparison_route
+  purpose: An author creates a comparison route, adds a claim with its source and date, and publishes it
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com, open /studio/, create a comparison route, add one comparative claim, then publish the route
+      cov: C-UF-10, C-RL-11
+    - kind: pytest
+      test: test_output.py::test_route_rows_are_persisted_and_survive_a_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_comparison_claim_renders_its_source_and_checked_date
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_claim_without_a_checked_date_is_refused_and_nothing_is_written
+      category: validation
+      weight: 3
+
+- id: draft_route_denied_to_a_reader
+  purpose: A draft route is unreadable by anyone who is not an author and looks exactly like a slug that does not exist
+  substeps:
+    - kind: browser
+      do: Signed out, request the draft sector route slug and see the site own not found page rather than the route
+      cov: C-UF-16
+    - kind: pytest
+      test: test_output.py::test_draft_route_is_denied_to_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_route_denied_to_a_reader_looks_like_a_missing_slug
+      category: security
+      weight: 5
+
+- id: reader_cannot_publish_a_route
+  purpose: A reader session is refused at the API when it tries to create or publish a route
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com, request /studio/routes/new/ and read the page saying the console is for authors
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_publish_a_route_and_the_row_is_unchanged
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_write_to_pages_is_denied
+      category: security
+      weight: 5
+
+- id: reader_cannot_upload_an_image
+  purpose: A reader session is refused at the API when it tries to upload an image and no object reaches the bucket
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com and open /studio/media/, which refuses the reader and offers a way back to /
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_upload_and_no_object_reaches_the_bucket
+      critical: true
+      category: security
+      weight: 5
+
+- id: author_uploads_an_image_to_the_media_library
+  purpose: An author uploads an image and the bytes land in the object store at the key the scheme produces
+  substeps:
+    - kind: browser
+      do: Sign in as author2@example.com, open /studio/media/, upload an image to a route and read back the object key its media scheme produced
+      cov: C-CF-91
+    - kind: pytest
+      test: test_output.py::test_uploaded_file_lands_in_the_bucket_at_its_scheme_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_identical_bytes_uploaded_twice_leave_one_media_row
+      category: data_integrity
+      weight: 5
+
+- id: draft_attachment_denied_to_the_public
+  purpose: An image attached to a draft route is unreadable until the route is published
+  substeps:
+    - kind: browser
+      do: Signed out, request the object key of an image attached to a draft route and read the refusal rather than the image
+      cov: C-CF-98
+    - kind: pytest
+      test: test_output.py::test_draft_attachment_is_not_publicly_readable
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_image_without_alternative_text_is_refused
+      category: validation
+      weight: 3
+
+- id: sector_route_filters_its_proof_cards
+  purpose: A sector route shows three template cards filtered to that sector and inherits the shared core claim
+  substeps:
+    - kind: browser
+      do: Open /solutions/nonprofit/ and read the three template cards filtered to the nonprofit sector
+      cov: C-CF-31
+    - kind: pytest
+      test: test_output.py::test_sector_route_filters_its_proof_cards_on_sector
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_sector_route_inherits_the_shared_core_claim
+      category: business_rule
+      weight: 3
+
+- id: capability_route_holds_three_steps
+  purpose: A capability route carries exactly three numbered steps and refuses any other count
+  substeps:
+    - kind: browser
+      do: Open /ai-assistant/ and read the three numbered steps named Build, Share and Analyze above the Why Sheaf? section
+      cov: C-CF-34, C-CF-35
+    - kind: pytest
+      test: test_output.py::test_capability_route_carries_exactly_three_numbered_steps
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_capability_route_with_four_steps_is_refused
+      category: validation
+      weight: 3
+
+- id: content_index_shows_three_tiers
+  purpose: A content index carries one featured article above the highlighted set and the paginated remainder
+  substeps:
+    - kind: browser
+      do: Open /case-studies/ and read one featured article, the highlighted set below it, then the paginated grid under the All Posts heading
+      cov: C-CF-47, C-CF-48
+    - kind: pytest
+      test: test_output.py::test_content_index_carries_one_featured_article
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_carries_sector_size_and_capability_fields
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_content_index_count_excludes_drafts
+      category: security
+      weight: 5
+
+- id: concurrent_team_names_leave_at_most_one_trial
+  purpose: Two people submitting the same team name at once produce exactly one trial and one team site address
+  substeps:
+    - kind: browser
+      do: Open /trial/, submit a team name an existing trial already holds, and read the conflict telling the visitor the submission was rejected on the team name field
+      cov: C-CF-111
+    - kind: pytest
+      test: test_output.py::test_concurrent_team_names_leave_exactly_one_trial
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_slug_is_refused_and_one_row_remains
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_trial_submission_writes_nothing_new
+  purpose: Submitting the same email and team name twice returns the first team site address and creates no second row
+  substeps:
+    - kind: browser
+      do: Submit the trial form twice with the same email and the same team name, and read the same team site address back both times
+      cov: C-CF-113
+    - kind: pytest
+      test: test_output.py::test_repeated_trial_submission_creates_no_second_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_and_routes_are_stored_once
+      category: data_integrity
+      weight: 5
+
+- id: invalid_trial_input_is_refused
+  purpose: The trial form refuses a malformed email or an unknown sector inline and writes nothing
+  substeps:
+    - kind: browser
+      do: Open the trial form, submit an email carrying no at sign, and read the inline rejection of the invalid input naming the email field
+      cov: C-CF-117, C-CF-118
+    - kind: pytest
+      test: test_output.py::test_trial_without_an_at_sign_in_the_email_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_trial_with_an_unknown_sector_is_refused
+      category: validation
+      weight: 3
+
+- id: trial_signup_list_is_forbidden_to_a_reader
+  purpose: The trial signup list and another reader trial are both refused to a reader session
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com and request /studio/signups/, which refuses the reader rather than listing the trial signups
+      cov: C-RL-09
+    - kind: pytest
+      test: test_output.py::test_trial_signup_list_is_forbidden_to_a_reader
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_another_readers_trial
+      category: security
+      weight: 5
+
+- id: chrome_holds_on_every_route
+  purpose: The announcement bar, the star count control, the closing band, the cookie choice and the security headers hold across routes
+  substeps:
+    - kind: browser
+      do: Open /pricing/, dismiss the announcement bar, reload the route and confirm the bar stays dismissed and the closing action band still sits above the footer
+      cov: C-CF-77, C-CF-78
+    - kind: browser
+      do: Open / as a first-time visitor and read the cookie bar offering accept and decline as two equally reachable controls
+      cov: C-CF-123
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_response
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_storage_secret_appears_in_downloaded_assets
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_announcement_bar_dismissal_persists_for_the_visitor
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_star_count_control_degrades_without_a_number
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_closing_action_band_appears_on_every_route_but_home
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_persists_and_gates_third_party_scripts
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Request an address that was never created and read the site own not found page carrying a way back to the home route
+      cov: C-UF-16
+    - kind: pytest
+      test: test_output.py::test_unknown_address_renders_the_not_found_page
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Follow every internal link in the footer of /pricing/ and confirm each one resolves to a published route
+      cov: C-CF-129
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_resolves_to_a_published_route
+      category: business_rule
+      weight: 3

@@ -1,0 +1,391 @@
+- id: member_signs_in_and_opens_a_shared_file
+  purpose: A seeded member signs in and reaches a shared file through the team trail
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com with the password deku-demo-pw-2026, drill down through Atlas then Atlas Mobile to the file Checkout Redesign, and read the frames Payment Step and Confirmation on the canvas
+      cov: C-CF-01, C-CF-09, C-UF-01, C-CF-02, C-DM-05, C-DM-06
+    - kind: browser
+      do: Read the rail carrying the organization, team, project and file trail, and read the skeleton rows standing at the real row geometry while the team trail loads
+      cov: C-CF-08
+    - kind: browser
+      do: Open the file Checkout Redesign and read the dimmed still standing under a determinate bar, with the toolbar saying editing is not yet possible, before the live frames arrive
+      cov: C-UF-09
+    - kind: pytest
+      test: test_output.py::test_seeded_member_signs_in_and_receives_token
+      category: security
+      weight: 5
+      cov: C-CF-06, C-RL-14, C-TR-12
+    - kind: pytest
+      test: test_output.py::test_frame_move_is_persisted_and_survives_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-10, C-CF-11
+
+- id: editor_moves_a_frame_on_the_canvas
+  purpose: A frame moved on the canvas keeps its stored position across a reload
+  substeps:
+    - kind: browser
+      do: Drag the frame Payment Step on the canvas, read the inline banner confirming the save, reload the file and read Payment Step at its new position
+      cov: C-CF-10, C-CF-16, C-UF-07
+    - kind: pytest
+      test: test_output.py::test_frame_delete_removes_it_from_the_stored_board
+      category: data_integrity
+      weight: 5
+      cov: C-CF-12, C-CF-18
+
+- id: invalid_frame_parent_is_rejected
+  purpose: A move that would make a frame its own ancestor is refused and the tree is left unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_frame_cycle_move_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-13
+    - kind: browser
+      do: Attempt to drop a frame into a frame it already contains on the canvas, and read the inline banner naming the reason the move was reverted
+      cov: C-CF-16
+
+- id: concurrent_frame_inserts_keep_both
+  purpose: Two inserts at one position under one parent both survive in one agreed order
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_frame_inserts_are_both_stored
+      category: data_integrity
+      weight: 5
+      cov: C-CF-14, C-CF-17
+    - kind: pytest
+      test: test_output.py::test_file_version_sequence_rises_by_one_per_file
+      category: data_integrity
+      weight: 5
+      cov: C-DM-02
+
+- id: member_comments_on_a_frame
+  purpose: A comment thread is anchored to a frame, ordered, and resolvable
+  substeps:
+    - kind: browser
+      do: Select the frame Confirmation, open the comment panel, start a thread, and read the thread listed against Confirmation
+      cov: C-CF-23
+    - kind: browser
+      do: Reply in the thread on the frame Confirmation, read the replies ordered oldest first, then resolve the thread and read the resolved count rise
+      cov: C-CF-24, C-CF-27
+    - kind: pytest
+      test: test_output.py::test_comment_thread_is_stored_against_its_frame
+      category: business_rule
+      weight: 3
+      cov: C-CF-23, C-CF-24
+    - kind: pytest
+      test: test_output.py::test_thread_resolution_is_stored_with_its_resolver
+      category: business_rule
+      weight: 3
+      cov: C-CF-27
+
+- id: comment_edit_from_another_member_is_forbidden
+  purpose: Only the author may edit a comment, and a deleted comment leaves a tombstone
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_comment_edit_after_window_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-25
+    - kind: pytest
+      test: test_output.py::test_comment_delete_leaves_a_tombstone_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-26
+
+- id: owner_publishes_a_library_version
+  purpose: A library version is published immutably and a subscriber keeps its pin until the update is applied
+  substeps:
+    - kind: browser
+      do: Open the file Atlas Core Kit, open the publish slide-over, write a changelog line, publish, and read the new version number beside that changelog line on the library page
+      cov: C-CF-33, C-CF-29
+    - kind: pytest
+      test: test_output.py::test_library_publish_stores_an_immutable_version
+      category: business_rule
+      weight: 3
+      cov: C-CF-33, C-CF-34
+    - kind: pytest
+      test: test_output.py::test_subscriber_pin_is_unchanged_until_the_update_is_applied
+      category: business_rule
+      weight: 3
+      cov: C-CF-36
+
+- id: library_publish_with_an_invalid_component_is_rejected
+  purpose: An unnamed component and a duplicate component name each refuse the publish
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_library_publish_with_unnamed_component_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-30, C-CF-32
+    - kind: pytest
+      test: test_output.py::test_library_publish_with_duplicate_name_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-31
+
+- id: editor_opens_a_branch_and_requests_review
+  purpose: A branch records its base version and the named reviewer is notified by mail
+  substeps:
+    - kind: browser
+      do: Open the file Checkout Redesign, create the branch Compact Payment Step, request review from reviewer@example.com, and read the branch state in_review in the review panel
+      cov: C-CF-37, C-CF-39, C-OV-02
+    - kind: pytest
+      test: test_output.py::test_branch_creation_records_the_base_version
+      category: data_integrity
+      weight: 5
+      cov: C-CF-37, C-CF-38
+    - kind: pytest
+      test: test_output.py::test_review_request_moves_the_branch_to_in_review
+      category: business_rule
+      weight: 3
+      cov: C-CF-39
+    - kind: pytest
+      test: test_output.py::test_review_request_delivers_mail_to_the_reviewer
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-CF-54, C-CF-57, C-CF-61
+
+- id: reviewer_approves_and_the_merge_lands
+  purpose: An approval binds to the branch version and a second approval lets the merge append one version
+  substeps:
+    - kind: browser
+      do: Sign in as reviewer@example.com, open the review panel on the branch Compact Payment Step, approve, and read the branch version the approval was recorded against
+      cov: C-CF-43
+    - kind: browser
+      do: Press approve in the review panel and read the control entering a pending state, staying disabled until the server answers
+      cov: C-UF-10, C-UF-11
+    - kind: browser
+      do: Open the notification centre from the top bar and read the unread count standing on the bell, then read the grouped review items behind it
+      cov: C-CF-62, C-CF-84
+    - kind: pytest
+      test: test_output.py::test_approval_is_bound_to_the_branch_version
+      category: data_integrity
+      weight: 5
+      cov: C-CF-43, C-DM-03
+    - kind: pytest
+      test: test_output.py::test_second_approval_allows_the_merge_to_append_one_version
+      category: core_outcome
+      weight: 5
+      cov: C-CF-51, C-OV-01
+    - kind: pytest
+      test: test_output.py::test_merge_delivers_confirmation_mail_to_the_requester
+      category: notification
+      weight: 3
+      cov: C-CF-56
+
+- id: merge_after_a_later_push_is_denied
+  purpose: A push after an approval voids it and the merge is refused with the main file unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_push_after_approval_invalidates_the_approval
+      category: data_integrity
+      weight: 5
+      cov: C-CF-44, C-DM-04, C-CF-80
+    - kind: pytest
+      test: test_output.py::test_approval_invalidated_row_names_both_versions
+      category: data_integrity
+      weight: 5
+      cov: C-CF-71
+    - kind: pytest
+      test: test_output.py::test_merge_is_refused_while_the_approval_is_invalidated
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-46, C-CF-47, C-CF-48
+    - kind: browser
+      do: Read the review panel on the branch Compact Payment Step naming the approval as superseded and naming the version that superseded it
+      cov: C-CF-46
+
+- id: editor_cannot_approve_or_merge
+  purpose: A lower role is denied at the API on every decision and merge endpoint
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open the review panel on the branch Compact Payment Step, and read the panel offering no approve action to that member
+      cov: C-RL-02
+    - kind: pytest
+      test: test_output.py::test_editor_is_denied_on_the_decision_endpoint
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-02, C-RL-10
+    - kind: pytest
+      test: test_output.py::test_editor_is_denied_on_the_merge_endpoint
+      category: security
+      weight: 5
+      cov: C-RL-03
+    - kind: pytest
+      test: test_output.py::test_self_approval_is_denied
+      category: security
+      weight: 5
+      cov: C-CF-49, C-RL-06
+    - kind: pytest
+      test: test_output.py::test_peer_team_reviewer_is_denied_on_the_decision
+      category: security
+      weight: 5
+      cov: C-RL-07, C-CF-50
+
+- id: unauthenticated_and_cross_team_requests_are_forbidden
+  purpose: An anonymous caller and a member outside the team are refused, and a read-only member changes no row
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and read the rail without an entry to the organization administration area, then sign out and read the public overview
+      cov: C-UF-02, C-UF-04
+    - kind: pytest
+      test: test_output.py::test_anonymous_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-03, C-DC-08
+    - kind: pytest
+      test: test_output.py::test_cross_team_file_read_is_denied_with_the_not_found_shape
+      category: security
+      weight: 5
+      cov: C-RL-11, C-CN-01, C-DM-08
+    - kind: pytest
+      test: test_output.py::test_read_only_member_write_is_denied_and_changes_no_row
+      category: security
+      weight: 5
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_org_admin_holds_no_implicit_file_grant
+      category: security
+      weight: 5
+      cov: C-RL-09
+
+- id: administrator_changes_a_role_and_reads_the_record
+  purpose: A bulk role change is previewed, applied to the permitted rows, and recorded in the audit stream
+  substeps:
+    - kind: browser
+      do: Sign in as org_admin@example.com, open the member list, select several rows, preview a bulk role change naming how many rows will change and how many the actor may not change, apply, and read the outcome reported per row
+      cov: C-CF-65, C-CF-66
+    - kind: browser
+      do: Open the audit view as org_admin@example.com, filter by actor and by action, and read the review transitions listed with their time and outcome
+      cov: C-CF-74, C-CF-73
+    - kind: pytest
+      test: test_output.py::test_role_change_is_stored_on_the_membership_row
+      category: business_rule
+      weight: 3
+      cov: C-CF-64, C-RL-08
+    - kind: pytest
+      test: test_output.py::test_editor_is_denied_on_every_admin_endpoint
+      category: security
+      weight: 5
+      cov: C-RL-04, C-UF-04
+    - kind: pytest
+      test: test_output.py::test_audit_stream_stores_every_review_transition
+      category: data_integrity
+      weight: 5
+      cov: C-CF-69, C-CF-70
+
+- id: duplicate_invitation_creates_no_second_row
+  purpose: A repeated invitation returns the existing membership and the audit stream refuses an update
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_repeat_invitation_stores_no_second_membership_row
+      category: data_integrity
+      weight: 5
+      cov: C-CF-67
+    - kind: pytest
+      test: test_output.py::test_audit_row_update_is_refused_append_only
+      category: data_integrity
+      weight: 5
+      cov: C-CF-72
+
+- id: review_request_with_an_empty_reviewer_is_invalid
+  purpose: A request naming no reviewer and a changes-requested decision without a comment are both rejected as invalid
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_review_request_without_a_reviewer_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-40
+    - kind: pytest
+      test: test_output.py::test_changes_requested_without_a_comment_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-41
+    - kind: pytest
+      test: test_output.py::test_changes_requested_returns_the_branch_to_in_review_on_push
+      category: business_rule
+      weight: 3
+      cov: C-CF-42
+    - kind: pytest
+      test: test_output.py::test_changes_requested_delivers_no_mail
+      category: notification
+      weight: 3
+      cov: C-CF-58, C-CF-59, C-CF-60
+    - kind: browser
+      do: Sign in as editor@example.com, open the notification centre from the top bar, and read an item for a changes-requested decision on a branch that sent no mail
+      cov: C-CF-83
+
+- id: visitor_reads_the_public_surface
+  purpose: The public overview leads with one primary action and the machine-readable routes resolve
+  substeps:
+    - kind: browser
+      do: Open the public overview at the site root, read the one primary action leading to the sign-in route, and follow it to the sign-in screen
+      cov: C-CF-75, C-UX-12, C-TR-07
+    - kind: browser
+      do: Follow every internal link on the public overview and on the public access route, confirm each resolves, then open an address the app does not serve and read the product not-found page carrying a way back, with the surrounding shell still usable rather than crashed
+      cov: C-CF-76, C-CF-79, C-UF-08
+    - kind: browser
+      do: Resize to a narrow viewport, read the public overview with nothing overflowing sideways, and reach every navigation target from the overlay drawer
+      cov: C-FE-01
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_the_public_routes
+      category: presentation
+      weight: 1
+      cov: C-TR-05
+    - kind: pytest
+      test: test_output.py::test_robots_names_the_sitemap
+      category: presentation
+      weight: 1
+      cov: C-TR-06
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: presentation
+      weight: 1
+      cov: C-CF-79
+
+- id: access_request_with_an_invalid_decoy_is_rejected
+  purpose: A submission carrying the filled unattended field is refused and records nothing
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_access_request_with_the_decoy_field_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-78, C-CF-82
+    - kind: browser
+      do: Open the public access route, submit the form with a mail address and a note, and read the recorded confirmation naming the address
+      cov: C-CF-77
+
+- id: repeated_sign_in_failures_reach_the_limit
+  purpose: Sign-in locks out after repeated failures and a repeated merge creates no second version
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_sign_in_lockout_after_repeated_failures
+      category: security
+      weight: 5
+      cov: C-CF-07, C-CF-04
+    - kind: pytest
+      test: test_output.py::test_repeat_merge_creates_no_second_merge_version
+      category: data_integrity
+      weight: 5
+      cov: C-CF-52
+    - kind: pytest
+      test: test_output.py::test_branch_withdrawal_is_stored
+      category: business_rule
+      weight: 3
+      cov: C-CF-53
+
+- id: two_members_in_one_file_see_each_other
+  purpose: Presence lists the other member with a stable colour and is persisted nowhere
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_presence_lists_the_other_member_with_a_stable_colour
+      category: business_rule
+      weight: 3
+      cov: C-CF-19, C-CF-20, C-CF-21, C-CF-22, C-CF-81

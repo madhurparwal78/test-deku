@@ -1,0 +1,522 @@
+- id: developer_signs_up_and_lands_on_overview
+  purpose: A new developer creates an account and arrives at the console overview in a workspace of their own
+  substeps:
+    - kind: browser
+      do: Open the signup route, enter a fresh address, a password and a display name, then land on the console overview
+      cov: C-RL-07 (earned: the substep signs up from the public route with no invitation, which is what open signup looks like)
+    - kind: browser
+      do: Observe the overview offering an empty state that names the missing sending domain and offers the action that adds one
+      cov: C-UF-03
+    - kind: browser
+      do: Observe the workspace switcher at the top of the rail listing every workspace membership this person holds
+      cov: C-CF-52
+    - kind: pytest
+      test: test_output.py::test_signup_creates_person_carrying_display_name
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_login_returns_access_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_duplicate_signup_address_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_password_below_the_stated_minimum_length_is_refused
+      category: validation
+      weight: 3
+
+- id: admin_adds_and_verifies_a_sending_domain
+  purpose: An admin adds a sending domain, reads back the records to publish, and requests a verification pass that resolves each record on its own
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com and open the domain list, then the add-domain route
+    - kind: browser
+      do: Enter docs.northwind.example.com and observe the record table carrying a type, a host, a value and a status on every row
+    - kind: browser
+      do: Observe a skeleton in place while the domain record data is in flight rather than an indefinite spinner
+      cov: C-UF-04
+    - kind: pytest
+      test: test_output.py::test_adding_domain_creates_pending_domain
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_created_domain_generates_three_publication_records
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_domain_whose_records_read_correct_becomes_verified
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Press the verification control on the pending domain and observe the record that was missing change its own status
+    - kind: browser
+      do: Observe the domain still reading pending while one record remains missing, with the failing record named
+    - kind: pytest
+      test: test_output.py::test_verification_pass_refreshes_every_record_status
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_admin_verifies_a_sending_domain
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_deleting_a_domain_keeps_every_message_already_sent
+      category: data_integrity
+      weight: 5
+
+- id: admin_mints_credential_and_copies_secret_once
+  purpose: An admin mints a scoped credential, copies the secret from the one panel that shows it, and finds the row carrying its prefix
+  substeps:
+    - kind: browser
+      do: Open the credentials route and mint a credential named Production sender with the sending scope
+    - kind: browser
+      do: Observe the panel showing the secret once, dismiss it, then observe the new row carrying its prefix beside never as its last used time
+    - kind: pytest
+      test: test_output.py::test_minting_credential_returns_the_secret_exactly_once
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_listing_credentials_omits_every_secret
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_revoked_credential_presented_for_sending_is_denied
+      category: security
+      weight: 5
+
+- id: developer_sends_first_message_and_watches_delivery
+  purpose: A developer hands a message to the sending interface and watches it settle into delivered in the log
+  substeps:
+    - kind: browser
+      do: Open the emails log and observe the newest message at the top carrying its state chip with the state word beside the glyph
+    - kind: browser
+      do: Open that message and observe the identifier with a copy control beside the envelope
+    - kind: pytest
+      test: test_output.py::test_sending_interface_accepts_a_message_from_a_verified_domain
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_reserved_delivered_address_produces_a_delivered_event
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_retrieving_a_message_returns_its_current_state
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cancelling_a_queued_message_reaches_the_canceled_state
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_external_identifier_carries_a_type_prefix
+      category: data_integrity
+      weight: 5
+
+- id: reserved_and_ordinary_recipients_reach_their_outcomes
+  purpose: The three reserved recipient addresses drive a delivered, a bounced and a complained outcome, while an ordinary recipient receives real mail over SMTP
+  substeps:
+    - kind: browser
+      do: Filter the emails log to bounced and open the seeded bounced message to read its diagnostic with a plain-language reading beneath
+    - kind: browser
+      do: Observe the timeline rows carrying a glyph, an event name in plain words and the exact instant
+    - kind: pytest
+      test: test_output.py::test_the_reserved_bounced_address_produces_a_diagnostic
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_reserved_complained_address_produces_a_complaint_event
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_send_to_a_suppressed_address_is_refused_before_queueing
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_deferred_message_records_its_attempt_number
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Open a delivered message and observe the envelope naming the recipient beside the sending domain
+    - kind: browser
+      do: Observe the rendered body panel showing the message content inside its own isolated frame
+    - kind: pytest
+      test: test_output.py::test_an_ordinary_recipient_receives_real_mail
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reserved_relay_addresses_stay_unmetered
+      category: business_rule
+      weight: 3
+
+- id: duplicate_and_concurrent_sends_admit_at_most_one_message
+  purpose: A repeated send and two simultaneous sends under one idempotency key each leave exactly one message behind
+  substeps:
+    - kind: browser
+      do: Open the emails log after a repeated send and observe a single row for that recipient rather than two
+    - kind: pytest
+      test: test_output.py::test_replayed_idempotency_key_produces_no_second_message_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_replayed_idempotency_key_carrying_a_different_body_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_send_missing_the_idempotency_key_header_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Open the audience route and observe one contact row for the repeated address rather than a duplicate pair
+    - kind: pytest
+      test: test_output.py::test_two_simultaneous_sends_under_one_key_admit_exactly_one_message
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_two_simultaneous_contact_creates_admit_exactly_one_row
+      category: data_integrity
+      weight: 5
+
+- id: invalid_send_requests_are_refused
+  purpose: A send that breaks a stated rule is refused before anything is queued, naming every failing field
+  substeps:
+    - kind: browser
+      do: Observe the domain detail route stating that sending from a pending domain is not yet possible
+    - kind: browser
+      do: Observe the refusal rendered in place on the console route with the rest of the screen still usable
+      cov: C-UF-05 (earned: the refusal is read where it is rendered, with the surrounding route still usable)
+    - kind: pytest
+      test: test_output.py::test_send_from_an_unverified_domain_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_unknown_field_on_a_write_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_validation_failure_reports_every_failing_field
+      category: validation
+      weight: 3
+
+- id: member_write_actions_are_denied
+  purpose: A member is refused every action that changes the plumbing: minting a credential, and sending a broadcast to a live audience
+  substeps:
+    - kind: browser
+      do: Sign in as member@example.com and observe the credentials route showing the list with its mint control disabled
+    - kind: pytest
+      test: test_output.py::test_a_member_minting_a_credential_writes_no_credential_row
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_credential_minting_another_credential_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_sending_scope_credential_reading_domains_is_denied
+      category: security
+      weight: 5
+    - kind: browser
+      do: As member@example.com compose a broadcast against Launch List and observe a request-send control in place of a send control
+    - kind: browser
+      do: Observe the composed broadcast reading as a draft in the broadcast list afterwards
+    - kind: pytest
+      test: test_output.py::test_a_member_sending_a_broadcast_leaves_the_broadcast_unsent
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_member_composes_a_broadcast_draft
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_owner_changes_the_workspace_plan
+      category: security
+      weight: 5
+
+- id: unauthenticated_and_cross_workspace_requests_are_denied
+  purpose: A request with no session and a request for another workspace's resource are both refused at the interface
+  substeps:
+    - kind: browser
+      do: Open a console address naming a domain the active workspace does not own and observe the product not-found page
+    - kind: pytest
+      test: test_output.py::test_domain_owned_by_another_workspace_answers_as_not_found
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_pinned_credential_sending_from_another_domain_is_refused
+      category: security
+      weight: 5
+    - kind: browser
+      do: Open a console route with no session and observe the sign-in route carrying the path that was asked for
+      cov: C-UF-01
+    - kind: browser
+      do: Sign in, then open the login route again and observe the console overview in place of a sign-in form
+      cov: C-UF-02
+    - kind: pytest
+      test: test_output.py::test_console_request_carrying_no_bearer_token_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wrong_password_login_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_unauthorized_call_is_rejected_as_a_client_error
+      category: security
+      weight: 5
+
+- id: log_filters_and_timeline_read_server_side
+  purpose: The emails log filters on the server and every filter lives in the address a colleague can open
+  substeps:
+    - kind: browser
+      do: Filter the emails log by state and copy the resulting address so a colleague can open the same view
+    - kind: browser
+      do: Open a message and read its timeline in occurrence order with any late event marked
+    - kind: browser
+      do: Set a filter that matches nothing and observe the filter staying visible with an offer to clear it
+      cov: C-UF-06
+    - kind: pytest
+      test: test_output.py::test_the_log_filters_server_side_by_message_state
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_message_detail_returns_events_in_occurrence_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_late_event_is_recorded_without_moving_the_state_backwards
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: overview_counters_reconcile_with_rows
+  purpose: The overview counters and the delivery chart agree exactly with the message rows for the same window
+  substeps:
+    - kind: browser
+      do: Open the overview and observe four counters above a stacked delivery chart
+      cov: C-CF-40
+    - kind: browser
+      do: Observe the bucket covering the current hour drawn differently and labelled partial
+      cov: C-CF-41
+    - kind: browser
+      do: Follow a counter into the emails log and observe the log opening pre-filtered to that state
+    - kind: pytest
+      test: test_output.py::test_overview_counters_match_the_underlying_message_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_overview_buckets_sum_to_the_counters_exactly
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_seeded_workspace_rows_persisted_with_three_membership_roles
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_every_stored_timestamp_is_utc
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_datastore_is_reached_at_the_database_environment_variable
+      category: data_integrity
+      weight: 5
+
+- id: audience_contacts_and_broadcast_send
+  purpose: A stored audience accepts contacts by address and a broadcast reaches every subscribed one
+  substeps:
+    - kind: browser
+      do: Open the audience route and observe the contact list beside its count
+    - kind: browser
+      do: Open the broadcast list and observe a sent broadcast carrying its report
+    - kind: pytest
+      test: test_output.py::test_upserting_a_contact_by_address_writes_no_duplicate_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_address_is_normalised_before_comparison
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sending_a_broadcast_writes_a_message_per_subscribed_contact
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_deleting_a_referenced_audience_is_refused
+      category: validation
+      weight: 3
+
+- id: notification_endpoint_delivery_and_replay
+  purpose: An endpoint receives delivery events, records one row per attempt, and a recorded attempt replays
+  substeps:
+    - kind: browser
+      do: Open the notifications route and observe the endpoint row with its success reading over the trailing day
+    - kind: browser
+      do: Open the endpoint detail and observe one delivery row per attempt with its status code
+    - kind: pytest
+      test: test_output.py::test_creating_a_notification_endpoint_returns_a_signing_secret_once
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_delivery_attempt_writes_one_notification_row
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_notification_replay_keeps_the_original_event_identifier
+      category: notification
+      weight: 3
+
+- id: usage_metering_stops_at_the_allowance_limit
+  purpose: Metered sending is counted against the plan allowance and a send past it is refused
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com and open the usage route to read the metered count against the allowance
+    - kind: browser
+      do: Observe the banner naming how much of the allowance is left once the workspace is close to it
+    - kind: pytest
+      test: test_output.py::test_usage_returns_the_metered_count_beside_the_allowance
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_send_past_the_monthly_allowance_is_refused
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_caller_over_the_send_budget_is_refused
+      category: validation
+      weight: 3
+
+- id: public_surface_and_deployment_contract_hold
+  purpose: The ordinary product surface carries its terms page, its not-found page and working links, and the app is still a reachable production build once the session is over
+  substeps:
+    - kind: browser
+      do: Open the terms route signed out and read the terms of use
+      cov: C-CF-53
+    - kind: browser
+      do: Open an unknown address and observe the product not-found page with a way back
+      cov: C-CF-55
+    - kind: browser
+      do: Submit the signup form with an address that is not an address and observe an inline refusal naming the field
+      cov: C-CF-54
+    - kind: browser
+      do: Follow every internal link on the terms route and observe each link resolving to a real route
+      cov: C-CF-56
+    - kind: pytest
+      test: test_output.py::test_the_terms_route_is_readable_by_a_signed_out_visitor
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_a_signup_form_refuses_an_invalid_address_inline
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_renders_the_product_not_found_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_a_reachable_route_resolves
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open the app root and observe the console shell rendering without a development banner
+    - kind: pytest
+      test: test_output.py::test_the_server_outlives_the_session_that_started_the_process
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_list_endpoint_returns_a_top_level_json_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_login_signup_health_answer_without_a_bearer_token
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_log_reflects_message_rows_stored_in_the_named_datastore
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_frontend_ships_as_a_built_production_bundle
+      category: presentation
+      weight: 1
+
+- id: api_headers_and_error_shape
+  purpose: Every response carries its identifier, its security headers and its budget, and every refusal carries one error shape
+  substeps:
+    - kind: browser
+      do: Open the console shell and observe the left rail grouped into a sending half above a marketing half
+    - kind: browser
+      do: Observe the console rail offering no mailbox reading destination beside the message log
+      cov: C-OV-03
+    - kind: browser
+      do: Open the account menu and observe the person name beside a sign-out control
+    - kind: pytest
+      test: test_output.py::test_the_health_route_answers_without_a_token
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_backend_serves_json_under_the_api_prefix
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_a_request_identifier_header
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_a_nosniff_content_type_header
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_a_strict_transport_security_header
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_permissions_policy_denies_camera_access
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_authenticated_response_carries_a_no_store_cache_header
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_versioned_list_response_carries_a_cursor_page_envelope
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_an_error_body_carries_a_type_beside_a_request_identifier
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_the_rate_limit_budget_headers
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_a_deprecated_interface_version_answers_with_sunset_headers
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_post_sign_in_return_path_stays_relative_to_the_serving_origin
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_nothing_the_browser_downloads_carries_a_credential
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_payment_processor_route_is_absent
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_an_open_tracking_setting_is_absent
+      category: presentation
+      weight: 1

@@ -1,0 +1,395 @@
+- id: visitor_reads_the_home_page
+  purpose: The home page renders its twelve bands and the booking demo answers a click without confirming anything
+  substeps:
+    - kind: browser
+      do: Open the home page and confirm twelve bands render in order, opening on the hero and closing on the footer
+      cov: C-CF-30
+    - kind: browser
+      do: Confirm the hero carries the launch chip, the headline "The better way to schedule your meetings", the standfirst, both sign-up pills and the line "No credit card required"
+      cov: C-CF-31
+    - kind: browser
+      do: Click an available day in the hero booking card and then the "45m" duration pill, confirming the selection moves and no confirmation is offered
+      cov: C-CF-32
+    - kind: browser
+      do: Scroll to the trusted-by band and confirm eight wordmarks drift past in a continuous marquee
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_first_response_carries_the_page_text
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ok
+      category: presentation
+      weight: 1
+
+- id: visitor_reads_every_public_route
+  purpose: All fifteen public routes answer without a session, each with its own metadata and working internal links
+  substeps:
+    - kind: browser
+      do: Confirm the floating pill bar sits on every page, staying put as the page scrolls beneath, then hover Solutions, Developer and Resources so each opens a panel that closes on leave
+      cov: C-CF-41, C-CF-42
+    - kind: browser
+      do: Scroll to the footer and confirm four link columns over the identity block, the five compliance seals, the status pill and the download chips
+      cov: C-CF-43
+    - kind: browser
+      do: Open the teams route and confirm the avatar wall, the capability ticker, the six additional-feature cards and the six use-case cards
+      cov: C-CF-36
+    - kind: browser
+      do: Open the voice sub-brand route and confirm a dark ground carrying the phone mock, the call log and the price band
+      cov: C-CF-37
+    - kind: browser
+      do: Open the embed route and confirm four solution cards, one per embedding option
+      cov: C-CF-38
+    - kind: browser
+      do: Open about, jobs, open, faq, terms and font in turn, confirming each carries the headline pinned for it
+      cov: C-CF-39
+    - kind: browser
+      do: Open help and confirm category cards, then open docs and confirm the sidebar tree beside the section rail
+      cov: C-CF-40
+    - kind: pytest
+      test: test_output.py::test_fifteen_public_routes_answer_without_a_session
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_internal_links_on_public_routes_resolve
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_unique_description
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_preview_image_that_resolves
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_no_third_party_script_blocks_the_first_paint
+      category: presentation
+      weight: 1
+
+- id: author_composes_and_publishes_a_page
+  purpose: An author walks the three creation steps, saves a draft and publishes it from the list row
+  substeps:
+    - kind: browser
+      do: Sign in as author@example.com with deku-demo-pw-2026 and open the studio, confirming the page list sits on the left beside the selected page on the right
+      cov: C-UF-06
+    - kind: browser
+      do: Walk the details, bands and review steps at their own addresses, leaving the bands step and returning to confirm what was entered is still there
+      cov: C-CF-08, C-CF-09
+    - kind: browser
+      do: Press Publish on the new list row, confirming the author publishes the page and the row shows the published state ahead of the save answering
+      cov: C-RL-02, C-UF-07
+    - kind: pytest
+      test: test_output.py::test_seeded_author_can_sign_in
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_new_page_row_is_stored_as_draft
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publish_records_the_published_moment
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unpublish_returns_the_page_row_to_draft
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_band_positions_are_gapless_within_a_page
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wizard_step_data_survives_a_return_visit
+      category: presentation
+      weight: 1
+
+- id: author_uploads_media_to_a_page
+  purpose: An uploaded image lands in the bucket under the pinned key scheme and becomes readable once the page is published
+  substeps:
+    - kind: browser
+      do: Open the media library in the studio, upload an image to the new page and give it alternative text
+      cov: C-RL-03
+    - kind: browser
+      do: Confirm the published page streams its media to anyone from an address the app owns, and that every content image carries alternative text while a decorative image declares itself decorative
+      cov: C-CF-24, C-UX-08
+    - kind: pytest
+      test: test_output.py::test_upload_lands_in_the_bucket_under_the_key_scheme
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_media_row_holds_the_object_key_only
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_published_media_file_streams_to_anyone
+      category: business_rule
+      weight: 3
+
+- id: draft_page_is_denied_to_an_anonymous_visitor
+  purpose: A page in state draft is unreachable by route and absent from the interface to everyone without an author session
+  substeps:
+    - kind: browser
+      do: Sign out, then open /blog/scheduling-links-that-convert and confirm the product not-found page renders
+      cov: C-CF-16
+    - kind: browser
+      do: Confirm the page in state draft stays invisible to anyone without an author session, with the site navigation offering no link to it
+      cov: C-OV-03
+    - kind: pytest
+      test: test_output.py::test_draft_route_renders_not_found_for_anonymous
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_page_is_absent_by_slug_without_author_session
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_list_hides_drafts_from_anonymous
+      category: security
+      weight: 5
+
+- id: draft_media_cannot_be_read_without_an_author_session
+  purpose: The image a draft page carries is refused to an anonymous caller at every address the app offers
+  substeps:
+    - kind: browser
+      do: While signed out, open the object address of the draft page image and confirm the app refuses it
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_draft_media_object_is_refused_without_author_session
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_draft_page_record_carries_one_media_object
+      category: data_integrity
+      weight: 5
+
+- id: reader_publish_attempt_is_rejected
+  purpose: A reader session is refused every page mutation and the page-view totals, leaving the protected state unchanged
+  substeps:
+    - kind: browser
+      do: Sign in as reader@example.com with deku-demo-pw-2026 and confirm the studio is unreachable, landing back on the home page
+      cov: C-UF-04
+    - kind: browser
+      do: Confirm every page mutation a reader attempts is denied by the server, with the reader surface offering no publish control
+      cov: C-RL-05
+    - kind: pytest
+      test: test_output.py::test_reader_publish_is_denied_and_row_unchanged
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_cannot_read_page_view_totals
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reader_session_is_refused_at_the_studio
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_reader_can_sign_in
+      category: security
+      weight: 5
+
+- id: visitor_starts_a_trial_and_gets_a_booking_page
+  purpose: A signup creates a reader account with one booking page at the chosen username on the app origin
+  substeps:
+    - kind: browser
+      do: From the home page press "Sign up with email", confirming signup is open so anyone may create an account, and enter an email, a password, a username and a display name
+      cov: C-RL-08
+    - kind: browser
+      do: Confirm the new booking page opens at the chosen username on this app origin
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_signup_creates_a_reader_account
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_creates_one_booking_page_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_booking_page_for_the_seeded_author_is_public
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signup_body_role_is_ignored
+      category: security
+      weight: 5
+
+- id: author_reads_page_view_totals
+  purpose: Every view of a public route is recorded and an author reads the totals per route
+  substeps:
+    - kind: browser
+      do: Sign in as the author and open the page-view totals, confirming a row per public route
+      cov: C-CF-29, C-RL-04
+    - kind: browser
+      do: Confirm the author reads every page in any state from the list beside the totals, which names the home route
+      cov: C-RL-01
+    - kind: pytest
+      test: test_output.py::test_page_view_rows_are_recorded_per_route
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_author_reads_the_per_route_view_totals
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_view_log_only_ever_grows
+      category: data_integrity
+      weight: 5
+
+- id: unknown_address_renders_the_not_found_page
+  purpose: An address that was never published renders the product not-found page and answers as not found
+  substeps:
+    - kind: browser
+      do: Open an address that was never published and confirm the figure "404" over the line "This page could not be found."
+      cov: C-CF-27
+    - kind: browser
+      do: Confirm every internal link on the recommended-links card resolves to a page that exists, and that its entries dim on hover
+      cov: C-CF-26
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found
+      category: business_rule
+      weight: 3
+
+- id: duplicate_upload_of_one_image_creates_one_object
+  purpose: The same bytes uploaded twice to one page produce a single object and an upload with no alternative text is refused
+  substeps:
+    - kind: browser
+      do: Upload the same image a second time to the same page and confirm the library still lists it once
+      cov: C-CF-22
+    - kind: pytest
+      test: test_output.py::test_duplicate_upload_creates_one_object_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_upload_without_alternative_text_is_refused
+      category: validation
+      weight: 3
+
+- id: signup_with_an_invalid_username_is_refused
+  purpose: A taken username, a differently-cased duplicate, a wrong password and an empty body are each refused as client errors
+  substeps:
+    - kind: browser
+      do: Sign up with a username that is already taken and confirm the form names the field inline without creating an account
+      cov: C-CF-05
+    - kind: browser
+      do: Attempt a sign-in with the wrong password and confirm the surface reports the refusal
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_signup_with_taken_username_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_username_uniqueness_is_case_folded
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_login_with_wrong_password_is_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_body_is_refused_as_a_client_error
+      category: validation
+      weight: 3
+
+- id: concurrent_publish_leaves_at_most_one_winner
+  purpose: Two publishes racing for one route leave exactly one page published and no partial state behind
+  substeps:
+    - kind: browser
+      do: Confirm the studio list shows only one of the two competing pages in the published state
+      cov: C-CF-13
+    - kind: pytest
+      test: test_output.py::test_concurrent_publish_to_one_route_leaves_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_second_published_route_is_refused
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_failed_publish_leaves_no_orphaned_media_row
+      category: data_integrity
+      weight: 5
+
+- id: deployment_contract_is_honoured
+  purpose: The app answers on its own origin under the interface prefix with its reserved directories and its credential file in place
+  substeps:
+    - kind: browser
+      do: Open the app at its public address and confirm a production build is served behind a preview server rather than a development server
+      cov: C-DC-09
+    - kind: browser
+      do: Confirm the page list shows an empty state that says what to do next, never a blank panel, when no page matches the current filter
+      cov: C-UF-08
+    - kind: pytest
+      test: test_output.py::test_user_readme_records_the_seeded_accounts
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_reserved_browser_screenshots_directory_exists
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_reserved_downloads_directory_exists
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_list_endpoint_returns_a_top_level_array
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_response_carries_a_request_id_header
+      category: business_rule
+      weight: 3
+
+- id: unauthenticated_caller_is_denied_at_the_interface
+  purpose: An anonymous caller is sent to the sign-in surface and a token the app never issued is refused
+  substeps:
+    - kind: browser
+      do: While signed out, open the studio and confirm the sign-in surface opens, then sign in and confirm the studio address first asked for opens
+      cov: C-UF-03
+    - kind: browser
+      do: Let the session expire mid-edit and confirm the studio returns to the sign-in surface with the edited row unchanged
+      cov: C-UF-05
+    - kind: pytest
+      test: test_output.py::test_studio_routes_refuse_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unknown_bearer_token_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_password_is_not_stored_in_readable_form
+      category: security
+      weight: 5
+
+- id: site_holds_at_a_narrow_viewport
+  purpose: At a phone width nothing overflows sideways, navigation stays reachable and every content image is described
+  substeps:
+    - kind: browser
+      do: Open the home page at a phone width and confirm the header links fold behind a menu control whose drawer drops from the top
+      cov: C-UX-11
+    - kind: browser
+      do: At the narrow viewport confirm nothing overflows sideways and every navigation target stays reachable, with the hero booking card dropped below the copy
+      cov: C-UX-10
+    - kind: pytest
+      test: test_output.py::test_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_content_image_carries_alternative_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seed_is_present_and_survives_a_reload
+      category: data_integrity
+      weight: 5
