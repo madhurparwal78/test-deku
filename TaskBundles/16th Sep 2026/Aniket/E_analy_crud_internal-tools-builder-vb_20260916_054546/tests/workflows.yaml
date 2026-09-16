@@ -1,0 +1,446 @@
+- id: builder_connects_a_resource_and_runs_a_query
+  purpose: A builder connects a database resource, authors a read query, reads rows with a count and a duration
+  substeps:
+    - kind: browser
+      do: Sign in at /signin as builder@example.com with deku-demo-pw-2026, open Order Desk in the editor, run the orders_recent query, confirm the result pane shows rows, a row count and an execution duration
+      cov: C-CF-33, C-CF-26, C-CF-34, C-DM-28
+    - kind: pytest
+      test: test_output.py::test_query_run_returns_rows_with_a_count_and_a_duration
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-26, C-CF-33
+    - kind: pytest
+      test: test_output.py::test_resource_catalog_names_both_seeded_resources
+      category: business_rule
+      weight: 3
+      cov: C-CF-15
+    - kind: pytest
+      test: test_output.py::test_reachability_probe_reports_reachable_for_the_live_resource
+      category: business_rule
+      weight: 3
+      cov: C-CF-17
+
+- id: canvas_persists_across_a_reload
+  purpose: A saved canvas reopens with every position, size and binding intact
+  substeps:
+    - kind: browser
+      do: As builder@example.com, drag a table and a form onto the Order Desk canvas, bind each to a query, save, reload the editor and confirm every position, size and binding is unchanged
+      cov: C-CF-49, C-RL-15, C-CF-11, C-CF-33
+    - kind: pytest
+      test: test_output.py::test_canvas_operations_persist_positions_sizes_and_bindings
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-49, C-CF-45, C-CF-48, C-CF-52
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_carry_every_declared_column
+      category: data_integrity
+      weight: 5
+      cov: C-DM-30, C-DM-33
+
+- id: operator_runs_the_published_app
+  purpose: A support operator opens the published release at its own address and pages a large table
+  substeps:
+    - kind: browser
+      do: Sign in as operator@example.com, open /run/order-desk, confirm no component tree and no query panel appear, filter the orders table to delayed and page forward twice
+      cov: C-DM-28, C-RL-15, C-CF-33, C-CF-38
+    - kind: pytest
+      test: test_output.py::test_grid_page_request_never_returns_the_whole_table
+      category: core_outcome
+      weight: 5
+      cov: C-CF-73, C-CF-72, C-CF-74
+    - kind: pytest
+      test: test_output.py::test_filter_and_sort_change_the_result_at_the_resource
+      category: business_rule
+      weight: 3
+      cov: C-CF-71
+
+- id: signin_admits_every_seeded_account
+  purpose: Every seeded account signs in with the corpus password and the app reports itself ready
+  substeps:
+    - kind: browser
+      do: Open the sign-in route, sign in as owner@example.com with deku-demo-pw-2026 and confirm the workspace home lists apps
+      cov: C-UF-02, C-UF-03, C-CF-07, C-CF-08
+    - kind: pytest
+      test: test_output.py::test_signin_returns_a_token_for_every_seeded_account
+      category: security
+      weight: 5
+      cov: C-UF-03, C-DM-02
+    - kind: pytest
+      test: test_output.py::test_health_route_reports_ready
+      category: presentation
+      weight: 1
+      cov: C-DC-04, C-TR-06
+
+- id: unauthenticated_console_request_is_denied
+  purpose: A caller with no session is refused at every console endpoint and a signed-out token stops working
+  substeps:
+    - kind: browser
+      do: With no session, open /console and confirm the sign-in route is served with the requested address remembered
+      cov: C-UF-01, C-CF-131, C-UF-02, C-CF-04
+    - kind: pytest
+      test: test_output.py::test_anonymous_console_request_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-UF-01
+    - kind: pytest
+      test: test_output.py::test_signed_out_token_is_refused_on_the_next_request
+      category: security
+      weight: 5
+      cov: C-CF-06
+
+- id: operator_write_is_denied_at_the_api
+  purpose: A read-only group's write is refused by the server and the row is unchanged
+  substeps:
+    - kind: browser
+      do: Sign in as operator2@example.com, open /run/order-desk and confirm the delete control is either absent or refuses with a stated reason rather than changing a row
+      cov: C-RL-15, C-CF-04, C-CF-116, C-CF-133
+    - kind: pytest
+      test: test_output.py::test_operator_mutation_is_denied_at_the_api
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-15
+    - kind: pytest
+      test: test_output.py::test_builder_cannot_administer_grants
+      category: security
+      weight: 5
+      cov: C-RL-05, C-RL-01, C-RL-02, C-RL-06
+
+- id: auditor_cannot_read_an_app
+  purpose: The auditor role reads the trail and nothing else, and an operator never reaches the editor
+  substeps:
+    - kind: browser
+      do: Sign in as auditor@example.com, open /console/admin/audit, confirm the trail renders and that the workspace app list is stated as not theirs rather than shown empty
+      cov: C-CF-05, C-CF-133, C-RL-11, C-UF-04
+    - kind: pytest
+      test: test_output.py::test_auditor_cannot_read_an_app
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-11
+    - kind: pytest
+      test: test_output.py::test_operator_cannot_reach_the_editor_endpoints
+      category: security
+      weight: 5
+      cov: C-RL-09, C-RL-10, C-UF-05
+
+- id: explicit_deny_is_never_overcome_by_an_allow
+  purpose: An explicit deny at the workspace scope survives a narrower allow, and an ungranted action defaults to deny
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open /console/admin/decide, choose operator2@example.com and the export action on Order Desk, and confirm the answer states deny with the rule chain that decided it
+      cov: C-RL-15, C-CF-100, C-CF-114, C-CF-95
+    - kind: pytest
+      test: test_output.py::test_explicit_deny_defeats_every_allow_on_export
+      critical: true
+      category: security
+      weight: 5
+      cov: C-DM-34, C-CF-100, C-CF-101
+    - kind: pytest
+      test: test_output.py::test_default_decision_is_deny_for_an_ungranted_action
+      category: security
+      weight: 5
+      cov: C-CF-102, C-CF-103
+    - kind: pytest
+      test: test_output.py::test_permission_decision_returns_a_reason_and_an_ordered_chain
+      category: business_rule
+      weight: 3
+      cov: C-CF-96
+
+- id: row_scope_differs_between_two_groups
+  purpose: Two operators in different groups receive different row sets and a masked column never leaves the server
+  substeps:
+    - kind: browser
+      do: Sign in as operator2@example.com, open /run/order-desk and confirm the customer name column renders masked, then sign out and sign in as operator@example.com and confirm the same column renders in full
+      cov: C-RL-15, C-CF-111, C-CF-16, C-DC-13
+    - kind: pytest
+      test: test_output.py::test_row_predicate_narrows_the_result_for_the_restricted_group
+      category: data_integrity
+      weight: 5
+      cov: C-CF-97
+    - kind: pytest
+      test: test_output.py::test_column_mask_holds_on_the_stored_row_and_the_response
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-111, C-CF-113
+
+- id: removed_member_is_denied_on_the_next_action
+  purpose: Removing a member from the granting group ends access on the next authorised action rather than at the next sign-in
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open /console/admin/groups, remove operator@example.com from the Operations group and confirm the membership row disappears
+      cov: C-RL-01, C-RL-15, C-CF-97, C-RL-05
+    - kind: pytest
+      test: test_output.py::test_removed_member_is_denied_on_the_next_action
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-105
+
+- id: promotion_requires_a_second_principal
+  purpose: Promotion to the protected environment needs an approval from somebody other than the requester
+  substeps:
+    - kind: browser
+      do: Sign in as builder@example.com, freeze a version of Order Desk, request approval to promote to production with a reason, and confirm the promotion control states that an approval is outstanding
+      cov: C-CF-89, C-RL-07, C-CF-83, C-CF-88
+    - kind: pytest
+      test: test_output.py::test_self_approval_of_a_promotion_is_refused
+      category: business_rule
+      weight: 3
+      cov: C-CF-90
+    - kind: pytest
+      test: test_output.py::test_promotion_to_production_without_an_approval_is_refused
+      category: security
+      weight: 5
+      cov: C-CF-89, C-RL-07
+    - kind: pytest
+      test: test_output.py::test_version_freeze_returns_a_stable_content_hash
+      category: data_integrity
+      weight: 5
+      cov: C-CF-84, C-CF-91, C-DM-10
+
+- id: concurrent_promotions_yield_at_most_one_release
+  purpose: Two contending promotions on one approval produce exactly one release and the history only grows
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open the release history of Order Desk and confirm it reads newest first with a promoter and a time on every row
+      cov: C-CF-11, C-CF-32, C-CF-95, C-DM-13
+    - kind: pytest
+      test: test_output.py::test_concurrent_promotions_on_one_approval_produce_one_release
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DM-16, C-DM-15
+    - kind: pytest
+      test: test_output.py::test_release_history_rows_are_append_only
+      category: data_integrity
+      weight: 5
+      cov: C-DM-13
+
+- id: duplicate_submission_writes_exactly_once
+  purpose: A repeated submission returns the first result rather than writing a second time
+  substeps:
+    - kind: browser
+      do: Sign in as operator@example.com, open /run/order-desk, submit the form for order NG-1002 and press submit a second time, confirming the bound table shows one changed row rather than two
+      cov: C-CF-32, C-DM-23, C-RL-15, C-CF-116
+    - kind: pytest
+      test: test_output.py::test_repeated_idempotency_key_writes_exactly_once
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-32
+    - kind: pytest
+      test: test_output.py::test_currency_is_stored_as_integer_minor_units
+      category: data_integrity
+      weight: 5
+      cov: C-CF-76, C-DM-03
+
+- id: concurrent_saves_end_in_a_conflict_not_an_overwrite
+  purpose: A save against a stale base version hash is refused with the current version and the conflicting operations
+  substeps:
+    - kind: browser
+      do: Sign in as builder@example.com, open Order Desk in the editor, save a canvas change and confirm the editor states the saved version rather than silently replacing an earlier save
+      cov: C-CF-116, C-RL-04, C-RL-15, C-CF-11
+    - kind: pytest
+      test: test_output.py::test_stale_base_version_hash_is_refused_with_the_conflict
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-50
+
+- id: audit_trail_is_appended_and_verifiable
+  purpose: Every consequential action appends a hash-chained event and the chain verifies from the first sequence number
+  substeps:
+    - kind: browser
+      do: Sign in as auditor@example.com, open /console/admin/audit, filter to the denials for operator2@example.com and run the chain verification, confirming the result names an intact chain
+      cov: C-RL-15, C-CF-136, C-CF-05, C-CF-133
+    - kind: pytest
+      test: test_output.py::test_audit_chain_verification_reports_an_intact_chain
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-133
+    - kind: pytest
+      test: test_output.py::test_audit_sequence_increases_without_gaps
+      category: data_integrity
+      weight: 5
+      cov: C-DM-20, C-CF-131
+    - kind: pytest
+      test: test_output.py::test_audit_row_is_appended_for_a_query_execution
+      category: data_integrity
+      weight: 5
+      cov: C-CF-136, C-CF-137
+    - kind: pytest
+      test: test_output.py::test_query_run_record_stores_no_result_row
+      category: security
+      weight: 5
+      cov: C-CF-34
+
+- id: invitation_reaches_one_inbox
+  purpose: An invitation is delivered to the invited address alone and its subject names the workspace
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open /console/admin/members, invite a new address into the Support Desk group and confirm the pending invitation appears with its expiry
+      cov: C-RL-01, C-CF-117, C-CF-121, C-CF-97
+    - kind: pytest
+      test: test_output.py::test_invitation_email_reaches_only_the_invited_inbox
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-CF-117
+    - kind: pytest
+      test: test_output.py::test_invitation_mail_subject_names_the_workspace
+      category: notification
+      weight: 3
+      cov: C-CF-118, C-CF-120, C-CF-119, C-CF-124
+
+- id: duplicate_invitation_acceptance_is_rejected
+  purpose: An invitation token is single use and a revoked invitation sends nothing further
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open /console/admin/members, revoke a pending invitation and confirm the row leaves the pending list with the revocation stated
+      cov: C-RL-01, C-RL-13, C-CF-04, C-CF-07
+    - kind: pytest
+      test: test_output.py::test_invitation_token_is_single_use_confirmation
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-CF-121, C-DM-19
+    - kind: pytest
+      test: test_output.py::test_revoked_invitation_sends_no_further_mail
+      category: notification
+      weight: 3
+      cov: C-CF-126, C-CF-127
+
+- id: invalid_demo_request_is_refused_with_its_values_kept
+  purpose: A malformed demo address is refused as invalid and a well-formed one is accepted
+  substeps:
+    - kind: browser
+      do: Open /demo, submit a malformed work email and confirm a field-level message appears with the typed value still in the box, then submit a well-formed one and confirm the confirmation replaces the form block
+      cov: C-CF-161, C-CF-163, C-CF-57, C-CF-69
+    - kind: pytest
+      test: test_output.py::test_invalid_demo_request_is_refused_as_invalid
+      category: validation
+      weight: 3
+      cov: C-CF-162, C-DC-15
+    - kind: pytest
+      test: test_output.py::test_valid_demo_request_and_subscription_are_accepted
+      category: business_rule
+      weight: 3
+      cov: C-CF-162, C-CF-98, C-UF-01
+
+- id: public_surface_resolves_every_promised_destination
+  purpose: Every destination the header and footer name resolves and every route declares its metadata
+  substeps:
+    - kind: browser
+      do: Open the home route, open the Solution menu, follow three of its destinations in turn and confirm each serves a real page rather than the not-found route
+      cov: C-CF-174, C-CF-116, C-CF-133, C-CF-141
+    - kind: pytest
+      test: test_output.py::test_every_named_navigation_destination_resolves
+      category: presentation
+      weight: 1
+      cov: C-CF-141, C-CF-151
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_a_title_and_a_description
+      category: presentation
+      weight: 1
+      cov: C-CF-145, C-CF-172
+    - kind: pytest
+      test: test_output.py::test_sitemap_and_robots_list_public_routes_only
+      category: presentation
+      weight: 1
+      cov: C-CF-147, C-TR-26, C-CF-148, C-CF-152
+
+- id: not_found_and_search_never_expose_a_draft
+  purpose: The not-found route escapes the requested path and search returns published routes only
+  substeps:
+    - kind: browser
+      do: Open an address that resolves to nothing, confirm the message names the requested path as text, the header and footer render, and the falling-blocks game shows its keyboard bindings beside each action
+      cov: C-CF-175, C-CF-174, C-CF-141, C-CF-60
+    - kind: pytest
+      test: test_output.py::test_not_found_route_escapes_the_requested_path
+      category: security
+      weight: 5
+      cov: C-CF-175
+    - kind: pytest
+      test: test_output.py::test_search_answers_a_closed_state_and_hides_drafts
+      category: security
+      weight: 5
+      cov: C-CF-173
+
+- id: workspace_catalog_is_scoped_at_the_server
+  purpose: The app list and the palette offer only what the caller may open, and a new app lands as a draft
+  substeps:
+    - kind: browser
+      do: Sign in as operator2@example.com, open /console and confirm the app card grid shows Order Desk alone, then open the command palette and confirm it offers no draft app
+      cov: C-CF-13, C-RL-15, C-CF-14, C-DM-10
+    - kind: pytest
+      test: test_output.py::test_app_catalog_lists_only_apps_the_caller_may_open
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_command_palette_targets_exclude_what_the_caller_cannot_reach
+      category: security
+      weight: 5
+      cov: C-CF-13, C-CF-14
+    - kind: pytest
+      test: test_output.py::test_app_creation_lands_a_draft_carrying_no_release
+      category: business_rule
+      weight: 3
+      cov: C-CF-12
+
+- id: empty_state_reads_differently_from_a_refusal
+  purpose: An empty list and a refusal are distinguishable, and a sign-in refusal reveals nothing about the address
+  substeps:
+    - kind: browser
+      do: Sign in as builder@example.com, open Refund Desk in the editor and confirm the release list states that nothing is released yet rather than showing a refusal, then sign out and attempt a sign-in with an address that has no account and confirm the message matches a wrong password
+      cov: C-CF-02, C-CF-04, C-CF-11, C-DM-22
+    - kind: pytest
+      test: test_output.py::test_environments_are_ordered_staging_then_production
+      category: business_rule
+      weight: 3
+      cov: C-CF-83
+    - kind: pytest
+      test: test_output.py::test_signin_refusal_is_identical_for_unknown_and_wrong
+      category: security
+      weight: 5
+      cov: C-CF-02
+
+- id: referenced_resource_delete_is_rejected
+  purpose: A resource in use cannot be deleted, a stale credential never leaks, and an undeclared parameter is refused
+  substeps:
+    - kind: browser
+      do: Sign in as owner@example.com, open /console/resources, attempt to delete Orders Warehouse and confirm the refusal names the apps and queries that reference it
+      cov: C-CF-19, C-DM-26, C-DM-28, C-CF-04
+    - kind: pytest
+      test: test_output.py::test_referenced_resource_delete_is_refused_naming_its_references
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_reachability_probe_leaks_no_credential_for_the_stale_resource
+      category: security
+      weight: 5
+      cov: C-DM-35, C-CF-18, C-DM-07, C-DM-08
+    - kind: pytest
+      test: test_output.py::test_query_run_rejects_an_undeclared_parameter
+      category: validation
+      weight: 3
+      cov: C-CF-23
+    - kind: pytest
+      test: test_output.py::test_query_run_state_is_always_from_the_closed_set
+      category: business_rule
+      weight: 3
+      cov: C-CF-137, C-CF-22, C-CF-29, C-CF-33
+    - kind: pytest
+      test: test_output.py::test_seeded_orders_row_count_is_stable_across_reads
+      category: data_integrity
+      weight: 5
+      cov: C-DM-28, C-DM-26, C-DM-31

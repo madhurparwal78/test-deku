@@ -1,0 +1,345 @@
+- id: site_boots_and_serves_its_public_routes
+  purpose: The deployed brand world answers its health route and serves every public route with its own title and description
+  substeps:
+    - kind: browser
+      do: Open the story route and confirm the persistent frame is drawn, that the burger in its top left corner carries two horizontal strokes of unequal length, and that the action slot reads SIGN IN
+      cov: C-FE-1, C-FE-2, C-FE-6
+    - kind: browser
+      do: Confirm the audio control shows a four-bar level meter beside its label, that the muted label reads CLICK TO ENABLE SOUND, and that sound is off on arrival
+      cov: C-FE-9, C-FE-15, C-UX-12
+    - kind: browser
+      do: Move from the story route to the catalogue route and confirm the persistent frame does not unmount on navigation
+      cov: C-FE-1 (earned: the step watches the frame survive a route change, which is the whole of the item)
+    - kind: browser
+      do: Open the mint route and confirm it presents a closed state rather than a server error
+      cov: C-CF-134
+    - kind: pytest
+      test: test_output.py::test_health_and_deployment_contract
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-DC-4 (earned: the health route is the first call this grader makes, and it reads the status it returns)
+    - kind: pytest
+      test: test_output.py::test_public_routes_carry_distinct_titles_and_descriptions
+      category: presentation
+      weight: 1
+      cov: C-TR-12
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_linked_from_every_page_footer
+      category: presentation
+      weight: 1
+      cov: C-CF-128
+
+- id: visitor_signs_up_for_an_account
+  purpose: A visitor creates an account from the sign-up form and every seeded account signs in with the corpus password
+  substeps:
+    - kind: browser
+      do: Open the sign-up route, submit a fresh address with the corpus password, and confirm the action slot then reads CONNECT WALLET because no address is bound yet
+      cov: C-FE-7
+    - kind: pytest
+      test: test_output.py::test_signup_creates_account_and_refuses_a_duplicate_email
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-6
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-18
+    - kind: pytest
+      test: test_output.py::test_automated_form_submission_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-9
+
+- id: holder_binds_an_address_with_a_single_use_challenge
+  purpose: An account requests a challenge over an address, returns the nonce, and the binding is persisted against that account
+  substeps:
+    - kind: browser
+      do: Open the binding route, enter the first seeded address, request the challenge and confirm the statement names the address being claimed
+      cov: C-CF-15
+    - kind: browser
+      do: After the binding completes, confirm the action slot offers DISCONNECT beside the abbreviated address
+      cov: C-FE-8
+    - kind: browser
+      do: Sign in as the third seeded account, open its citizen page, and confirm a bound address holding nothing is presented as a legitimate end state rather than as an error
+      cov: C-CF-137
+    - kind: pytest
+      test: test_output.py::test_challenge_binds_the_address_and_the_row_survives_a_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-16
+    - kind: pytest
+      test: test_output.py::test_address_comparison_is_case_insensitive
+      category: business_rule
+      weight: 3
+      cov: C-CF-22
+
+- id: replayed_challenge_nonce_is_refused
+  purpose: A nonce already consumed, or issued over a different address, never binds a second time
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_replayed_challenge_nonce_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-18
+    - kind: pytest
+      test: test_output.py::test_challenge_for_another_address_is_refused
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-20
+
+- id: catalogue_index_is_published_and_its_arithmetic_holds
+  purpose: The packed catalogue index is a real object in the bucket and the identifier shift resolves every worked example
+  substeps:
+    - kind: browser
+      do: Open the catalogue route and confirm the count reads 10000 KEEPERS, the whole-collection tab reads KEEPERS COLLECTION and the holdings tab reads MY COLLECTION
+      cov: C-UF-15, C-UF-16, C-UF-17
+    - kind: browser
+      do: Confirm the monospace figures in the grid captions line up in a column wherever the numbers stack
+      cov: C-UX-6
+    - kind: browser
+      do: Open one catalogue item, then press the escape key and confirm the escape key closes the detail overlay
+      cov: C-CF-44
+    - kind: browser
+      do: Choose the holdings tab while no address is bound and confirm a connect prompt is shown in place of results
+      cov: C-CF-45
+    - kind: browser
+      do: Resize the window from a wide width to a medium width and confirm resizing rescales the whole interface proportionally
+      cov: C-UX-2
+    - kind: pytest
+      test: test_output.py::test_catalogue_index_file_is_stored_in_the_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-24
+    - kind: pytest
+      test: test_output.py::test_identifier_shift_resolves_every_worked_example
+      category: business_rule
+      weight: 3
+      cov: C-CF-34
+    - kind: pytest
+      test: test_output.py::test_seeded_catalogue_carries_ten_thousand_records
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-29 (earned: the grader counts the seeded token rows and compares the total to the pinned collection size)
+
+- id: citizen_page_reads_its_public_record
+  purpose: A citizen page answers every caller with its public half and shows its achievements and highlight traits
+  substeps:
+    - kind: browser
+      do: Open the first seeded citizen page and confirm a trait absent from the representative Keeper renders as a dash rather than being omitted
+      cov: C-CF-58
+    - kind: browser
+      do: Confirm an unearned achievement is listed rather than hidden, and that its mark shows the ring shrunk inside the resting position
+      cov: C-CF-59, C-FE-12
+    - kind: browser
+      do: Confirm one control dropped on the dark field, then the same control on the light field of the about route, inverts its ink colour
+      cov: C-UX-5
+    - kind: pytest
+      test: test_output.py::test_citizen_record_is_assembled_from_the_seeded_row
+      category: business_rule
+      weight: 3
+      cov: C-CF-53
+    - kind: pytest
+      test: test_output.py::test_holdings_response_names_whether_a_citizen_record_exists
+      category: business_rule
+      weight: 3
+      cov: C-CF-97
+
+- id: owner_edits_their_own_citizen_page
+  purpose: The owner changes the nickname, the biography and the representative Keeper, and the change survives a reload
+  substeps:
+    - kind: browser
+      do: Sign in as the first seeded account, open the citizen page editor dialog, change the nickname and confirm a saved nickname appears in the citizen record at once
+      cov: C-UF-19
+    - kind: browser
+      do: Confirm a pending passport face shows the previous document beside a regenerating marker rather than an empty frame
+      cov: C-CF-87
+    - kind: pytest
+      test: test_output.py::test_owner_edits_persist_and_the_record_survives_a_reload
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-61 (earned: the grader writes the record with the owning session and reads the stored values back, which is the editing path this item reserves to the owner)
+    - kind: pytest
+      test: test_output.py::test_omitted_field_is_left_alone_and_an_explicit_null_clears_it
+      category: business_rule
+      weight: 3
+      cov: C-CF-71
+
+- id: invalid_profile_edit_is_refused_with_the_field_named
+  purpose: A nickname or biography outside its bounds is refused inline with the offending field named and nothing written
+  substeps:
+    - kind: browser
+      do: Open the editor dialog, submit a biography longer than the stated ceiling, and confirm a refused save puts the previous nickname back beside the reason
+      cov: C-UF-20
+    - kind: pytest
+      test: test_output.py::test_form_validation_refuses_invalid_input_and_stores_nothing
+      category: validation
+      weight: 3
+      cov: C-CF-66 (earned: the grader submits a biography one character past the ceiling and asserts the refusal names the field)
+    - kind: pytest
+      test: test_output.py::test_unowned_representative_item_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-67 (earned: the grader claims a Keeper the bound address does not hold and asserts the write is refused)
+
+- id: cross_account_profile_write_is_denied
+  purpose: A signed-in citizen writing another citizen record is denied at the interface and the stored row is unchanged
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_cross_account_profile_write_is_denied_and_the_row_is_unchanged
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-13 (earned: the grader writes one citizen record from the other citizen's session and asserts the denial plus an unchanged row)
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_profile_write_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-5 (earned: the grader writes a citizen record with no bearer token at all and asserts the denial)
+
+- id: another_citizens_passport_document_is_denied
+  purpose: The passport documents of one citizen are readable by that citizen alone, and absent rather than empty for anybody else
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_citizen_record_hides_renders_from_every_other_caller
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-54 (earned: the grader reads the record as three different callers and asserts the renders key is missing rather than empty for every one that is not the owner)
+    - kind: pytest
+      test: test_output.py::test_another_citizens_passport_document_is_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-90
+
+- id: passport_generation_is_idempotent_by_content_hash
+  purpose: A passport face lands in the bucket under its content-addressed key, and saving the same values again queues no second run
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_passport_object_is_stored_in_the_bucket_at_its_key
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-78
+    - kind: pytest
+      test: test_output.py::test_repeated_generation_request_returns_the_run_in_flight
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-86
+
+- id: concurrent_nickname_claims_accept_at_most_one
+  purpose: Two simultaneous claims of one nickname leave exactly one citizen holding it
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_nickname_claims_accept_at_most_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-69
+    - kind: pytest
+      test: test_output.py::test_refused_nickname_claim_stores_nothing
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-70
+
+- id: render_harness_refuses_without_a_signed_parameter
+  purpose: The operator harness is unreachable without its signed expiring parameter and no public route links it
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_render_harness_refuses_without_a_signed_parameter
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-92
+    - kind: pytest
+      test: test_output.py::test_no_credential_appears_in_anything_the_browser_downloads
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-19
+
+- id: editorial_surfaces_read_and_count_correctly
+  purpose: The journal filters by category, the media counts sum, and an unpublished achievement appears nowhere
+  substeps:
+    - kind: browser
+      do: Open the journal route, choose the updates category and confirm every list carries a named empty state when a category holds nothing
+      cov: C-UF-24
+    - kind: browser
+      do: Press the backtick key on the media route and confirm the backtick key toggles the console overlay, whose window carries two cut corners of different sizes
+      cov: C-CF-130, C-FE-13
+    - kind: pytest
+      test: test_output.py::test_journal_category_filter_and_media_counts_sum
+      category: business_rule
+      weight: 3
+      cov: C-CF-120
+    - kind: pytest
+      test: test_output.py::test_unpublished_achievement_is_absent_from_every_list
+      category: business_rule
+      weight: 3
+      cov: C-CF-95
+    - kind: pytest
+      test: test_output.py::test_media_download_address_is_minted_per_request
+      category: business_rule
+      weight: 3
+      cov: C-CF-123
+
+- id: story_and_protocol_scenes_degrade_and_stay_operable
+  purpose: The story preloader is honest and bounded, and the protocol hold control releases and works by keyboard
+  substeps:
+    - kind: browser
+      do: Open the story route and confirm the preloader reports real progress against the prefetch byte total rather than running a timed animation
+      cov: C-CF-103
+    - kind: browser
+      do: Confirm the preloader gives up after ten seconds and the route continues without the scene
+      cov: C-CF-104
+    - kind: browser
+      do: Choose a story section from the submenu and confirm choosing a story section scrubs the scroll position rather than jumping to it
+      cov: C-CF-105
+    - kind: browser
+      do: Confirm the story submenu reads Project, The Hold, Factions, The World
+      cov: C-FE-4
+    - kind: browser
+      do: Open the protocol route and confirm its submenu reads VISION, WORLD, CHARACTERS, PORTAL, UNION
+      cov: C-FE-5
+    - kind: browser
+      do: Hold the protocol control, move the pointer out of the window, and confirm the hold control releases when the pointer leaves the window
+      cov: C-CF-106
+    - kind: browser
+      do: With sound muted, confirm the protocol level meter keeps moving under a synthetic envelope rather than flatlining
+      cov: C-CF-107
+    - kind: browser
+      do: Reach the protocol control by keyboard and confirm the hold control works as a keyboard toggle, activating once to start and again to stop
+      cov: C-CF-108
+    - kind: browser
+      do: Narrow the window and confirm at a narrow width the story route becomes an ordinary scrolling document
+      cov: C-FE-14
+
+- id: unknown_address_renders_the_product_not_found_page
+  purpose: An unknown address answers not found behind the product's own page, and the console echoes typed input as text
+  substeps:
+    - kind: browser
+      do: Open an address that does not exist and confirm the not-found page offers a way back
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_unknown_address_renders_the_product_not_found_page
+      category: presentation
+      weight: 1
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_console_echoes_typed_input_as_text
+      category: presentation
+      weight: 1
+      cov: C-CF-133

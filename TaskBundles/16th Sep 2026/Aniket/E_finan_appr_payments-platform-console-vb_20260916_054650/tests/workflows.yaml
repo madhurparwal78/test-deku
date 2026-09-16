@@ -1,0 +1,404 @@
+- id: support_refunds_within_ceiling
+  purpose: A support operator signs in, opens a payment beside its detail pane, and refunds an amount inside their own ceiling
+  substeps:
+    - kind: browser
+      do: Sign in at /signin as support@example.com with the seeded password, whose one membership lands straight on the Northbeam Retail organisation home rather than on a chooser
+      cov: C-UF-10, C-UF-17
+    - kind: browser
+      do: Open the refund composer at its own dedicated address beneath the Corvid Motors payment, read the refundable remainder, then close the composer
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wrong_password_is_refused
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refund_within_ceiling_is_persisted
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_me_lists_every_membership
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_accounts_lists_only_memberships_held
+      category: security
+      weight: 5
+
+- id: support_refund_above_ceiling_becomes_request
+  purpose: A refund larger than the operator's ceiling turns into a request that holds no money
+  substeps:
+    - kind: browser
+      do: As support@example.com open the Kaufhaus payment, open the refund composer, enter a refund amount above the caller's own ceiling, and read the refusal offered in its place
+      cov: C-CF-13
+    - kind: browser
+      do: Write a justification under the prompt asking why the refund is needed because approvers will read it, submit the request, then confirm the payment now carries a pending badge
+      cov: C-CF-16
+    - kind: pytest
+      test: test_output.py::test_refund_above_ceiling_requires_approval
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_refund_request_is_created_pending
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pending_request_moves_no_balance
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: finance_approves_refund_request
+  purpose: A second person approves the waiting request and the balance falls by exactly the refund amount
+  substeps:
+    - kind: browser
+      do: Sign in as finance@example.com, whose two memberships land on the account chooser served at /accounts, then choose Northbeam Retail
+      cov: C-UF-11, C-UF-16
+    - kind: browser
+      do: Open the approval queue, confirm requests are ordered soonest to expire first, then select the waiting request to read the raiser, the raiser's own ceiling and the justification
+      cov: C-CF-20
+    - kind: browser
+      do: Approve the waiting request, then watch the money that stayed still while the refund request was pending finally move on the decision
+      cov: C-OV-03
+    - kind: pytest
+      test: test_output.py::test_approval_executes_exactly_one_refund
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rejected_request_writes_no_refund
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_withdrawn_request_is_closed_by_its_requester
+      category: business_rule
+      weight: 3
+
+- id: support_cannot_approve_request_denied
+  purpose: A support session is refused the approve endpoint at the API and the waiting request is untouched
+  substeps:
+    - kind: browser
+      do: Sign in as support@example.com, open the approval queue of northbeam, and read a waiting request without being offered any way to decide it
+      cov: C-CF-23
+    - kind: pytest
+      test: test_output.py::test_support_cannot_approve_request_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: requester_self_approval_forbidden
+  purpose: The person who raised a request cannot approve it, whatever role they hold
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_self_approval_is_forbidden
+      critical: true
+      category: security
+      weight: 5
+
+- id: administrator_cannot_create_refund_denied
+  purpose: The role that governs access cannot move money
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_administrator_cannot_create_refund_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: cross_account_read_denied
+  purpose: A member of one organisation reaches nothing belonging to another, in either direction
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_cross_account_payment_read_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_wellspring_member_cannot_read_northbeam_denied
+      critical: true
+      category: security
+      weight: 5
+
+- id: unauthenticated_console_read_denied
+  purpose: A caller with no session reaches no console data, and a lower role reaches no governed surface
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_console_read_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_support_cannot_read_api_keys_denied
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_support_cannot_read_audit_log_denied
+      category: security
+      weight: 5
+
+- id: duplicate_approval_at_most_one_refund
+  purpose: Approving one request a second time hands the money back once
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_duplicate_approval_creates_no_second_refund
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: concurrent_approvals_resolve_to_one_refund
+  purpose: Two approvals arriving at one instant produce exactly one refund
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_concurrent_approvals_produce_one_refund
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_refund_key_is_a_no_op
+  purpose: A replayed idempotency key moves the balance once, and a changed body under one key is refused
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_idempotent_refund_replay_creates_no_second_row
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_idempotency_conflict_on_changed_body
+      category: validation
+      weight: 3
+
+- id: expired_request_cannot_be_approved
+  purpose: A request older than its lifetime is expired when it is next read and can no longer execute
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_expired_request_cannot_be_approved
+      critical: true
+      category: business_rule
+      weight: 5
+
+- id: invalid_refund_amounts_are_refused
+  purpose: A refund beyond the remainder, or of a disputed payment, is refused, and a surface the brief scopes out is absent
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_refund_over_remainder_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_refund_of_disputed_payment_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_out_of_scope_routes_are_absent
+      category: validation
+      weight: 3
+
+- id: sandbox_and_live_rows_stay_separate
+  purpose: The two environments are separate dimensions of storage rather than a filter applied on read
+  substeps:
+    - kind: browser
+      do: Sign in as finance@example.com, switch the environment control to sandbox, and confirm a tinted band runs the full width of the top bar reading that no real money moves here
+      cov: C-CF-71
+    - kind: pytest
+      test: test_output.py::test_sandbox_payment_is_not_found_under_live
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_sandbox_balance_row_is_stored
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_wellspring_balance_row_is_stored
+      category: data_integrity
+      weight: 5
+
+- id: ledger_and_balances_reconcile
+  purpose: Balances are computed from entries, every transaction nets to zero, and a payout reconciles to the transactions composing it
+  substeps:
+    - kind: browser
+      do: As finance@example.com open the balances route of northbeam, open the seeded payout, and confirm its amount equals the sum of the net amounts of the transactions listed beneath
+      cov: C-CF-42
+    - kind: pytest
+      test: test_output.py::test_balances_sum_to_zero_per_environment
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_balance_row_equals_sum_of_ledger_entries
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_ledger_transaction_entries_sum_to_zero
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_payout_reconciles_to_its_transactions
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_refund_reduces_available_by_exact_amount
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_live_payments_are_stored
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_northbeam_balance_row_is_stored
+      category: data_integrity
+      weight: 5
+
+- id: audit_log_is_append_only
+  purpose: Every mutation appends one hash-chained record that no route can edit
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the audit log of northbeam, filter it by actor, and read one record with its actor, action, target and time
+      cov: C-RL-08
+    - kind: pytest
+      test: test_output.py::test_audit_sequence_has_no_gap
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_record_hash_links_to_previous
+      category: data_integrity
+      weight: 5
+
+- id: developer_credentials_are_shown_once
+  purpose: A secret credential is readable at creation and never again
+  substeps:
+    - kind: browser
+      do: As admin@example.com open the developer keys route, create a secret API credential, read the secret value once beneath the notice telling you to copy it now, then reload the route
+      cov: C-CF-45
+    - kind: pytest
+      test: test_output.py::test_api_key_creation_returns_secret_once
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_api_key_list_never_returns_secret
+      category: security
+      weight: 5
+
+- id: webhook_addresses_are_validated
+  purpose: A delivery address is checked before it is stored, and an unknown event type is refused
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_webhook_loopback_address_is_forbidden
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_webhook_plain_transport_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_event_type_is_refused
+      category: validation
+      weight: 3
+
+- id: storefront_lead_capture_and_launch_surface
+  purpose: The one public write path refuses a bot, deduplicates a repeat, and the site carries the files crawlers and sharers read
+  substeps:
+    - kind: browser
+      do: Open the country home, read the hero, follow the products menu to the billing product route, then press the primary control
+      cov: C-CF-72
+    - kind: browser
+      do: Fill in a work email, a full name, a company and an annual volume band on the lead form, submit it, and read the confirmation naming the next step
+      cov: C-CF-75
+    - kind: browser
+      do: Filter the guides index by category, confirm the filter state appears in the address, then press back to step through the filter changes one at a time
+      cov: C-CF-74
+    - kind: pytest
+      test: test_output.py::test_lead_decoy_field_writes_no_row
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_duplicate_lead_returns_first_identifier
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_every_public_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_robots_names_the_sitemap
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_public_routes_declare_social_preview
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_custom_not_found_page_answers_404
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_returns_200
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_app_root_carries_readme_and_reserved_directories
+      category: presentation
+      weight: 1
+
+- id: empty_states_and_the_gated_product
+  purpose: A filtered list names its filters and the gated product renders a note in place of prices
+  substeps:
+    - kind: browser
+      do: Filter the approval queue so nothing matches, then read the message naming each active filter with a control to clear each one individually
+      cov: C-UF-20
+    - kind: browser
+      do: Open the gated analytics product route and confirm the pricing band renders a note in place of prices while the route stays fully readable
+      cov: C-CF-64
+    - kind: pytest
+      test: test_output.py::test_empty_filtered_queue_returns_empty_array
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_route_carries_pinned_hero_copy
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_gated_route_shows_waitlist_action
+      category: presentation
+      weight: 1
+
+- id: storefront_chrome_and_the_type_scale
+  purpose: The shared chrome, the drawn icons, the leaning dividers and the composed demonstrations read as the companion describes them
+  substeps:
+    - kind: browser
+      do: On the country home confirm the heaviest step of the type scale carries the headings while the ordinary body step carries body copy, both lighter than a conventional pairing
+      cov: C-FE-03, C-FE-04, C-FE-07
+    - kind: browser
+      do: Open the developer band and confirm the code sample is set in the code face the brief names, distinct from the interface family
+      cov: C-FE-05
+    - kind: browser
+      do: Confirm every icon is geometry drawn in the page rather than a fetched file, keeping its stroke crisp when the page is magnified
+      cov: C-FE-08
+    - kind: browser
+      do: At a phone width press the menu control and confirm it becomes a cross by rotating two coincident bars rather than swapping one shape for another
+      cov: C-FE-09
+    - kind: browser
+      do: Hover each of the four disclosures in turn and confirm one shared panel resizes between them rather than four separate panels opening
+      cov: C-FE-10
+    - kind: browser
+      do: Hover a disclosure, then move the pointer on a diagonal path from the trigger into the panel, and confirm the hover intent survives the gap
+      cov: C-FE-11
+    - kind: browser
+      do: Scroll the country home and confirm the section dividers lean rather than sitting level, with no seam showing where two bands meet
+      cov: C-FE-12
+    - kind: browser
+      do: On a product route confirm the running demonstration is composed from markup rather than played as a video, staying sharp at any size
+      cov: C-FE-13
+    - kind: browser
+      do: Read the dark statistics band and confirm each gradient numeral carries a solid fallback colour so no figure can render as nothing
+      cov: C-FE-14
+    - kind: browser
+      do: Confirm the fake browser window inside a demonstration never becomes fully opaque, staying slightly translucent over the page behind
+      cov: C-FE-15

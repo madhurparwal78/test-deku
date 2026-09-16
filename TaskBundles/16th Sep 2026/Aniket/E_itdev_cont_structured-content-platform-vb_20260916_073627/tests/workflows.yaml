@@ -1,0 +1,481 @@
+- id: editor_publishes_an_article_to_every_surface
+  purpose: An editor signs in, edits a paragraph of a seeded article, publishes the document in one action, and reads the confirmation naming the revision it produced
+  substeps:
+    - kind: browser
+      do: Sign in at /signin as editor@example.com with the seeded password, then land on the dataset chooser served at /studio and choose the production dataset
+      cov: C-UF-07
+    - kind: browser
+      do: Open article-editorial-standards from the document table served at /d/production/desk, edit its summary in the document editor, then press Publish
+      cov: C-UF-08
+    - kind: pytest
+      test: test_output.py::test_login_returns_bearer_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_me_reports_role_and_department
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_stores_one_published_row_and_removes_the_draft
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publish_confirmation_names_the_new_revision
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_datasets_list_carries_visibility_and_counts
+      category: business_rule
+      weight: 3
+
+- id: wrong_password_is_rejected_at_sign_in
+  purpose: A sign-in with the wrong password is refused, and an address that was never seeded is refused the same way
+  substeps:
+    - kind: browser
+      do: Open /signin, enter editor@example.com with a password that is not the seeded one, submit, and read the refusal shown inline on the form
+      cov: C-UF-09
+    - kind: browser
+      do: Enter an address no seeded person holds, submit, read a refusal carrying no indication that the address is unknown, and find the page keeps whatever was typed
+      cov: C-UF-10
+    - kind: pytest
+      test: test_output.py::test_wrong_password_is_refused
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unknown_email_is_refused_without_a_hint
+      category: security
+      weight: 5
+
+- id: contributor_cannot_publish_a_document
+  purpose: A contributor may edit a draft but may not publish it, and the publish control is absent rather than present and refusing
+  substeps:
+    - kind: browser
+      do: Sign in as contributor@example.com, open article-editorial-standards, patch a draft inside their own department, and confirm the draft saves
+      cov: C-RL-16
+    - kind: browser
+      do: Read the document header and confirm the Publish control is absent rather than present, because a control the viewer may not use is never shown
+      cov: C-UF-11
+    - kind: pytest
+      test: test_output.py::test_contributor_cannot_publish
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editor_cannot_reach_project_routes
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_administrator_cannot_patch_a_document
+      category: security
+      weight: 5
+
+- id: cross_department_read_is_denied
+  purpose: An editor of one department cannot read, list or search a document belonging to another department
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and read the document table at /d/production/desk, which shows one document per row under a shared header, confirming article-quarterly-letter is absent
+      cov: C-UX-01
+    - kind: browser
+      do: Open /d/production/search, which serves editor search over the dataset, and search for the title of article-quarterly-letter, confirming nothing comes back
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_editor_cannot_read_another_department
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cross_department_document_is_absent_from_search
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_grant_escape_write_is_refused
+      category: security
+      weight: 5
+
+- id: anonymous_reader_cannot_see_a_draft
+  purpose: A read carrying no credentials returns published documents only, and a viewer asking for drafts is answered with published content plus a stated downgrade
+  substeps:
+    - kind: browser
+      do: Open /blog, which serves the editorial index, with no session and read the index, confirming article-keys-and-arrays is absent from it
+      cov: C-UF-13
+    - kind: browser
+      do: Sign in as viewer@example.com, open /d/production/desk, and confirm every badge carries a label together with a shape rather than a colour alone
+      cov: C-UX-02
+    - kind: pytest
+      test: test_output.py::test_anonymous_read_defaults_to_published
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_viewer_cannot_read_a_draft
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_perspective_downgrade_is_stated_not_an_error
+      category: security
+      weight: 5
+
+- id: array_items_keep_their_keys_under_concurrent_edits
+  purpose: Every object in an array carries a key from creation, keeps it across saves, and a patch addressed by key lands on the item it named even when another writer inserts at the head
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and create a document, confirming the modal opens over the document table rather than navigating away, then add three items to the tag list
+      cov: C-UX-03
+    - kind: browser
+      do: Reorder the tag list, then refetch the route and confirm the existing rows keep their place on screen without losing scroll position
+      cov: C-UF-14
+    - kind: pytest
+      test: test_output.py::test_created_array_objects_all_carry_keys
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_saves_leave_array_keys_unchanged
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_array_patch_by_key_survives_a_concurrent_head_insert
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_increments_are_all_stored
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_transaction_id_applies_once
+  purpose: A retried transaction identifier changes nothing a second time, a stale revision is refused, and a patch whose later operation is invalid applies none of its operations
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open article-editorial-standards, press Save twice in quick succession, and read the inline message in the region that produced the error
+      cov: C-UF-15
+    - kind: browser
+      do: Open the revision chain served at /d/production/doc/article-editorial-standards/history and read the revisions with the newest first
+      cov: C-UF-16
+    - kind: pytest
+      test: test_output.py::test_replayed_transaction_id_applies_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_revision_mismatch_is_refused
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_partial_patch_applies_nothing
+      category: data_integrity
+      weight: 5
+
+- id: rich_text_split_and_merge_keep_span_identity
+  purpose: Emboldening the middle of a word splits a span into three with the first keeping its key, equal mark sets merge, an orphaned annotation is cleaned up, and a run of bullets renders as one list
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open article-aurora-pipeline, and read the document editor as a single column of fields at a capped measure with the part-emboldened word pipeline in its second paragraph
+      cov: C-UX-04
+    - kind: browser
+      do: Open /blog and read the published article, whose body copy is set at the body size the brief names, confirming the run of three bulleted blocks renders as one list
+      cov: C-UX-05
+    - kind: pytest
+      test: test_output.py::test_split_span_keeps_the_first_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_adjacent_spans_with_equal_mark_sets_merge
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_orphaned_annotation_is_removed
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_consecutive_bullets_render_as_one_list
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_markup_characters_survive_byte_identical
+      category: security
+      weight: 5
+
+- id: publish_with_unpublished_dependency_is_rejected
+  purpose: Publishing a document whose strong reference is still a draft is refused with the unpublished dependency named, and a referenced document cannot be deleted
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open article-keys-and-arrays, press Publish, and read the blocked publish reported inline rather than as a whole-page error
+      cov: C-UF-17
+    - kind: browser
+      do: Sign in as admin@example.com, open /project/datasets, which serves datasets, visibility, copy and delete to an administrator, and read the seeded counts
+      cov: C-UF-18
+    - kind: pytest
+      test: test_output.py::test_publish_with_draft_dependency_is_refused
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_strong_reference_blocks_delete_and_names_referrers
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_weak_dangling_reference_dereferences_to_null
+      category: validation
+      weight: 3
+
+- id: unfiltered_mutation_by_query_is_refused
+  purpose: A mutation addressed by query is refused without its confirmation flag, refused outright when the query carries no filter, and recorded in the hash-chained audit log whatever the outcome
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com and open /project/audit, which serves the audit log to an administrator alone, reading the chained entries with their actor
+      cov: C-UF-19
+    - kind: browser
+      do: Sort the audit log by actor and confirm the sortable columns announce their sort state, then read one entry with the hash linking it to the entry before
+      cov: C-UX-06
+    - kind: pytest
+      test: test_output.py::test_unfiltered_mutation_by_query_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unconfirmed_mutation_by_query_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_mutation_by_query_is_audited
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_audit_chain_verifies_end_to_end
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: query_playground_reports_its_own_cost
+  purpose: Every query answer carries its cost, a parameter carrying query syntax stays a literal string, and a query past a bound is refused with the expensive predicate named
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open the query playground served at /d/production/vision, run a projection over articles, and read the cost beside the result
+      cov: C-UF-20
+    - kind: browser
+      do: Run a query in the playground whose parameter carries query syntax inside its value, read a result that treated the value as ordinary text, and read the cost beside that result
+      cov: C-CF-109
+    - kind: pytest
+      test: test_output.py::test_query_returns_result_with_cost
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_query_parameter_containing_syntax_is_a_literal
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_query_over_bound_is_refused_naming_the_predicate
+      category: validation
+      weight: 3
+
+- id: live_stream_reports_every_revision
+  purpose: The event stream opens with a welcome, carries the previous and resulting revisions of each change, and the four publication states stay distinguishable across a publish and an unpublish
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open /d/production/desk, reading the publication state badge carried on each row without opening the document
+      cov: C-UX-07
+    - kind: browser
+      do: Open the document table of the staging dataset, which holds no documents yet, and read the empty state naming the action that creates the first entry
+      cov: C-UF-21
+    - kind: pytest
+      test: test_output.py::test_listen_stream_opens_with_welcome_and_carries_revisions
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_drafts_perspective_returns_published_ids
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_history_is_append_only_across_publish
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_four_publication_states_are_distinguishable
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unpublish_recreates_the_draft
+      category: business_rule
+      weight: 3
+
+- id: uploaded_image_is_stored_in_the_bucket
+  purpose: An uploaded file lands in the object store at its content-addressed key, identical bytes deduplicate to one asset, and a derived rendering is cached under its own prefix
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com and open the media library served at /d/production/media, reading the seeded asset with its dimensions plus its original filename
+      cov: C-UF-22
+    - kind: browser
+      do: Open article-aurora-pipeline, read the image block, and confirm each image use shows its own alternative text beside the image
+      cov: C-UX-08
+    - kind: pytest
+      test: test_output.py::test_uploaded_bytes_live_in_the_bucket_at_the_pinned_key
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_identical_uploads_deduplicate_to_one_asset
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_derived_rendering_is_cached_under_its_own_prefix
+      category: data_integrity
+      weight: 5
+
+- id: one_asset_carries_a_different_crop_in_each_use
+  purpose: A crop belongs to the use rather than to the asset, a square rendering keeps the hotspot region visible, and an asset in a private dataset is refused without credentials
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open article-editorial-standards, and edit the crop of that one use on the image block of the document editor before saving
+      cov: C-UX-09
+    - kind: browser
+      do: Sign in as editor2@example.com, open article-quarterly-letter, and confirm the seeded image keeps its own crop together with its own alternative text
+      cov: C-DM-23
+    - kind: pytest
+      test: test_output.py::test_crop_on_one_use_leaves_other_uses_unchanged
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_square_rendering_keeps_the_hotspot_visible
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_private_dataset_asset_requires_credentials
+      critical: true
+      category: security
+      weight: 5
+
+- id: invalid_upload_is_refused_before_it_is_decoded
+  purpose: A file whose declared type does not match its bytes is refused, and a client that supplies a service-assigned field on a write is refused
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open /d/production/media, attempt an upload whose extension disagrees with its content, and read the refused upload reported inline in the media library
+      cov: C-UF-23
+    - kind: browser
+      do: Filter the media library of the staging dataset so the filtered list returns nothing, and confirm each active filter is named with a clear control of its own
+      cov: C-UF-24
+    - kind: pytest
+      test: test_output.py::test_mislabelled_upload_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_document_carries_reserved_service_fields
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_client_supplied_revision_is_refused
+      category: validation
+      weight: 3
+
+- id: migration_dry_run_writes_nothing
+  purpose: A migration reports what it would change without writing, a second run changes nothing, rich-text keys survive it, and the guarded dataset demands its name typed again
+  substeps:
+    - kind: browser
+      do: Sign in as admin@example.com, open the migration runner served at /project/migrations, and run a field rename against production in its default mode
+      cov: C-UF-25
+    - kind: browser
+      do: Read the dry-run report, which names the dataset in its first line, then type the dataset name again to confirm and apply the migration
+      cov: C-CF-110
+    - kind: pytest
+      test: test_output.py::test_migration_dry_run_writes_nothing
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_migration_rerun_changes_nothing
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_migration_preserves_rich_text_keys
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_migration_against_production_requires_retyped_name
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_dataset_visibility_change_requires_typed_name
+      category: security
+      weight: 5
+
+- id: release_publishes_every_document_or_none
+  purpose: A release publishes its whole set in one transaction, and a set too large to be atomic is refused when the release is created rather than when it fires
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, create two documents, open the releases route served at /d/production/releases, and build a release holding both of them
+      cov: C-UF-26
+    - kind: browser
+      do: Publish the release, then read a partial failure that shows the rows already loaded with an inline retry offered for the range that did not arrive
+      cov: C-UF-27
+    - kind: pytest
+      test: test_output.py::test_release_publishes_atomically
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_oversized_release_is_refused_at_creation
+      category: validation
+      weight: 3
+
+- id: search_finds_a_word_split_by_a_mark
+  purpose: A word whose middle is emboldened is stored as three spans and is still findable in editor search as one word
+  substeps:
+    - kind: browser
+      do: Sign in as editor@example.com, open /d/production/search, and search for the word whose middle is emboldened inside article-aurora-pipeline
+      cov: C-CF-111
+    - kind: browser
+      do: Read the result row naming the document, then confirm a search that cannot answer says so rather than returning nothing
+      cov: C-UF-28
+    - kind: pytest
+      test: test_output.py::test_search_finds_a_word_split_across_spans
+      critical: true
+      category: core_outcome
+      weight: 5
+
+- id: public_site_serves_its_own_not_found_page
+  purpose: An unmatched address returns the product's own not-found page, every internal link resolves, the sitemap lists every public route, and a cookie decision survives a reload
+  substeps:
+    - kind: browser
+      do: Open an address that matches no route, read the not-found page carrying the address that failed, and follow the suggestion it offers toward the nearest real route
+      cov: C-CF-112
+    - kind: browser
+      do: Open the marketing home served at /, record a cookie decision, reload the route, and confirm the recorded decision is still in force
+      cov: C-UF-29
+    - kind: pytest
+      test: test_output.py::test_unmatched_path_returns_the_not_found_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_internal_link_on_a_public_route_is_broken
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_every_public_route
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_robots_names_the_sitemap
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_cookie_decision_survives_a_reload
+      category: presentation
+      weight: 1
+
+- id: repeated_lead_submissions_are_refused
+  purpose: A demo request submitted repeatedly in quick succession from one origin is refused and writes no second lead
+  substeps:
+    - kind: browser
+      do: Open the demo request form served at /contact, fill in a work address, a name, a company plus a team size, and submit it
+      cov: C-UF-30
+    - kind: browser
+      do: Submit an invalid demo request and read the offending field named inline, then submit the same form again straight away and read the refusal
+      cov: C-CF-113
+    - kind: pytest
+      test: test_output.py::test_repeated_lead_submissions_are_refused
+      category: validation
+      weight: 3
