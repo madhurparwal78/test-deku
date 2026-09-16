@@ -1,0 +1,336 @@
+- id: spatial_gallery_is_served_from_one_origin
+  purpose: "A visitor reaches the live gallery and its counted footer on one origin"
+  substeps:
+    - kind: browser
+      do: "Open the site root and confirm it arrives at a home where, after the counting boot loader, a live three dimensional scene of floating project cards fills the viewport over the blue"
+      cov: C-UF-13
+    - kind: browser
+      do: "Scroll over the home and confirm the focused card changes and its label pill shows a different project title"
+      cov: C-CF-13, C-CF-15, C-UF-14
+    - kind: browser
+      do: "Choose Spiral in the formation switch and confirm the cards rearrange into a helix, then reload and confirm Spiral is still selected"
+      cov: C-CF-12, C-UF-15
+    - kind: browser
+      do: "Confirm the home footer line reads BRAND & DIGITAL DESIGN STUDIO, 12 / 20 selected Works and \u00a9 2026"
+      cov: C-CF-18
+    - kind: pytest
+      test: test_output.py::test_health_returns_200_and_the_shell_shares_the_api_origin
+      category: presentation
+      weight: 1
+      cov: C-TR-01, C-TR-07, C-TR-15, C-CN-05, C-DC-01
+    - kind: pytest
+      test: test_output.py::test_app_root_keeps_reserved_screenshot_and_download_directories
+      category: presentation
+      weight: 1
+      cov: C-DC-02
+    - kind: pytest
+      test: test_output.py::test_the_home_draws_a_live_three_dimensional_canvas
+      category: presentation
+      weight: 1
+      cov: C-CF-09, C-CF-17, C-FE-20
+    - kind: pytest
+      test: test_output.py::test_without_webgl_the_home_shows_the_flat_catalogue
+      category: business_rule
+      weight: 3
+      cov: C-OV-04, C-CF-20, C-FE-19
+    - kind: pytest
+      test: test_output.py::test_the_footer_counts_featured_and_total_projects_from_stored_rows
+      category: data_integrity
+      weight: 5
+      cov: C-CF-19, C-TR-09, C-DM-09, C-DM-10
+
+- id: wrong_password_login_is_refused
+  purpose: "A wrong password and an unknown email are refused alike, and a retired token reaches nothing"
+  substeps:
+    - kind: browser
+      do: "Open /login, sign in as studio@example.com with the password wrong-password, and confirm the refusal message reads Sign in failed"
+      cov: C-CF-08
+    - kind: pytest
+      test: test_output.py::test_seeded_studio_accounts_are_stored_once_with_hashed_passwords
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-RL-10, C-RL-11, C-RL-12, C-CF-06, C-TR-11, C-DM-01, C-DM-02, C-CN-02, C-DC-03
+    - kind: pytest
+      test: test_output.py::test_login_refuses_a_wrong_password_and_an_unknown_email_alike
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-01, C-CF-02
+    - kind: pytest
+      test: test_output.py::test_missing_unknown_and_retired_tokens_are_refused
+      category: security
+      weight: 5
+      cov: C-CF-03, C-CF-05, C-DM-03
+    - kind: pytest
+      test: test_output.py::test_logout_retires_the_token
+      category: security
+      weight: 5
+      cov: C-CF-04, C-DC-05
+
+- id: catalogue_facets_narrow_with_computed_counts
+  purpose: "The Works catalogue narrows by discipline with counts computed from the stored rows"
+  substeps:
+    - kind: browser
+      do: "Open /works and confirm the grid shows twenty project covers and the filter pill reads All (20)"
+      cov: C-CF-24, C-UF-16
+    - kind: browser
+      do: "Open the filter, choose Packaging (2) and confirm the grid narrows to Etna Wine Cellars and Sale Marino"
+      cov: C-CF-32, C-UF-17
+    - kind: browser
+      do: "Choose List in the view switch and confirm the same two projects show as rows with their disciplines, year and client"
+      cov: C-CF-25
+    - kind: pytest
+      test: test_output.py::test_twenty_seeded_projects_are_stored_once_in_catalogue_order
+      category: data_integrity
+      weight: 5
+      cov: C-OV-03, C-TR-05, C-TR-08, C-DM-06, C-DM-07, C-DM-08, C-CN-01
+    - kind: pytest
+      test: test_output.py::test_the_project_list_serves_catalogue_order_with_localised_labels
+      category: business_rule
+      weight: 3
+      cov: C-CF-79, C-DM-05, C-DM-12, C-DC-06
+    - kind: pytest
+      test: test_output.py::test_facet_counts_are_computed_from_stored_disciplines
+      category: data_integrity
+      weight: 5
+      cov: C-CF-26, C-CF-27, C-CF-28, C-CF-29, C-TR-10, C-DM-04, C-DM-13, C-DC-08, C-DC-16
+    - kind: pytest
+      test: test_output.py::test_a_discipline_facet_narrows_the_catalogue_in_order
+      category: business_rule
+      weight: 3
+      cov: C-CF-30, C-UF-03
+
+- id: invalid_discipline_or_slug_answers_not_found
+  purpose: "A discipline, a locale or a slug outside the catalogue is refused rather than served"
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_an_unknown_discipline_or_locale_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-78
+    - kind: pytest
+      test: test_output.py::test_an_unknown_project_slug_answers_not_found
+      category: validation
+      weight: 3
+      cov: C-CF-36, C-UF-04
+
+- id: project_page_steps_through_the_catalogue
+  purpose: "A project page carries its metadata and its images and steps through the twenty"
+  substeps:
+    - kind: browser
+      do: "Open Sale Marino and confirm its project page shows the year 2023 and the client Saline di Trapani"
+      cov: C-CF-37
+    - kind: browser
+      do: "Choose the next project on that page and confirm the Teatro Bellini project page opens"
+      cov: C-CF-38, C-UF-18
+    - kind: pytest
+      test: test_output.py::test_a_project_page_carries_its_metadata_and_wraps_previous_and_next
+      category: business_rule
+      weight: 3
+      cov: C-CF-33, C-CF-34, C-DM-11, C-DC-07
+    - kind: pytest
+      test: test_output.py::test_every_project_image_carries_alternative_text_naming_the_project
+      category: presentation
+      weight: 1
+      cov: C-CF-90, C-FE-17, C-DM-14
+
+- id: languages_switch_content_and_chrome
+  purpose: "The site answers in Italian and English, from the root redirect to the document titles"
+  substeps:
+    - kind: browser
+      do: "Choose IT in the header language switch on /works and confirm the filter pill reads Tutti (20) and offers Editoria (5)"
+      cov: C-CF-76, C-UF-23
+    - kind: pytest
+      test: test_output.py::test_root_redirects_to_the_home_in_the_preferred_language
+      category: business_rule
+      weight: 3
+      cov: C-CF-75, C-UF-01, C-TR-02
+    - kind: pytest
+      test: test_output.py::test_navigation_labels_follow_the_requested_locale
+      category: business_rule
+      weight: 3
+      cov: C-OV-10, C-CF-77, C-DC-10
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_its_own_title_and_description
+      category: presentation
+      weight: 1
+      cov: C-CF-80, C-CF-81
+
+- id: studio_page_tells_the_story
+  purpose: "The studio page serves its eyebrows, its statement and six services in both languages"
+  substeps:
+    - kind: browser
+      do: "Open /studio, scroll the page and confirm the eyebrow SINCE 2017, the statement WE DON'T JUST DESIGN WE DEFINE ATTITUDES and six service labels"
+      cov: C-CF-46
+    - kind: pytest
+      test: test_output.py::test_the_studio_content_serves_eyebrows_statement_and_six_services
+      category: business_rule
+      weight: 3
+      cov: C-CF-40, C-CF-41, C-CF-42, C-CF-43, C-UF-05, C-DM-15, C-DC-09
+
+- id: enquiry_is_stored_and_mailed_to_the_studio
+  purpose: "An enquiry is validated, stored, given a reference and mailed to the studio"
+  substeps:
+    - kind: browser
+      do: "Open /contact, fill the name Walkthrough Visitor and a valid email, submit with a message of five characters, and confirm the message field is named invalid beside it with nothing sent"
+      cov: C-CF-53, C-UF-19
+    - kind: browser
+      do: "Complete the message to more than twenty characters and submit, then confirm a toast names a reference beginning ENQ- and the form clears"
+      cov: C-CF-57, C-CF-58, C-UF-20
+    - kind: pytest
+      test: test_output.py::test_an_accepted_enquiry_is_stored_exactly_as_submitted
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-OV-05, C-RL-02, C-CF-55, C-CF-67, C-DM-16, C-DC-11, C-DC-14
+    - kind: pytest
+      test: test_output.py::test_an_enquiry_notification_mail_reaches_the_studio_inbox_alone
+      critical: true
+      category: notification
+      weight: 5
+      cov: C-OV-06, C-CF-47, C-CF-60, C-CF-61, C-TR-06, C-DC-15
+    - kind: pytest
+      test: test_output.py::test_enquiry_references_are_sequential_and_well_formed
+      category: data_integrity
+      weight: 5
+      cov: C-CF-56
+
+- id: invalid_enquiry_is_refused_and_nothing_is_stored
+  purpose: "An invalid enquiry and a filled decoy field store nothing and send nothing"
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_an_invalid_enquiry_is_refused_with_field_keyed_errors_and_nothing_stored
+      category: validation
+      weight: 3
+      cov: C-CF-49, C-CF-50, C-CF-51, C-TR-17
+    - kind: pytest
+      test: test_output.py::test_a_filled_decoy_field_is_refused_and_nothing_is_stored_or_mailed
+      category: security
+      weight: 5
+      cov: C-OV-07, C-CF-54, C-TR-13
+
+- id: visitor_is_denied_the_stored_enquiries
+  purpose: "Nobody but the studio reads a stored enquiry, by the app or by the read surface"
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_a_visitor_cannot_list_or_read_any_stored_enquiry
+      critical: true
+      category: security
+      weight: 5
+      cov: C-OV-08, C-RL-03, C-RL-08, C-CF-71
+    - kind: pytest
+      test: test_output.py::test_the_inbox_sends_a_visitor_without_a_session_to_sign_in
+      category: security
+      weight: 5
+      cov: C-RL-04, C-CF-07, C-UF-12, C-CN-06
+    - kind: pytest
+      test: test_output.py::test_an_unknown_enquiry_reference_answers_not_found
+      category: validation
+      weight: 3
+      cov: C-CF-72, C-DC-12
+
+- id: studio_status_change_survives_a_reload
+  purpose: "The studio reads the enquiries table and a status change survives a reload"
+  substeps:
+    - kind: browser
+      do: "Sign in as studio@example.com and confirm /inbox lists the enquiry from Walkthrough Visitor first with the status new and the exact message"
+      cov: C-CF-73, C-UF-21
+    - kind: browser
+      do: "Mark that enquiry replied, confirm a toast, reload /inbox and confirm the status still reads replied"
+      cov: C-CF-74, C-UF-22
+    - kind: pytest
+      test: test_output.py::test_the_studio_lists_every_stored_enquiry_newest_first
+      category: business_rule
+      weight: 3
+      cov: C-RL-05, C-RL-13, C-CF-66, C-DM-18, C-DC-04
+    - kind: pytest
+      test: test_output.py::test_a_status_change_is_stored_and_survives_a_reload
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-RL-06, C-CF-68, C-DC-13
+    - kind: pytest
+      test: test_output.py::test_an_unknown_status_is_refused_and_the_stored_status_is_unchanged
+      category: validation
+      weight: 3
+      cov: C-RL-09, C-CF-69, C-DM-17
+    - kind: pytest
+      test: test_output.py::test_a_stored_enquiry_cannot_be_deleted
+      category: data_integrity
+      weight: 5
+      cov: C-RL-07, C-CF-70, C-CN-03
+
+- id: consent_comes_before_any_cookie
+  purpose: "No cookie is set before a choice, and the choice is recorded in cc_cookie"
+  substeps:
+    - kind: browser
+      do: "Confirm the consent banner offered Accept and Reject on the first visit, choose Reject if the consent banner is still showing, reload, and confirm the consent banner does not return"
+      cov: C-CF-83
+    - kind: pytest
+      test: test_output.py::test_no_response_sets_a_cookie_before_a_consent_choice
+      category: security
+      weight: 5
+      cov: C-OV-09, C-CF-64, C-CF-82, C-TR-14, C-CN-04
+    - kind: pytest
+      test: test_output.py::test_a_consent_choice_writes_cc_cookie_and_the_banner_stays_away
+      category: business_rule
+      weight: 3
+      cov: C-CF-84
+
+- id: site_edges_are_designed_not_defaulted
+  purpose: "The not-found page, the privacy page, the links, the images and the narrow layout are the studio's own"
+  substeps:
+    - kind: browser
+      do: "Open /test and confirm the broken television page shows 404 and an action back to the home"
+      cov: C-CF-88, C-UF-24
+    - kind: browser
+      do: "Narrow the viewport to a phone width, confirm the header links collapse behind the MENU button, open the menu and confirm the button reads \u00d7 CLOSE"
+      cov: C-CF-92, C-FE-04
+    - kind: browser
+      do: "Open /privacy and confirm the title Privacy & Cookie Policy and the seven numbered section headings"
+      cov: C-CF-96
+    - kind: pytest
+      test: test_output.py::test_works_and_studio_slash_forms_redirect_permanently
+      category: business_rule
+      weight: 3
+      cov: C-CF-22, C-CF-39, C-UF-11, C-TR-03
+    - kind: pytest
+      test: test_output.py::test_an_unknown_address_answers_with_the_not_found_status
+      category: presentation
+      weight: 1
+      cov: C-CF-86, C-UF-09, C-TR-04
+    - kind: pytest
+      test: test_output.py::test_no_stored_credential_reaches_anything_the_browser_downloads
+      category: security
+      weight: 5
+      cov: C-TR-16
+    - kind: pytest
+      test: test_output.py::test_body_text_meets_the_contrast_bar_against_its_background
+      category: presentation
+      weight: 1
+      cov: C-UX-21
+    - kind: pytest
+      test: test_output.py::test_a_narrow_viewport_shows_no_sideways_overflow
+      category: presentation
+      weight: 1
+      cov: C-CF-91
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_leads_to_a_route_that_answers_success
+      category: presentation
+      weight: 1
+      cov: C-RL-01, C-CF-93, C-UF-10
+    - kind: pytest
+      test: test_output.py::test_the_privacy_page_carries_the_controller_and_seven_sections
+      category: presentation
+      weight: 1
+      cov: C-CF-94, C-CF-95, C-UF-07
+
+- id: enquiry_limit_refuses_a_flood
+  purpose: "The per-address enquiry limit refuses a flood without storing or mailing anything"
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_the_enquiry_limit_refuses_the_eleventh_and_stores_nothing
+      category: security
+      weight: 5
+      cov: C-CF-62, C-CF-63, C-TR-12, C-DM-19

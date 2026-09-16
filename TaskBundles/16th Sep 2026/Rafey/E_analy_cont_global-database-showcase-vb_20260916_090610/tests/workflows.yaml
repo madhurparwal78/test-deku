@@ -1,0 +1,729 @@
+- id: visitor_makes_a_cookie_choice
+  purpose: A first-time visitor declines the cookie choice and is not asked again.
+  substeps:
+    - kind: browser
+      do: Arriving for the first time on /, read the cookie choice band docked at the foot with the sentence We use cookies to measure how the site is used., its Privacy link, its filled Accept control and its outline Decline control, then press Decline
+      cov: "C-CF-22, C-CF-23, C-CF-24, C-UF-20, C-FE-44 (earned: the band this substep reads is docked at the foot and stays pressable over everything but the dialog layer)"
+    - kind: pytest
+      test: test_output.py::test_no_analytics_cookie_is_set_before_the_visitor_chooses
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Open /product after declining the cookie choice and find the band gone, then reload the address and find the band still gone
+      cov: C-CF-29, C-UF-21, C-FE-65
+    - kind: pytest
+      test: test_output.py::test_the_cookie_choice_is_remembered_across_routes
+      category: business_rule
+      weight: 3
+
+- id: visitor_finds_distinct_page_metadata
+  purpose: Every public route carries its own title, description and canonical link.
+  substeps:
+    - kind: browser
+      do: Open /, /product and /product/tessera in turn and read a different page title and a different description on each, the product page title carrying Tessera
+      cov: C-UF-23, C-UF-24
+    - kind: pytest
+      test: test_output.py::test_every_public_route_carries_its_own_title_and_description
+      category: presentation
+      weight: 1
+
+- id: visitor_proves_consistency_in_the_console
+  purpose: A visitor writes in one region and reads the value back from another.
+  substeps:
+    - kind: browser
+      do: Open /console and read the region globe with its five nodes us-central, eu-west, asia-south, sa-east and au-southeast joined by thin links, the write-then-read strip with its fields sitting in inset wells a step deeper than the panel, the synchronized-clock readout and the partition control
+      cov: "C-RL-04 (earned: the substep uses the console with no account), C-CF-41 (earned: the substep opens /console and reads the console standing there), C-UF-09 (earned: the substep opens /console with no account and reads what the route table says the route shows), C-UX-23 (earned: the substep reads the strip fields sitting in inset wells a step deeper than the panel), C-FE-105, C-FE-106, C-FE-114 (earned: the four parts this substep reads include the meter along the foot), C-FE-171 (earned: the drawn map is the console's own diagram, and its figures are the ones the console answers)"
+    - kind: pytest
+      test: test_output.py::test_partition_response_carries_all_five_regions
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Write the value amber into us-central and see the commit-wait bar fill for the uncertainty band before the committed state flashes the darker soft green with the checkmark, then read the key back from eu-west in mode strong and receive amber with a latency figure and no staleness
+      cov: "C-UF-26, C-UX-65, C-FE-107, C-FE-110, C-FE-160 (earned: the substep reads the committed state flash in the darker soft green)"
+    - kind: pytest
+      test: test_output.py::test_strong_read_from_another_region_returns_the_last_write
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_strong_read_never_returns_a_stale_value
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_commit_waits_out_an_uncertainty_above_zero
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: browser
+      do: Read the synchronized-clock readout showing each region clock as an uncertainty band rather than a single instant, drawn as a narrowing bar
+      cov: C-OV-12, C-FE-109
+    - kind: pytest
+      test: test_output.py::test_bounded_read_stays_within_the_bound_it_is_given
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_exact_read_answers_at_the_timestamp_it_is_given
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_unknown_region_or_mode_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Read the console state as text, the current value per region, the clock uncertainty and the partition status, each beside its word rather than carried by colour alone
+      cov: "C-CF-72, C-CF-73, C-CF-74, C-UX-15, C-UX-81, C-FE-108 (earned: the substep reads the console state as text, which a keyboard operator reaches by the same controls)"
+    - kind: pytest
+      test: test_output.py::test_console_timestamps_carry_utc_milliseconds
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_read_missing_its_bound_or_timestamp_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_write_missing_its_value_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Resize to a narrow viewport on /console and see the four console parts stacked vertically with shortened region labels
+      cov: C-FE-41
+    - kind: pytest
+      test: test_output.py::test_console_reads_as_a_labelled_diagram_without_scripting
+      category: presentation
+      weight: 1
+
+- id: visitor_severs_a_region_and_restores_it
+  purpose: A severed region refuses a write while the majority side stays correct.
+  substeps:
+    - kind: browser
+      do: On /console sever asia-south with the partition control and see its node grey with its links drawn dashed
+      cov: C-OV-13, C-CF-64, C-UX-68, C-FE-111
+    - kind: browser
+      do: Attempt a write against the severed asia-south and read the refusal That region will not accept a write it cannot safely agree on. beside the status circle
+      cov: C-CF-68, C-FE-112
+    - kind: pytest
+      test: test_output.py::test_write_against_a_severed_region_is_refused
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: browser
+      do: Write into eu-west while asia-south stays severed and see it commit, then restore asia-south and see the skeleton shimmer, a step deeper than the panel ground, before it rejoins with nothing drawn as corrupted
+      cov: "C-CF-71 (earned: the substep reads the console through a sever and a restore, where a forked state would show), C-UF-29, C-UX-24 (earned: the substep reads the skeleton shimmer a step deeper than the panel ground), C-FE-113"
+    - kind: pytest
+      test: test_output.py::test_majority_side_write_commits_while_a_region_is_severed
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_restoring_a_severed_region_resyncs_it
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_severing_a_severed_region_changes_nothing
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_console_reset_returns_the_seeded_state
+      category: business_rule
+      weight: 3
+
+- id: visitor_cannot_reach_a_draft_product_denied
+  purpose: An unpublished product is unreachable and absent from every public surface.
+  substeps:
+    - kind: browser
+      do: Signed out, open /product/halyard and receive the not-found surface with the heading We cannot find that page inside the global header and footer
+      cov: C-UF-30
+    - kind: pytest
+      test: test_output.py::test_draft_product_address_answers_like_an_unknown_one
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_state_parameter_makes_a_public_response_carry_a_draft
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Signed out, look for Halyard in the product index, the Networking family, the art gallery and the header search overlay, and find it absent from all four
+      cov: C-OV-23, C-UF-31
+    - kind: pytest
+      test: test_output.py::test_the_search_overlay_lists_only_published_products
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seed_holds_the_eight_published_products_and_one_draft
+      category: data_integrity
+      weight: 5
+
+- id: draft_object_bytes_are_denied_to_a_visitor
+  purpose: The bytes behind a draft product are denied to a caller without a desk session.
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_draft_art_bytes_are_denied_to_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_a_desk_session_reads_a_draft_art_piece
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_draft_datasheet_bytes_are_denied_to_anonymous
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Signed out, open /datasheet and find Halyard Technical Overview absent from the grid of download cards
+      cov: C-CF-03
+
+- id: visitor_reads_a_published_product
+  purpose: A visitor reads one published product in full and reaches another sharing a family.
+  substeps:
+    - kind: browser
+      do: Open /product/tessera and read the eyebrow Tessera database, the heading One database, every region, one truth, the lead, and the highlights rail with its eight jump links
+      cov: "C-OV-08, C-OV-15 (earned: the flagship product route this substep opens carries the console the data architects are answered by), C-OV-16 (earned: the highlights rail this substep reads is the surface the brief assigns to engineering leaders), C-CF-43 (earned: the flagship product route this substep opens is the one the brief names as carrying the console), C-CF-79, C-UF-03 (earned: the substep opens /product/{slug} with no account and reads what the route table says the route shows), C-UF-32, C-UF-33, C-FE-90"
+    - kind: pytest
+      test: test_output.py::test_product_detail_carries_claims_and_highlights
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Follow one card in the Related products row and land on another published product sharing a family with Tessera
+      cov: C-UF-34
+    - kind: pytest
+      test: test_output.py::test_product_related_row_shares_a_family
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_published_product_fields_survive_a_reread
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: On /product/tessera select Partitions in the left sticky sub-nav and see the page scroll to that claim band with the active item carrying the asymmetric radius and a pale fill a step deeper than a pointed-at item
+      cov: "C-UX-33 (earned: the substep reads the active sub-nav item a step deeper than a pointed-at one), C-UX-51, C-FE-85, C-FE-86"
+    - kind: pytest
+      test: test_output.py::test_product_route_moves_its_sub_nav_and_rail_below_lg
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: On /product/tessera read the eight claim bands in sort order, each carrying its claim as a heading, a paragraph of body and the link Try it in the console, then follow one link and land on the console with a region pair prefilled
+      cov: "C-UX-20 (earned: the substep follows Try it in the console and lands on the console with a region pair prefilled), C-FE-88, C-FE-89, C-FE-91, C-CN-13 (earned: every product route is drawn from the one template whose claim bands this substep reads)"
+    - kind: pytest
+      test: test_output.py::test_product_title_uses_the_display_type_family
+      category: presentation
+      weight: 1
+
+- id: visitor_narrows_the_product_index
+  purpose: A visitor narrows, sorts and reloads the product index and finds the same view.
+  substeps:
+    - kind: browser
+      do: Open /product and read the heading Every product on the platform with the count line reading 8 products
+      cov: "C-OV-05 (earned: the substep opens the flat product index with no account), C-CF-77, C-CF-78, C-UF-02 (earned: the substep opens /product with no account and reads what the route table says the route shows), C-UF-35"
+    - kind: pytest
+      test: test_output.py::test_product_index_lists_only_published_products
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_index_count_line_reconciles_with_the_published_rows
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Type slip into the Filter by name field and see Slipstream as the only card left, the earlier cards held in place rather than emptied while the request is in flight
+      cov: "C-UX-80 (earned: the substep watches a filter request in flight, where a spinner would replace the cards already drawn)"
+    - kind: pytest
+      test: test_output.py::test_index_name_filter_narrows_to_one_product
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Choose the family Databases in the filter bar, copy the address, reload it, and find the same family filter still applied
+      cov: C-CF-93, C-CF-94, C-UF-37, C-FE-98
+    - kind: pytest
+      test: test_output.py::test_index_family_filter_narrows_to_a_family
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Choose the sort Name, A to Z and see the cards ordered alphabetically, then choose Recently added and see the newest first
+      cov: C-UF-38
+    - kind: pytest
+      test: test_output.py::test_index_sort_by_name_orders_products_alphabetically
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_index_sort_by_recent_orders_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_unknown_sort_is_refused_and_an_unknown_family_answers_empty
+      category: validation
+      weight: 3
+
+- id: visitor_filter_matching_nothing_shows_an_empty_state
+  purpose: A filter matching nothing states so and offers a way to clear it.
+  substeps:
+    - kind: browser
+      do: On /product type zzzz into the Filter by name field, read the sentence Nothing matches that. Try a different family, or clear the filter. and press Clear filter to see every card return
+      cov: C-CF-96, C-UF-40
+    - kind: pytest
+      test: test_output.py::test_a_filter_matching_nothing_returns_an_empty_array
+      category: business_rule
+      weight: 3
+
+- id: visitor_opens_a_product_family
+  purpose: A visitor reads one family and the family index with its published counts.
+  substeps:
+    - kind: browser
+      do: Open /family/databases and read the family name Databases, its standfirst, its editorial introduction in the reading column, and the four published products carrying it
+      cov: "C-CF-99, C-UF-05 (earned: the substep opens /family/{slug} with no account and reads what the route table says the route shows), C-UF-41, C-FE-97"
+    - kind: pytest
+      test: test_output.py::test_family_detail_lists_only_its_published_products
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Follow Families in the header to /family and read the heading Three ways into the platform with three cards in a row, each carrying its name, its standfirst and its published count
+      cov: "C-CF-97, C-CF-98, C-UF-04 (earned: the substep opens /family with no account and reads what the route table says the route shows), C-UF-42"
+    - kind: pytest
+      test: test_output.py::test_families_endpoint_returns_the_three_seeded_families
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_family_answers_ok_rather_than_not_found
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_family_published_counts_reconcile_with_the_seed
+      category: data_integrity
+      weight: 5
+
+- id: visitor_explores_the_industry_solutions
+  purpose: A visitor swaps the industry explorer and filters the industry index.
+  substeps:
+    - kind: browser
+      do: On / select Telecommunications in the industry explorer and see the right panel fade to its proof card carrying the stat line and the customer Harrowgate, with no other address loaded
+      cov: "C-CF-104, C-CF-105, C-UF-43, C-FE-82 (earned: the panel this substep swaps away from is the one standing on arrival)"
+    - kind: pytest
+      test: test_output.py::test_industries_response_returns_the_six_seeded_rows
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: On / read the customer proof wall of eight wordmark tiles edge-faded at both ends, beside the testimonial card carrying the quote We put agents to work across our network and cut issue resolution from hours to minutes. attributed to Anjali Rao, the attribution set a step lighter than the quote, with a monogram disc standing where a portrait would
+      cov: "C-OV-18, C-DM-37, C-DM-38, C-FE-26, C-FE-84, C-FE-159 (earned: the substep reads the attribution set a step lighter than the quote), C-FE-168, C-FE-169"
+    - kind: pytest
+      test: test_output.py::test_customers_response_returns_the_eight_seeded_rows
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Open /solution, read the heading Solutions by industry, press the chip Healthcare and see only its card remain, then press the chip All and see the six industry cards return
+      cov: "C-OV-17, C-CF-102, C-UF-06 (earned: the substep opens /solution with no account and reads what the route table says the route shows), C-FE-99"
+
+- id: visitor_downloads_a_datasheet
+  purpose: A visitor downloads a platform datasheet from its card.
+  substeps:
+    - kind: browser
+      do: Open /datasheet and read the card for Meridian Platform Overview with its cover, its page count and its file size in megabytes to one decimal place, then press its download control
+      cov: "C-OV-09, C-CF-106 (earned: the substep opens /datasheet and reads the library there), C-CF-110, C-UF-07 (earned: the substep opens /datasheet with no account and reads what the route table says the route shows), C-UF-44"
+    - kind: pytest
+      test: test_output.py::test_datasheet_library_lists_product_and_platform_sheets
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_registered_datasheet_reads_its_page_count
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_datasheet_cover_keeps_a_three_by_four_ratio
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_datasheet_byte_size_matches_the_stored_object
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_datasheet_download_carries_an_attachment_filename
+      category: presentation
+      weight: 1
+
+- id: visitor_browses_the_art_gallery
+  purpose: A visitor browses the generated product art and reads its alternative text.
+  substeps:
+    - kind: browser
+      do: Open /gallery, narrow the family selector to Databases, and see the masonry grid of art from the published products carrying that family
+      cov: "C-OV-10, C-CF-115, C-CF-117, C-UF-08 (earned: the substep opens /gallery with no account and reads what the route table says the route shows), C-FE-102"
+    - kind: pytest
+      test: test_output.py::test_art_response_pages_at_twenty_four
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_art_page_past_the_last_answers_empty
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Select a tile to open the lightbox, read the product name, the alternative text and the Read about this product link, then press Escape and see the lightbox close
+      cov: C-UF-46, C-UX-12, C-FE-94, C-FE-104
+    - kind: pytest
+      test: test_output.py::test_every_art_piece_carries_alternative_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seeded_flagship_art_carries_its_patterned_description
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_decorative_images_declare_themselves_decorative
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Press Show more at the foot of the grid and see further tiles added below, the tiles already drawn staying in place and the footer not moving
+      cov: C-FE-103
+    - kind: pytest
+      test: test_output.py::test_generated_art_is_seeded_by_its_own_product
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_published_art_bytes_stream_from_the_bucket
+      category: core_outcome
+      weight: 5
+
+- id: visitor_submits_the_contact_sales_form
+  purpose: A visitor submits an evaluation request and is refused a malformed one.
+  substeps:
+    - kind: browser
+      do: Open /contact, fill Full name, Work email and Company, choose the region Europe and the interest Evaluation, submit, and read the banner Thank you. Your evaluation request is with us. on its pale neutral fill with a soft green left border, beside the checkmark with the enquiry identifier, having left Message empty
+      cov: "C-OV-14, C-RL-05 (earned: the substep submits the form with no account), C-CF-127 (earned: the substep submits with Message left empty and reads the success banner), C-UF-11 (earned: the substep opens /contact with no account and reads what the route table says the route shows), C-UF-47, C-UX-40 (earned: the substep reads the success banner on its pale neutral fill with its green left border), C-FE-127"
+    - kind: browser
+      do: Set Work email to notanaddress and submit, then read the failure message directly beneath that field with the failure banner on its pale warm fill, its text in the failure red, naming the field it is about
+      cov: "C-CF-133, C-UX-41 (earned: the substep reads the failure banner on its pale warm fill with red text), C-UX-70, C-FE-125"
+    - kind: pytest
+      test: test_output.py::test_contact_refused_when_the_work_address_is_not_an_address
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_contact_refused_when_the_message_runs_past_its_cap
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_contact_refused_when_the_region_is_not_listed
+      category: validation
+      weight: 3
+
+- id: editor_drafts_a_product_and_cannot_publish
+  purpose: An editor drafts and attaches art, and finds publishing out of reach.
+  substeps:
+    - kind: browser
+      do: Open /desk/login, submit editor@example.com with a wrong password, and see the card nudge once with its border in the failure red and the message That address and password do not match.
+      cov: "C-CF-140, C-UF-14 (earned: the substep opens /desk/login with no account and reads what the route table says the route shows), C-FE-131, C-FE-132 (earned: the substep fills both sign-in fields to submit), C-FE-219 (earned: the substep reads the desk sign-in failure on the desk)"
+    - kind: pytest
+      test: test_output.py::test_sign_in_failure_hides_whether_the_address_exists
+      category: security
+      weight: 5
+    - kind: browser
+      do: Submit editor@example.com with the password deku-demo-pw-2026, land on /desk, and read the left sidebar with Products and Sign out, the product list with its name, families, state, art and last edited columns, a Live or Draft badge on each row with each badge word standing beside its fill, and a count on each of the All, Live and Draft filter controls
+      cov: "C-RL-10 (earned: the substep signs in with the seeded editor address and its password), C-RL-11, C-RL-27, C-RL-30, C-CF-145, C-CF-146, C-UF-49, C-UX-16 (earned: the substep reads each badge word standing beside its fill), C-UX-43 (earned: the substep reads the Draft badge on each draft row), C-FE-133, C-FE-135, C-FE-136, C-FE-140 (earned: the substep reads each badge word standing beside its fill), C-FE-141 (earned: the substep reads each badge word standing beside its fill), C-FE-220 (earned: the substep reads the desk list heading on the desk), C-FE-223 (earned: the substep reads the desk filter controls on the desk), C-FE-225 (earned: the substep reads the desk badges on the desk)"
+    - kind: pytest
+      test: test_output.py::test_desk_art_count_matches_the_objects_stored
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Press New product, type the name Kestrel into the Product name field, see the Web address field fill in as kestrel, fill the eyebrow, the summary and the claim body, and press Save draft
+      cov: "C-OV-20, C-RL-12, C-CF-168, C-CF-169 (earned: the composer step reads the address the app filled in, which is the value a later hand edit must survive), C-UF-50, C-FE-224 (earned: the substep reads the desk new control on the desk)"
+    - kind: pytest
+      test: test_output.py::test_a_created_product_always_lands_in_the_draft_state
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_saving_one_product_twice_creates_no_second_product
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: After the draft is saved, attach one art piece with its description in Describe this image, see the upload show how far it has got, and press Save draft again
+      cov: "C-UF-51, C-FE-145, C-FE-226 (earned: the substep reads the desk art field label on the desk), C-FE-232 (earned: the substep watches an upload run, whose failure raises this message)"
+    - kind: pytest
+      test: test_output.py::test_uploaded_art_object_exists_in_the_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_uploaded_object_key_follows_the_art_scheme
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: As the editor, find no Publish control and no Return to draft control in the composer
+      cov: C-UF-52, C-FE-146
+    - kind: pytest
+      test: test_output.py::test_an_editor_cannot_publish
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_an_editor_cannot_return_a_product_to_draft
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: On /desk/product/new read the composer drawn from the public design system, the same near-white grounds, the same two families, the same radii and the same blue on every control, card and control borders in a pale hairline, any divider a step deeper than a hairline, and any unavailable control or text in a lighter grey marked by more than colour
+      cov: "C-UF-16 (earned: the substep opens /desk/product/new to editor, publisher, administrator and reads what the route table says the route shows), C-UX-25 (earned: the substep reads the composer drawn from the public design system, where borders, dividers and unavailable controls take the same look as the public surfaces), C-UX-28 (earned: the substep reads the composer drawn from the public design system, where borders, dividers and unavailable controls take the same look as the public surfaces), C-UX-71 (earned: the substep reads the composer drawn from the public design system, where borders, dividers and unavailable controls take the same look as the public surfaces), C-UX-82 (earned: the composer this substep reads is the working desk surface, so a marketing layout standing there is what it sees), C-FE-101 (earned: the composer fields this substep reads are the whole set, so a cover field would appear among them), C-FE-142, C-FE-143 (earned: the substep reads the composer whose fields these are), C-FE-144 (earned: the substep reads the composer whose fields these are), C-FE-162 (earned: the substep reads the composer drawn from the public design system, where borders, dividers and unavailable controls take the same look as the public surfaces), C-FE-172 (earned: the substep reads the composer drawn from the public design system, where borders, dividers and unavailable controls take the same look as the public surfaces)"
+
+- id: publisher_publishes_and_returns_to_draft
+  purpose: A publisher publishes a draft, is refused an invalid publish, and returns it to draft.
+  substeps:
+    - kind: browser
+      do: Sign in as publisher@example.com, select Kestrel in the desk product list, read its detail pane with its name, badge, summary and art pieces with the selected row marked, then narrow the window and see the pane stack under the table, widen it again, press Open in composer and land on its composer route
+      cov: "C-CF-149, C-CF-150, C-UF-53, C-UF-54, C-FE-137, C-FE-139, C-FE-221 (earned: the substep reads the desk detail pane control on the desk)"
+    - kind: browser
+      do: In the Kestrel composer, empty the Summary field and press Publish, then read the refusal, set the Web address to console and read that refusal, then set it to tessera and read that refusal
+      cov: "C-RL-16 (earned: the substep signs in with the seeded publisher address), C-RL-28, C-FE-227 (earned: the substep reads the desk composer controls on the desk)"
+    - kind: pytest
+      test: test_output.py::test_publish_refused_when_a_required_field_is_empty
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_refused_when_the_slug_is_a_reserved_segment
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_refused_when_the_slug_is_already_taken
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_publish_refused_when_an_art_description_is_empty
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_publish_refused_when_the_product_carries_no_art
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_name_shorter_than_three_characters_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_an_empty_name_saves_as_an_incomplete_draft
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_a_summary_over_two_hundred_forty_characters_is_refused
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Restore the summary and the web address kestrel, press Publish, and read the message Published. It is live now. as a toast standing in the corner of the desk over the page acted on, entering on a short decelerating travel
+      cov: "C-OV-21, C-UF-55, C-UX-67 (earned: the substep watches the published toast arrive), C-FE-150"
+    - kind: pytest
+      test: test_output.py::test_publish_then_unpublish_leaves_a_single_product_row
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_two_concurrent_publishes_of_one_slug_admit_one_winner
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_the_desk_message_stack_holds_at_most_three
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Press Return to draft, read the confirmation Return this product to draft?, press Return to draft, and read the message Returned to draft. It is no longer public.
+      cov: "C-CF-173, C-UF-56, C-UF-57, C-UX-14 (earned: returning a product to draft is the destructive action this substep confirms), C-FE-43, C-FE-45 (earned: the confirmation dialog this substep reads sits on the front layer over the desk), C-FE-147, C-FE-228 (earned: the substep reads the desk return confirmation on the desk), C-FE-229 (earned: the substep reads the desk confirmation cancel on the desk)"
+    - kind: pytest
+      test: test_output.py::test_unpublished_product_objects_stop_resolving_at_once
+      critical: true
+      category: security
+      weight: 5
+
+- id: administrator_reads_enquiries_and_views
+  purpose: An administrator reads the stored enquiries and the page-view log that no other role reaches.
+  substeps:
+    - kind: browser
+      do: Sign in as administrator@example.com, find Evaluation requests and Page views in the desk sidebar, open /desk/enquiries, and read the heading Evaluation requests over the stored submission newest first with its name, company, region and interest
+      cov: "C-OV-22, C-RL-19 (earned: the substep signs in with the seeded administrator address), C-RL-29, C-UF-58, C-FE-134, C-FE-148, C-FE-230 (earned: the substep reads the desk enquiries heading on the desk)"
+    - kind: pytest
+      test: test_output.py::test_contact_submission_is_stored_and_read_by_an_administrator
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_only_an_administrator_reads_the_enquiries
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Open /desk/views and read the heading Page views over a count for /product, ordered by count, and a list of recent views each with its route and its time
+      cov: "C-CF-175, C-UF-60, C-FE-149, C-FE-231 (earned: the substep reads the desk views heading on the desk)"
+    - kind: pytest
+      test: test_output.py::test_every_public_route_records_a_page_view
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_page_view_log_carries_route_and_time
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_only_an_administrator_reads_the_view_log
+      critical: true
+      category: security
+      weight: 5
+    - kind: browser
+      do: Press Sign out at the foot of the desk sidebar and see the sign-in card return
+      cov: "C-CF-176, C-FE-222 (earned: the substep reads the desk sidebar sign-out control on the desk)"
+    - kind: pytest
+      test: test_output.py::test_a_signed_out_token_is_refused
+      category: security
+      weight: 5
+
+- id: unauthenticated_desk_request_is_denied
+  purpose: Every desk surface is closed behind the bearer token.
+  substeps:
+    - kind: browser
+      do: Signed out, open /desk and see the sign-in card at /desk/login rather than the product list
+      cov: C-OV-02, C-CF-141
+    - kind: pytest
+      test: test_output.py::test_desk_product_list_is_denied_without_a_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_desk_publish_is_denied_without_a_token
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_desk_product_list_is_denied_with_a_malformed_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_enquiries_are_denied_to_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_view_log_is_denied_to_an_anonymous_caller
+      critical: true
+      category: security
+      weight: 5
+
+- id: visitor_reaches_the_standing_pages_on_every_surface
+  purpose: The chrome, the standing pages and the accessibility floors hold on every surface.
+  substeps:
+    - kind: browser
+      do: Open / and read the bands in order, the hero, the product rail, the consistency console, the industry explorer, the customer proof and the closing band, then the footer, with the rail, the explorer and the closing band on the section ground, the gradient product mark in the brand gradient, and any diamond mark in orange or category chip in a pale violet-cast grey where one stands
+      cov: "C-CF-42, C-UF-01 (earned: the substep opens / with no account and reads what the route table says the route shows), C-UX-22 (earned: the substep reads the rail, the explorer and the closing band on the section ground), C-FE-68, C-FE-69, C-FE-157 (earned: the substep reads the home bands where the gradient product mark and any diamond mark stand), C-FE-161 (earned: the substep reads the home bands where any category chip would stand)"
+    - kind: pytest
+      test: test_output.py::test_the_page_ground_is_near_white_on_every_surface
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_the_product_rail_is_omitted_when_nothing_is_featured
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_only_the_skeleton_animates_indefinitely
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: On / read the hero with the gradient product mark above the heading The new way to cloud with Meridian, its lead line, the filled Get started for free control and the outline Contact sales control, then press Get started for free and land on /contact
+      cov: C-FE-71, C-FE-72, C-CN-12
+    - kind: browser
+      do: On / watch the product rail of dark cards advance one card on its timer, then press its previous and next controls and see it page back and forward one card at a time, each card carrying an eyebrow, a title line and generated art
+      cov: "C-FE-74, C-FE-76, C-FE-77 (earned: the substep watches the rail of dark cards on the home band)"
+    - kind: browser
+      do: On / and on /product/tessera find the rounded pill ask bar fixed near the foot of the viewport with its placeholder Ask anything about Meridian Cloud in the placeholder grey and its send glyph, type How do I evaluate Tessera? and submit it, and land on /ask with that question prefilled in the field and nothing answered
+      cov: "C-OV-27 (earned: the substep submits a question and reads nothing answered), C-CF-139 (earned: the substep submits a question from the ask bar and reads nothing answered on /ask), C-UX-29 (earned: the substep reads the ask bar placeholder in the placeholder grey), C-FE-62"
+    - kind: browser
+      do: Open /, follow the Privacy link in the footer to /privacy and read the heading What we record, then return and follow the Site terms link to /terms and read the heading Using the platform
+      cov: C-CF-180, C-FE-64
+    - kind: pytest
+      test: test_output.py::test_privacy_page_is_served_and_linked_from_the_footer
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_served_and_linked_from_the_footer
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open /nothing-here and see the platform not-found surface with the global header and footer around it
+      cov: C-CF-182, C-FE-130
+    - kind: pytest
+      test: test_output.py::test_unknown_path_renders_the_platform_not_found_surface
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_internal_links_on_public_surfaces_all_resolve
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_route_answers_ready
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: On / read the fixed pale header spanning the full width, its hairline bottom border, its wordmark Meridian plus Cloud in the four brand hues letter by letter, its six navigation labels Products, Families, Solutions, Datasheets, Console and Contact us set in the body family, a label warming to the action blue when pointed at, and the active label underlined
+      cov: "C-OV-01, C-UX-38 (earned: the substep reads the wordmark in the four brand hues with the underlined active label), C-FE-48, C-FE-49, C-FE-50, C-FE-51"
+    - kind: browser
+      do: Hover Products in the header and see the full-width mega-menu panel fade open under it with the published products grouped by their three families, casting a deeper two-part shadow, and the chevron turning, find only one panel open at a time, then press Escape and see it close
+      cov: "C-CF-08 (earned: the mega-menu this substep opens groups the published products, so a draft listed there is visible in the same read), C-UX-13 (earned: the substep closes the mega-menu with Escape, where focus returning to the trigger is what lets the next key continue), C-UX-64, C-FE-27, C-FE-54, C-FE-55, C-FE-56"
+    - kind: browser
+      do: Resize to a narrow viewport, open the menu mark to slide the navigation drawer in from the left over a dimmed backdrop, read each primary item as a row with a trailing arrow and Start free pinned to the panel foot, find every navigation target reachable with nothing overflowing sideways, and dismiss the drawer with its close control
+      cov: C-UX-75, C-FE-39, C-FE-57, C-FE-58
+    - kind: pytest
+      test: test_output.py::test_a_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_body_text_contrast_meets_the_accessibility_bar
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_skip_link_is_the_first_focusable_element
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_navigation_targets_are_comfortably_sized
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_no_font_or_icon_asset_ships_with_the_build
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_home_surface_stays_inside_its_delivery_budget
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_five_named_breakpoints_drive_the_pinned_column_counts
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_body_copy_uses_the_body_type_family
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_type_steps_render_at_their_pinned_sizes
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_headings_descend_without_skipping_a_level
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_shape_and_spacing_follow_the_product_rhythm
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Open /ask and read the greeting Hello, how can I help?, the four suggestion pills and the counter 0 of 500 characters entered beneath the field, then type past 500 characters and see the cap hold
+      cov: "C-CF-136, C-CF-138, C-UF-10 (earned: the substep opens /ask with no account and reads what the route table says the route shows), C-FE-120"
+    - kind: pytest
+      test: test_output.py::test_assistant_counter_caps_at_five_hundred_characters
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_the_copy_deck_renders_its_exact_strings
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_route_declares_its_page_type_shell
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: On / read the footer with its five link columns Why Meridian Cloud, Products and pricing, Solutions, Resources and Engage, its baseline Privacy and Site terms, and the fine print Meridian Cloud. All rights reserved.
+      cov: "C-UX-30, C-CN-06 (earned: the footer this substep reads carries only its columns, baseline and fine print, where a language selector would otherwise stand), C-CN-07 (earned: the footer this substep reads is where the companion placed its newsletter field)"

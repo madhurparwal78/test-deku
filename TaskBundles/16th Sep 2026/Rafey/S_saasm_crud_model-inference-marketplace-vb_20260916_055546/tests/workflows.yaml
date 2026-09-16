@@ -1,0 +1,1258 @@
+- id: visitor_browses_the_catalogue_collections_and_the_rate_card
+  purpose: "A signed out visitor reads the catalogue, its collections, an owner profile and the published rate card, then opens a model page"
+  substeps:
+    - kind: browser
+      do: "Open /explore signed out and observe the title Explore with the LATEST column heading a featured model card and the POPULAR MODELS column listing model cards ordered by rank"
+      cov: C-CF-21, C-CF-12, C-UX-11
+    - kind: browser
+      do: "In the POPULAR MODELS column observe each card showing an owner, a slash separator, a model name, a description, a run count and a badge row"
+      cov: C-CF-15, C-FE-18
+    - kind: browser
+      do: "Open the card for northlight/scribe-2 and observe the header address, the Official badge, the Warm badge and the run count reading 17.9M"
+      cov: C-CF-13, C-CF-32, C-UF-16, C-CF-73 (earned: C-CF-13: the step opens a card addressed owner slash model, which is the address under test; C-CF-32: the step reads the model page header, where the hidden heading carrying the full address sits)
+    - kind: browser
+      do: "On the northlight/scribe-2 page observe the run form already drawn from the version schema with the featured example prompt in the prompt field"
+      cov: C-CF-55, C-CF-40, C-DM-24
+    - kind: pytest
+      test: test_output.py::test_catalogue_listing_returns_public_models_with_owner_name_description_run_count_and_badges
+      category: core_outcome
+      weight: 5
+      cov: C-OV-08
+    - kind: pytest
+      test: test_output.py::test_model_detail_response_carries_the_default_version_input_schema_output_schema_and_pricing
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-DM-13
+    - kind: pytest
+      test: test_output.py::test_run_count_formatter_renders_seeded_counts_as_abbreviated_values_dropping_a_trailing_zero
+      category: presentation
+      weight: 1
+      cov: C-CF-17, C-CF-16
+    - kind: browser
+      do: "Open /explore and observe the collections band showing each collection title, its use case description, its first three models in curated order and a remainder line reading and N more"
+      cov: C-UF-02, C-CF-22, C-FE-41
+    - kind: browser
+      do: "Open /collections/summarise-text and observe the collection title Summarise long text with its full model list"
+      cov: C-UX-20
+    - kind: browser
+      do: "Open /northlight and observe the owner profile header with the handle in monospace, the total run count and that owner's public model cards"
+      cov: C-CF-14, C-RL-03
+    - kind: browser
+      do: "Open /pricing and observe the title Pricing, the anchored public models, private models and hardware subsections and the hardware table printing a rate per second to six decimal places"
+      cov: C-FE-29, C-DM-18
+    - kind: pytest
+      test: test_output.py::test_collections_endpoint_returns_seeded_collections_with_slug_title_description_and_curated_model_order
+      category: business_rule
+      weight: 3
+      cov: C-DC-11
+    - kind: pytest
+      test: test_output.py::test_hardware_catalogue_endpoint_returns_every_seeded_class_with_its_rate_micros_per_second
+      category: data_integrity
+      weight: 5
+      cov: C-CF-100
+    - kind: pytest
+      test: test_output.py::test_owner_profile_listing_returns_only_that_owner_public_models
+      category: business_rule
+      weight: 3
+      cov: C-RL-08
+    - kind: browser
+      do: "Open /explore signed out and observe the rail card variant on the home route, the list card variant in the catalogue and the inline reference variant wherever a model is named inside prose"
+      cov: C-UF-01, C-FE-22
+    - kind: browser
+      do: "Open /northlight/scribe-2/api and observe the install command, the create call built from the current input object, and the schema tables carrying types, defaults, bounds and descriptions"
+      cov: C-CF-43, C-FE-42, C-DM-01, C-DM-19
+    - kind: pytest
+      test: test_output.py::test_catalogue_front_page_and_the_terms_route_are_reachable_without_a_session
+      category: presentation
+      weight: 1
+      cov: C-OV-03
+    - kind: pytest
+      test: test_output.py::test_ranking_number_is_recomputed_on_a_schedule_and_is_never_printed_to_a_reader
+      category: business_rule
+      weight: 3
+      cov: C-CF-20
+    - kind: browser
+      do: "Open /explore and observe every list carrying an empty state saying what would be there, and a loading state occupying the final geometry so nothing shifts"
+      cov: C-UF-30, C-CF-174, C-UF-31
+    - kind: browser
+      do: "Open /pricing and observe the hardware table displaying cpu-small as CPU (Small) with its processors and memory, cpu-large as CPU (Large), and gpu-a40 as GPU A40"
+      cov: C-CF-101
+    - kind: browser
+      do: "On a model page observe the Priced by multiple properties badge linking to the pricing route, and a stale ranking rendering from the last computed snapshot with no visible difference"
+      cov: C-FE-28
+    - kind: pytest
+      test: test_output.py::test_pages_are_produced_on_the_server_from_templates_and_the_http_interface_shares_that_origin_under_api
+      category: presentation
+      weight: 1
+      cov: C-TR-01
+    - kind: pytest
+      test: test_output.py::test_the_app_starts_from_the_environment_image_with_no_manual_steps_and_seeding_is_idempotent
+      category: data_integrity
+      weight: 5
+      cov: C-TR-15
+- id: visitor_search_finds_an_exact_address_before_a_looser_match
+  purpose: "Search groups results by kind in a fixed order and never lets a looser match displace an exact model address"
+  substeps:
+    - kind: browser
+      do: "Open the header search combobox and observe the placeholder naming two example queries with a keyboard hint beside it"
+      cov: C-CF-26, C-FE-07
+    - kind: browser
+      do: "Search for northlight/scribe-2 and observe grouped results with the models group first and that exact model at the head of it"
+      cov: C-CF-30, C-CF-31
+    - kind: pytest
+      test: test_output.py::test_search_ranks_an_exact_model_address_first_within_the_models_group
+      category: business_rule
+      weight: 3
+      cov: C-CF-28
+    - kind: pytest
+      test: test_output.py::test_search_groups_results_by_kind_in_the_fixed_order_models_owners_collections
+      category: business_rule
+      weight: 3
+      cov: C-DC-10
+    - kind: pytest
+      test: test_output.py::test_search_with_no_match_names_the_query_and_offers_a_collection
+      category: validation
+      weight: 3
+      cov: C-CF-29
+    - kind: browser
+      do: "Search for a phrase matching nothing and observe the panel naming the query back with the nearest collection offered rather than an empty panel"
+      cov: C-OV-05, C-TR-22
+    - kind: pytest
+      test: test_output.py::test_stale_ranking_snapshot_still_serves_the_popular_column_without_a_visible_difference
+      category: business_rule
+      weight: 3
+      cov: C-CF-18
+- id: developer_signs_in_takes_a_token_and_creates_a_prediction
+  purpose: "The end to end outcome: a stranger browses, signs in, mints a token and creates a prediction that reaches succeeded with its charge recorded"
+  substeps:
+    - kind: browser
+      do: "Sign in at /signin as member@example.com with the password deku-demo-pw-2026 and land on the dashboard"
+      cov: C-UF-10, C-RL-15, C-DM-02
+    - kind: browser
+      do: "Open /account/tokens, create a token named laptop with the run scope and observe the full token value shown once beside the sentence about the only time we will show you"
+      cov: C-RL-14, C-CF-102
+    - kind: browser
+      do: "Reload /account/tokens and observe the row now showing only the mp_ prefix with the last four characters"
+      cov: C-UF-17
+    - kind: browser
+      do: "Open northlight/scribe-2, press Run and observe the output panel moving to Succeeded with the label Generated in above the elapsed time and the action row beneath"
+      cov: C-UF-18, C-CF-61
+    - kind: pytest
+      test: test_output.py::test_signup_then_login_issues_a_session_cookie_marked_httponly_samesite_lax_and_path_root
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-13, C-CF-04, C-DC-09 (earned: C-RL-13: the step creates the account the token is minted under, so an open signup is what it walks)
+    - kind: pytest
+      test: test_output.py::test_token_creation_returns_the_clear_value_once_and_thereafter_only_prefix_and_last_four
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-89, C-DC-03
+    - kind: pytest
+      test: test_output.py::test_prediction_created_with_a_run_token_reaches_succeeded_and_returns_the_resolved_version_digest
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: C-CF-68 (earned: C-CF-68: the test asserts the identifier shape the create returned, which is its length)
+    - kind: pytest
+      test: test_output.py::test_succeeded_prediction_writes_exactly_one_usage_row_for_the_rate_table_amount
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-RL-05
+    - kind: pytest
+      test: test_output.py::test_seeded_password_literal_works_at_login_and_is_stored_hashed_rather_than_in_clear_text
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-02, C-CF-03
+    - kind: pytest
+      test: test_output.py::test_bearer_credential_is_accepted_in_the_authorization_header_and_refused_in_a_query_parameter
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-05
+    - kind: pytest
+      test: test_output.py::test_minted_token_value_carries_the_declared_prefix_and_length_drawn_from_letters_and_digits
+      category: security
+      weight: 5
+      cov: C-CF-165
+    - kind: pytest
+      test: test_output.py::test_app_is_reachable_at_the_public_url_on_the_container_internal_port_from_the_environment
+      category: presentation
+      weight: 1
+      cov: C-DC-08, C-DC-02, C-DC-01 (earned: C-DC-08: the test reaches the app through the environment's own port mapping, which no fixed name or volume backs)
+    - kind: pytest
+      test: test_output.py::test_reserved_browser_screenshots_and_downloads_directories_exist_at_the_app_root_and_are_empty
+      category: presentation
+      weight: 1
+      cov: C-CF-166
+    - kind: pytest
+      test: test_output.py::test_server_keeps_running_after_the_starting_session_and_is_not_a_child_of_the_shell
+      category: presentation
+      weight: 1
+      cov: C-DC-06
+    - kind: pytest
+      test: test_output.py::test_server_serves_a_production_build_rather_than_a_development_server
+      category: presentation
+      weight: 1
+      cov: C-DC-05, C-DC-19
+    - kind: pytest
+      test: test_output.py::test_data_lives_in_postgres_reached_through_the_database_url_with_no_hardcoded_host_or_credential
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-TR-04, C-TR-05
+    - kind: pytest
+      test: test_output.py::test_seeded_rows_are_not_duplicated_by_a_restart_and_every_timestamp_is_utc
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DC-20, C-DM-33 (earned: C-DC-20: the test reads the prediction back from PostgreSQL rather than from the response)
+- id: run_form_renders_from_a_schema_it_has_never_seen
+  purpose: "The run form is generated from the version schema, with one control per declared type and a lossless JSON tab"
+  substeps:
+    - kind: browser
+      do: "Open orchard/quickdraw-2 and observe a required subject text input, a count numeric input with a slider bounded at 1 and 4, and a style select holding fifteen options"
+      cov: C-UF-19, C-CF-45, C-DM-26
+    - kind: browser
+      do: "Observe each field row showing a type glyph, the field name in monospace, the declared type, the control, the description and a line beginning Default:"
+      cov: C-CF-95
+    - kind: browser
+      do: "Switch to the JSON tab, change count to 3, switch back to the Form tab and observe the numeric field reading 3 with the stated cost changed to 120000"
+      cov: C-CF-52
+    - kind: browser
+      do: "Press Run on orchard/quickdraw-2 with count 3 and observe three structured cards rendered in the output pane"
+      cov: C-CF-105, C-CF-63
+    - kind: pytest
+      test: test_output.py::test_model_version_input_schema_declares_every_control_type_the_generated_form_must_render
+      category: business_rule
+      weight: 3
+      cov: C-DM-31, C-DM-29, C-CF-65
+    - kind: pytest
+      test: test_output.py::test_json_round_trip_preserves_zero_false_empty_string_and_null_distinctly_from_an_absent_field
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-53
+    - kind: pytest
+      test: test_output.py::test_generated_snippets_read_the_credential_from_the_modelport_api_token_variable_and_inline_none
+      category: security
+      weight: 5
+      cov: C-CF-34, C-CF-54, C-DC-04
+    - kind: pytest
+      test: test_output.py::test_quickdraw_prediction_with_count_three_returns_three_output_items_and_charges_per_output_item
+      category: business_rule
+      weight: 3
+      cov: C-DM-32, C-CF-103 (earned: C-DM-32: the test reads the example gallery of that model while asserting its per item charge)
+    - kind: browser
+      do: "On northlight/scribe-2 observe the output pane carrying six distinct states, the Queued state showing the sentence about waiting for a machine, the logs disclosure labelled Show logs and expanded by default on failure, and a raw toggle on rendered markdown"
+      cov: C-UX-33, C-CF-59, C-CF-48, C-CF-69, C-FE-32 (earned: C-UX-33: the step reads the output pane's status states, which is where the transition is announced)
+    - kind: browser
+      do: "Observe the submit footer pinned to the bottom of the input column carrying the textarea hint about Shift and Return adding a new line"
+      cov: C-CF-56
+    - kind: pytest
+      test: test_output.py::test_server_revalidates_every_declared_rule_from_the_stored_schema_and_decides_validity
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-UX-27
+    - kind: pytest
+      test: test_output.py::test_query_string_input_values_override_the_prefill_after_validation_and_invalid_ones_are_dropped
+      category: business_rule
+      weight: 3
+      cov: C-CF-51
+    - kind: pytest
+      test: test_output.py::test_markdown_output_and_author_readme_are_sanitised_through_one_allowlist_that_strips_event_handlers
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-37
+    - kind: pytest
+      test: test_output.py::test_external_link_in_author_markdown_renders_with_the_opener_relationship_removed
+      category: security
+      weight: 5
+      cov: C-CF-38
+    - kind: pytest
+      test: test_output.py::test_streaming_output_shows_raw_text_until_the_stream_ends
+      category: business_rule
+      weight: 3
+      cov: C-CF-44
+    - kind: pytest
+      test: test_output.py::test_a_string_field_carrying_an_enum_renders_as_a_select_with_every_declared_member
+      category: business_rule
+      weight: 3
+      cov: C-RL-07
+    - kind: pytest
+      test: test_output.py::test_no_allowlist_of_known_models_and_no_hand_written_form_exists_for_any_seeded_model
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-42, C-DM-03
+    - kind: browser
+      do: "Open the Examples tab and observe each example showing its full input beside the output, with a control loading that input back into the form"
+      cov: C-CF-36, C-CF-67
+    - kind: browser
+      do: "Type into a required field and observe client validation running on blur and on submit rather than on every keystroke"
+      cov: C-UX-14, C-CF-47
+    - kind: pytest
+      test: test_output.py::test_share_control_mints_a_read_only_link_carrying_its_own_identifier_and_its_own_expiry
+      category: business_rule
+      weight: 3
+      cov: C-CF-64, C-CF-147
+- id: invalid_form_input_is_refused_inline_and_writes_nothing
+  purpose: "The run form and the signup form both reject bad input on the server, name the field and write no row"
+  substeps:
+    - kind: browser
+      do: "On orchard/quickdraw-2 clear the subject field, set count to 9 and press Run"
+      cov: C-UF-20
+    - kind: browser
+      do: "Observe the page keeping the reader in place with a message under each invalid control naming its field, focus moved to subject and the Run control still enabled"
+      cov: C-CF-27
+    - kind: pytest
+      test: test_output.py::test_prediction_create_with_a_missing_required_field_is_refused_as_prediction_input_invalid
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-CF-92, C-DC-12
+    - kind: pytest
+      test: test_output.py::test_prediction_create_with_a_numeric_value_outside_the_declared_bounds_is_refused_and_writes_no_row
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-CF-41
+    - kind: pytest
+      test: test_output.py::test_prediction_create_with_an_enum_value_outside_the_declared_members_is_refused
+      category: validation
+      weight: 3
+      cov: C-RL-04
+    - kind: pytest
+      test: test_output.py::test_refused_prediction_create_returns_an_errors_array_carrying_field_code_and_detail
+      category: validation
+      weight: 3
+      cov: C-CF-175, C-DM-27
+    - kind: browser
+      do: "Open /signup, claim the handle settings and observe the form rejecting it inline with the field named and no account created"
+      cov: C-CF-01, C-CF-160, C-UF-05
+    - kind: pytest
+      test: test_output.py::test_signup_claiming_a_reserved_handle_is_rejected_as_handle_reserved_and_writes_no_account
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-CF-08, C-CF-09
+    - kind: pytest
+      test: test_output.py::test_signup_with_a_malformed_handle_shape_is_refused
+      category: validation
+      weight: 3
+      cov: C-CF-06
+    - kind: pytest
+      test: test_output.py::test_router_resolves_a_reserved_segment_before_an_account_handle
+      category: business_rule
+      weight: 3
+      cov: C-CF-10, C-UF-14
+    - kind: pytest
+      test: test_output.py::test_handle_shape_rules_reject_a_leading_hyphen_a_trailing_hyphen_and_a_double_hyphen
+      category: validation
+      weight: 3
+      cov: C-CF-07
+    - kind: pytest
+      test: test_output.py::test_invalid_json_in_the_input_object_is_reported_without_destroying_the_last_valid_state
+      category: validation
+      weight: 3
+      cov: C-CF-46
+    - kind: browser
+      do: "On a form whose submission fails observe feedback as an inline banner above the region rather than a floating toast or a full page interstitial, with a failed fetch leaving the surrounding page readable and offering the action again"
+      cov: C-CF-159, C-UF-32
+    - kind: pytest
+      test: test_output.py::test_a_rejected_form_submission_writes_nothing_and_a_disabled_control_is_never_the_enforcement
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-CF-50, C-UF-21
+    - kind: pytest
+      test: test_output.py::test_durations_are_stored_as_an_integer_count_of_milliseconds_and_an_account_email_is_required_for_a_user
+      category: data_integrity
+      weight: 5
+      cov: C-DM-05
+- id: anonymous_run_is_unauthenticated_and_returns_to_the_filled_form
+  purpose: "An anonymous submit makes no request, routes to sign in and comes back with the exact input restored"
+  substeps:
+    - kind: browser
+      do: "Signed out on northlight/scribe-2 type a prompt, press Run and observe the sentence about bringing you back here with your inputs with the control resolving to /signin"
+      cov: C-OV-02
+    - kind: browser
+      do: "Sign in as member@example.com from that gate and observe the model page returning with the prompt still in the field"
+      cov: C-RL-01, C-RL-18
+    - kind: pytest
+      test: test_output.py::test_prediction_create_without_a_credential_is_refused_as_authentication_required
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-97
+    - kind: pytest
+      test: test_output.py::test_anonymous_reader_still_receives_the_model_record_schema_examples_and_readme
+      category: business_rule
+      weight: 3
+      cov: C-CF-35
+- id: duplicate_create_runs_once_and_the_usage_rows_reconcile
+  purpose: "A retried create produces one prediction and one usage row, and the itemised rows sum exactly to the period total"
+  substeps:
+    - kind: browser
+      do: "Open /predictions after two identical creates and observe one row for that model rather than two"
+      cov: C-CF-70
+    - kind: pytest
+      test: test_output.py::test_repeated_create_with_the_same_idempotency_key_and_body_returns_the_original_prediction
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-UF-24
+    - kind: pytest
+      test: test_output.py::test_repeated_create_with_the_same_idempotency_key_writes_no_second_usage_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-60
+    - kind: pytest
+      test: test_output.py::test_same_idempotency_key_with_a_different_body_is_refused_as_idempotency_key_conflict
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-84, C-CF-176
+    - kind: pytest
+      test: test_output.py::test_concurrent_creates_carrying_one_idempotency_key_produce_exactly_one_prediction
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-UF-23
+    - kind: browser
+      do: "Open /predictions and open the newest row, then observe the metrics panel itemising the charge as a quantity, a unit, the rate applied and the resulting amount"
+      cov: C-FE-17, C-CF-98 (earned: C-FE-17: the step opens a run from the list, which is the navigation that pushes the entry)
+    - kind: browser
+      do: "Open /account/usage for the current period and observe the by model view listing northlight/scribe-2 with its run count and cost"
+      cov: C-CF-113, C-CN-08
+    - kind: pytest
+      test: test_output.py::test_usage_rows_for_a_period_sum_exactly_to_the_reported_period_total
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-99, C-DC-21
+    - kind: pytest
+      test: test_output.py::test_per_second_pricing_charges_the_declared_run_seconds_at_the_hardware_rate
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CN-03, C-FE-31 (earned: C-CN-03: the test asserts the declared run seconds the platform recorded for the run it made)
+    - kind: pytest
+      test: test_output.py::test_per_thousand_output_tokens_pricing_rounds_a_partial_micro_unit_up
+      category: business_rule
+      weight: 3
+      cov: C-DM-30, C-CF-109
+    - kind: pytest
+      test: test_output.py::test_usage_row_records_the_quantity_unit_rate_micros_and_unit_divisor_used_for_the_charge
+      category: data_integrity
+      weight: 5
+      cov: C-OV-04
+    - kind: pytest
+      test: test_output.py::test_queue_time_between_created_at_and_started_at_is_never_billed
+      category: business_rule
+      weight: 3
+      cov: C-TR-14, C-CF-71 (earned: C-TR-14: the test reads the metrics block, where the three latencies are recorded separately)
+    - kind: pytest
+      test: test_output.py::test_rollups_rebuilt_from_the_raw_usage_rows_reproduce_every_stored_rollup_figure
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-107
+    - kind: pytest
+      test: test_output.py::test_reconciliation_compares_the_resummed_rows_against_the_stored_rollups_and_the_running_invoice
+      category: data_integrity
+      weight: 5
+      cov: C-CF-108
+    - kind: pytest
+      test: test_output.py::test_one_billing_path_prices_all_three_pricing_modes_from_the_same_formula
+      category: business_rule
+      weight: 3
+      cov: C-CF-104
+    - kind: pytest
+      test: test_output.py::test_rate_row_carries_a_half_open_effective_interval_with_one_row_in_force_per_instant
+      category: data_integrity
+      weight: 5
+      cov: C-DM-15
+    - kind: pytest
+      test: test_output.py::test_invoice_lines_descend_from_usage_rows_and_an_issued_invoice_stays_open_and_immutable
+      category: data_integrity
+      weight: 5
+      cov: C-CF-115, C-CN-06
+    - kind: pytest
+      test: test_output.py::test_hardware_display_names_and_specifications_match_the_seeded_catalogue
+      category: presentation
+      weight: 1
+      cov: C-DM-06
+    - kind: browser
+      do: "Open /account/billing and observe the billing details editable beside the invoice list"
+      cov: C-CF-117, C-FE-30
+    - kind: pytest
+      test: test_output.py::test_creation_accepts_an_idempotency_key_header_and_records_the_key_against_the_account
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-85, C-DM-20
+    - kind: pytest
+      test: test_output.py::test_rerendering_an_invoice_reproduces_the_same_numbers_from_the_same_usage_rows
+      category: data_integrity
+      weight: 5
+      cov: C-DC-15
+    - kind: pytest
+      test: test_output.py::test_a_currency_column_holds_usd_beside_every_money_column
+      category: data_integrity
+      weight: 5
+      cov: C-FE-12, C-DM-08
+    - kind: pytest
+      test: test_output.py::test_prediction_source_records_web_api_or_deployment
+      category: data_integrity
+      weight: 5
+      cov: C-CF-87, C-CF-118
+- id: spend_cap_denied_at_the_form_and_at_the_machine_interface
+  purpose: "Once month to date spend crosses the cap, admission refuses a new run identically through every entry point"
+  substeps:
+    - kind: browser
+      do: "Open /account/usage, lower the monthly cap below the month to date spend and observe the by day, by model and by source views over the same rows"
+      cov: C-FE-35, C-DC-16
+    - kind: browser
+      do: "Return to northlight/scribe-2, press Run and observe an inline banner above the form carrying the phrase about taking you over your monthly limit with a link to the cap control"
+      cov: C-CF-23
+    - kind: pytest
+      test: test_output.py::test_prediction_create_past_the_monthly_spend_cap_is_refused_as_spend_cap_exceeded
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-21, C-UF-26 (earned: C-TR-21: the test crosses the cap check, which sits inside the admission order under test)
+    - kind: pytest
+      test: test_output.py::test_prediction_create_past_the_cap_is_refused_before_any_prediction_row_is_written
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-UF-25, C-CF-179
+    - kind: pytest
+      test: test_output.py::test_spend_cap_refusal_is_identical_through_the_deployment_address_and_the_direct_create
+      category: security
+      weight: 5
+      cov: C-CF-110
+    - kind: pytest
+      test: test_output.py::test_free_allowance_is_consumed_before_charged_spend_and_reported_as_its_own_balance
+      category: business_rule
+      weight: 3
+      cov: C-CF-112
+    - kind: browser
+      do: "Open /account/usage and observe the screen stating that the cap can be exceeded by the work in flight at the crossing, with the free allowance drawn as its own band"
+      cov: C-CF-114
+    - kind: pytest
+      test: test_output.py::test_work_already_running_is_never_killed_by_a_cap_crossing
+      category: data_integrity
+      weight: 5
+      cov: C-CF-180, C-DC-07
+    - kind: pytest
+      test: test_output.py::test_warning_notices_fire_at_the_declared_thresholds_once_per_period_per_threshold
+      category: business_rule
+      weight: 3
+      cov: C-TR-24, C-CF-111 (earned: C-TR-24: the test reads the in product notices a threshold crossing writes)
+- id: cold_prediction_canceled_before_processing_is_never_billed
+  purpose: "A prediction cancelled while still starting never ran, so it produces no usage row and leaves the period total unchanged"
+  substeps:
+    - kind: browser
+      do: "Open blackpine-labs/prism-2-flex and observe the Cold badge printing its declared load time beside the word"
+      cov: C-CF-25
+    - kind: browser
+      do: "Press Run and observe the booting state naming 12 seconds, then press cancel and observe the panel moving through canceling to canceled"
+      cov: C-UF-22
+    - kind: pytest
+      test: test_output.py::test_prediction_on_a_cold_version_stays_starting_for_its_declared_load_time
+      category: business_rule
+      weight: 3
+      cov: C-CF-72
+    - kind: pytest
+      test: test_output.py::test_cancel_of_a_starting_prediction_reaches_canceled_and_writes_no_usage_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-DC-13
+    - kind: pytest
+      test: test_output.py::test_cancel_of_a_terminal_prediction_is_refused_and_changes_nothing
+      category: validation
+      weight: 3
+      cov: C-CF-86
+    - kind: pytest
+      test: test_output.py::test_prediction_status_is_monotonic_so_a_terminal_record_never_returns_to_processing
+      category: data_integrity
+      weight: 5
+      cov: C-CF-76
+    - kind: browser
+      do: "Open a running prediction, scroll the log view up and observe it detaching from the tail, monospaced inside its own scroll container with its cap stated on reaching"
+      cov: C-CF-167
+    - kind: pytest
+      test: test_output.py::test_a_prediction_is_billed_at_most_once_across_every_terminal_and_retry_path
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-OV-09
+    - kind: pytest
+      test: test_output.py::test_a_sweep_purges_an_output_past_its_retention_window_and_sets_data_removed
+      category: data_integrity
+      weight: 5
+      cov: C-TR-23
+- id: cross_account_read_of_a_private_model_is_denied_as_missing
+  purpose: "A second account asking directly for another account's records is told the records do not exist"
+  substeps:
+    - kind: browser
+      do: "Sign in as member2@example.com, request the prediction identifier belonging to member@example.com and observe the not-found page naming the address"
+      cov: C-UF-27, C-CF-149, C-CF-150
+    - kind: pytest
+      test: test_output.py::test_private_model_requested_by_another_account_is_answered_as_not_found_rather_than_forbidden
+      critical: true
+      category: security
+      weight: 5
+      cov: C-UF-13
+    - kind: pytest
+      test: test_output.py::test_prediction_belonging_to_another_account_is_answered_as_not_found
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-10
+    - kind: pytest
+      test: test_output.py::test_usage_rows_and_invoices_of_another_account_are_denied
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-144
+    - kind: pytest
+      test: test_output.py::test_deployment_of_another_account_is_answered_as_not_found
+      category: security
+      weight: 5
+      cov: C-DC-17
+    - kind: pytest
+      test: test_output.py::test_token_listing_never_returns_another_account_tokens
+      critical: true
+      category: security
+      weight: 5
+      cov: C-UX-34
+    - kind: pytest
+      test: test_output.py::test_the_account_is_the_one_tenant_boundary_so_no_sharing_lattice_widens_a_read
+      critical: true
+      category: security
+      weight: 5
+      cov: C-DM-04, C-DM-23, C-CN-01 (earned: C-DM-23: the test reads across accounts through the verifier's own role, which is the audited crossing)
+    - kind: pytest
+      test: test_output.py::test_the_server_enforces_authorization_on_every_mutating_endpoint_through_one_module
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-11
+    - kind: pytest
+      test: test_output.py::test_membership_pair_and_idempotency_key_pair_are_each_unique_in_the_stored_data
+      category: data_integrity
+      weight: 5
+      cov: C-DM-16, C-DM-17
+    - kind: pytest
+      test: test_output.py::test_stored_idempotency_snapshot_is_returned_unchanged_with_its_status
+      category: data_integrity
+      weight: 5
+      cov: C-DM-21
+    - kind: pytest
+      test: test_output.py::test_a_member_of_the_owning_account_runs_that_account_private_model
+      category: business_rule
+      weight: 3
+      cov: C-RL-02, C-CF-146
+    - kind: pytest
+      test: test_output.py::test_an_organisation_account_never_signs_in_and_shares_one_handle_namespace_with_a_person
+      category: security
+      weight: 5
+      cov: C-RL-19, C-RL-20, C-DM-07
+- id: revoked_token_cannot_create_a_prediction
+  purpose: "Revocation is immediate, rotation keeps both values live for the grace window and a read scope creates nothing"
+  substeps:
+    - kind: browser
+      do: "On /account/tokens open the row menu for laptop, choose revoke and type the token name to confirm"
+      cov: C-CF-96, C-UF-07
+    - kind: browser
+      do: "Observe the token table sorted by last used with never used tokens first and each row showing name, masked value, scope pills, created, last used and expiry"
+      cov: C-CF-151, C-CF-91
+    - kind: pytest
+      test: test_output.py::test_create_presented_with_a_revoked_token_is_refused_on_the_next_use
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-94
+    - kind: pytest
+      test: test_output.py::test_create_presented_with_a_read_scope_token_is_refused_as_token_scope_insufficient
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-93
+    - kind: pytest
+      test: test_output.py::test_rotated_token_leaves_both_values_working_during_the_grace_window
+      category: security
+      weight: 5
+      cov: C-DM-10
+    - kind: pytest
+      test: test_output.py::test_token_creation_past_the_per_account_limit_is_refused_with_the_limit_named
+      category: validation
+      weight: 3
+      cov: C-CF-90
+    - kind: pytest
+      test: test_output.py::test_revoked_credential_stops_working_within_one_second_rather_than_waiting_for_a_cached_verification
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-10, C-CF-75, C-TR-08
+    - kind: pytest
+      test: test_output.py::test_credential_verification_result_is_cached_for_at_most_sixty_seconds_keyed_by_its_hash
+      category: security
+      weight: 5
+      cov: C-TR-07
+    - kind: pytest
+      test: test_output.py::test_secret_comparison_is_constant_time_across_a_matching_and_a_mismatching_value
+      category: security
+      weight: 5
+      cov: C-TR-09
+- id: author_publishes_a_model_then_releases_and_rolls_back_a_deployment
+  purpose: "Publishing derives the schema and digests the content, and a deployment release is appended rather than edited"
+  substeps:
+    - kind: browser
+      do: "Open /models/new/identity, give the owner arden-hale, the name notes-tidy-2, a description and a licence, then continue"
+      cov: C-DM-11
+    - kind: browser
+      do: "On /models/new/packaging paste the packaging document with the predict signature and continue"
+      cov: C-CF-134
+    - kind: browser
+      do: "On /models/new/review observe the derived input schema, the derived output schema and the content digest, then confirm"
+      cov: C-CF-39
+    - kind: browser
+      do: "Open the published model versions list and observe one row carrying the digest shortened to eight characters, the created date, the status and the hardware class"
+      cov: C-FE-20, C-CF-106, C-CF-116 (earned: C-FE-20: the step opens the versions list of a model whose version is withdrawn, so the link resolved)
+    - kind: pytest
+      test: test_output.py::test_publishing_derives_the_input_schema_and_output_schema_from_the_packaging_document
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-132
+    - kind: pytest
+      test: test_output.py::test_publishing_identical_content_twice_returns_the_existing_version_and_adds_no_second_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-UF-28
+    - kind: pytest
+      test: test_output.py::test_create_naming_a_withdrawn_version_is_refused_as_model_version_withdrawn
+      critical: true
+      category: validation
+      weight: 5
+      cov: C-DM-12
+    - kind: pytest
+      test: test_output.py::test_versions_listing_is_append_only_and_newest_first_with_a_withdrawn_reason_inline
+      category: business_rule
+      weight: 3
+      cov: C-CF-153
+    - kind: browser
+      do: "Open /deployments/arden-hale/tidy-live and observe the address, the current version digest, the hardware class and a live instance count with its bounds"
+      cov: C-CF-131
+    - kind: browser
+      do: "Change the pinned version, save, and observe the release log gaining a row naming the actor, the instant and both versions, then press rollback on the previous row"
+      cov: C-CF-127
+    - kind: pytest
+      test: test_output.py::test_changing_a_deployment_version_writes_a_release_row_recording_actor_and_both_versions
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: C-CF-126
+    - kind: pytest
+      test: test_output.py::test_rollback_adds_a_new_release_row_and_removes_no_earlier_release_row
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-128, C-UF-29
+    - kind: pytest
+      test: test_output.py::test_deployment_cooldown_shorter_than_the_pinned_version_load_time_is_refused
+      category: validation
+      weight: 3
+      cov: C-FE-25
+    - kind: pytest
+      test: test_output.py::test_deployment_creation_reports_the_standing_cost_per_day_for_a_warm_instance
+      category: business_rule
+      weight: 3
+      cov: C-CF-122
+    - kind: browser
+      do: "On /deployments/arden-hale/tidy-live observe the traffic chart marking scaling decisions on the same axis, the queue age shown at the instance ceiling, and the standing cost so far shown separately from per run cost"
+      cov: C-CF-121, C-CF-129
+    - kind: pytest
+      test: test_output.py::test_each_publish_step_is_reachable_by_its_own_address_and_a_failed_step_leaves_no_version_row
+      category: business_rule
+      weight: 3
+      cov: C-CF-135, C-CF-133
+    - kind: pytest
+      test: test_output.py::test_one_stored_schema_serves_the_run_form_the_machine_interface_and_the_validator
+      category: data_integrity
+      weight: 5
+      cov: C-CF-170
+    - kind: pytest
+      test: test_output.py::test_deprecated_version_warns_on_use_and_a_withdrawn_version_states_its_reason_to_callers
+      category: business_rule
+      weight: 3
+      cov: C-CF-139, C-CF-137
+    - kind: pytest
+      test: test_output.py::test_deployment_configuration_stores_min_instances_max_instances_concurrency_and_cooldown
+      category: data_integrity
+      weight: 5
+      cov: C-CF-119 (earned: C-CF-119: the test creates a second deployment under the same name to prove the uniqueness)
+    - kind: pytest
+      test: test_output.py::test_scaling_decisions_read_queue_depth_and_queue_age_and_are_rate_limited_per_decision
+      category: business_rule
+      weight: 3
+      cov: C-CF-123, C-TR-26
+    - kind: pytest
+      test: test_output.py::test_queue_age_at_the_instance_ceiling_is_carried_in_the_response_headers
+      category: business_rule
+      weight: 3
+      cov: C-CF-124
+    - kind: pytest
+      test: test_output.py::test_publication_is_atomic_so_no_request_observes_a_half_visible_version
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-UF-09
+    - kind: pytest
+      test: test_output.py::test_minimum_instances_of_zero_scales_to_nothing_when_idle_and_the_cooldown_defaults_to_five_minutes
+      category: business_rule
+      weight: 3
+      cov: C-CF-120
+    - kind: pytest
+      test: test_output.py::test_one_scale_up_decision_every_ten_seconds_and_one_scale_down_every_cooldown
+      category: business_rule
+      weight: 3
+      cov: C-CF-125
+    - kind: pytest
+      test: test_output.py::test_version_pricing_takes_its_priced_quantity_from_the_declared_quantity_source
+      category: data_integrity
+      weight: 5
+      cov: C-CF-58, C-DM-28
+    - kind: pytest
+      test: test_output.py::test_a_published_version_is_never_mutated_after_creation
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-136, C-CF-138 (earned: C-CF-136: the test reads the version record back, where those provenance fields live)
+    - kind: pytest
+      test: test_output.py::test_renaming_a_model_keeps_the_old_address_resolving_through_a_permanent_redirect
+      category: business_rule
+      weight: 3
+      cov: C-DM-14, C-UF-11
+- id: owner_manages_membership_and_a_member_is_denied_the_endpoint
+  purpose: "Only an owner changes membership, the last owner cannot be removed and every change is chained into the audit log"
+  substeps:
+    - kind: browser
+      do: "Sign in as owner@example.com, open /northlight/settings/members and change arden-hale to owner"
+      cov: C-RL-16, C-RL-17, C-CF-141, C-UF-06
+    - kind: browser
+      do: "Attempt to remove the only remaining owner and observe the control refusing with the membership rows unchanged"
+      cov: C-CF-142, C-CF-143
+    - kind: pytest
+      test: test_output.py::test_member_calling_the_membership_endpoint_is_denied_and_leaves_the_membership_rows_unchanged
+      critical: true
+      category: security
+      weight: 5
+      cov: C-RL-12, C-RL-06
+    - kind: pytest
+      test: test_output.py::test_removing_the_last_owner_of_an_organisation_is_refused
+      category: business_rule
+      weight: 3
+      cov: C-RL-09, C-CF-140
+    - kind: pytest
+      test: test_output.py::test_removing_a_member_revokes_that_member_organisation_scoped_tokens_in_the_same_write
+      critical: true
+      category: security
+      weight: 5
+      cov: C-UF-12
+    - kind: pytest
+      test: test_output.py::test_audit_chain_links_every_entry_to_the_previous_hash_and_detects_an_edited_field
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-155, C-CF-154, C-DC-22
+    - kind: pytest
+      test: test_output.py::test_audit_log_of_another_account_is_denied
+      category: security
+      weight: 5
+      cov: C-CF-156
+    - kind: pytest
+      test: test_output.py::test_audit_log_records_a_spend_cap_change_and_a_billing_details_change
+      category: data_integrity
+      weight: 5
+      cov: C-CF-152
+    - kind: pytest
+      test: test_output.py::test_expired_session_performs_no_action_and_returns_the_reader_to_sign_in
+      category: security
+      weight: 5
+      cov: C-CF-57
+    - kind: pytest
+      test: test_output.py::test_memberships_store_the_organisation_account_the_user_account_and_the_role
+      category: data_integrity
+      weight: 5
+      cov: C-CF-145, C-DM-09, C-DM-22 (earned: C-CF-145: the test reads the membership rows a role change writes, which is where the timing shows)
+    - kind: pytest
+      test: test_output.py::test_revocation_publishes_an_invalidation_that_removes_the_cached_verification_at_once
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-11
+- id: webhook_to_a_loopback_address_is_rejected_at_create
+  purpose: "A delivery destination inside a private range is refused, and a permitted destination is published from the outbox after commit"
+  substeps:
+    - kind: browser
+      do: "Open a completed prediction and observe the delivery log listing an event identifier, a status, an attempt count and a sequence number with a replay control"
+      cov: C-CF-82, C-CF-66, C-TR-27
+    - kind: pytest
+      test: test_output.py::test_create_carrying_a_loopback_webhook_address_is_refused_as_webhook_url_not_allowed
+      critical: true
+      category: security
+      weight: 5
+      cov: C-CF-79
+    - kind: pytest
+      test: test_output.py::test_create_carrying_a_plain_http_webhook_address_is_refused_and_writes_no_prediction_row
+      category: security
+      weight: 5
+      cov: C-CF-80
+    - kind: pytest
+      test: test_output.py::test_terminal_prediction_writes_one_outbox_row_before_any_delivery_attempt_is_recorded
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: C-CF-81
+    - kind: pytest
+      test: test_output.py::test_delivery_rows_carry_a_sequence_number_that_only_increases_for_one_prediction
+      category: business_rule
+      weight: 3
+      cov: C-CN-07
+    - kind: pytest
+      test: test_output.py::test_outbound_fetch_resolves_the_hostname_first_then_connects_to_that_resolved_address
+      critical: true
+      category: security
+      weight: 5
+      cov: C-TR-17, C-TR-19
+    - kind: pytest
+      test: test_output.py::test_outbound_redirect_is_rechecked_at_every_hop_under_a_hop_limit
+      category: security
+      weight: 5
+      cov: C-TR-18
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_a_policy_forbidding_inline_script_and_denying_framing
+      category: security
+      weight: 5
+      cov: C-CF-74
+    - kind: pytest
+      test: test_output.py::test_notification_records_are_deduplicated_per_kind_per_period_and_a_report_is_queued_for_a_person
+      category: business_rule
+      weight: 3
+      cov: C-TR-25
+    - kind: pytest
+      test: test_output.py::test_a_failed_delivery_is_retried_with_backoff_across_the_published_retry_window
+      category: business_rule
+      weight: 3
+      cov: C-CF-83
+    - kind: pytest
+      test: test_output.py::test_no_outbound_email_or_sms_is_sent_and_no_second_region_is_addressed
+      category: presentation
+      weight: 1
+      cov: C-TR-16
+- id: machine_interface_paginates_by_cursor_and_limits_by_token
+  purpose: "Cursor pagination, the closed error shape, the rate limit headers and the health route behave as the contract states"
+  substeps:
+    - kind: browser
+      do: "Open /predictions with more rows than one page and observe the list paging forward without repeating or skipping a row"
+      cov: C-FE-21
+    - kind: pytest
+      test: test_output.py::test_health_route_returns_two_hundred_with_a_status_ok_body
+      category: presentation
+      weight: 1
+      cov: C-TR-12
+    - kind: pytest
+      test: test_output.py::test_prediction_listing_pages_by_cursor_with_the_default_limit_and_the_maximum_limit
+      category: business_rule
+      weight: 3
+      cov: C-CF-172
+    - kind: pytest
+      test: test_output.py::test_prediction_cursor_stays_valid_across_a_page_of_new_inserts
+      category: data_integrity
+      weight: 5
+      cov: C-CF-88
+    - kind: pytest
+      test: test_output.py::test_every_error_body_carries_type_title_detail_status_instance_and_errors
+      category: presentation
+      weight: 1
+      cov: C-TR-13
+    - kind: pytest
+      test: test_output.py::test_requests_past_the_per_token_rate_limit_are_refused_as_rate_limited_with_a_reset_hint
+      category: security
+      weight: 5
+      cov: C-CF-177
+    - kind: pytest
+      test: test_output.py::test_every_response_carries_the_remaining_allowance_and_the_reset_instant
+      category: presentation
+      weight: 1
+      cov: C-CF-178
+    - kind: browser
+      do: "Open /predictions and observe the console left sidebar persistent beside the list, with a console list sitting beside the detail of the selected row and selecting a row updating the address"
+      cov: C-UF-08, C-FE-34
+    - kind: pytest
+      test: test_output.py::test_machine_interface_accepts_json_and_returns_json_under_the_api_prefix_on_the_same_origin
+      category: presentation
+      weight: 1
+      cov: C-DC-18
+    - kind: pytest
+      test: test_output.py::test_list_response_omits_next_where_there_is_no_further_page_and_previous_where_there_is_none_earlier
+      category: business_rule
+      weight: 3
+      cov: C-CF-173
+    - kind: pytest
+      test: test_output.py::test_blocking_wait_returns_the_pending_record_at_its_published_ceiling_rather_than_a_timeout
+      category: business_rule
+      weight: 3
+      cov: C-CF-19
+    - kind: pytest
+      test: test_output.py::test_event_stream_resumes_from_a_last_event_id_header_and_closes_after_one_terminal_event
+      category: business_rule
+      weight: 3
+      cov: C-CF-77
+    - kind: pytest
+      test: test_output.py::test_polling_response_forbids_an_intermediary_from_storing_a_prediction_record
+      category: security
+      weight: 5
+      cov: C-CF-33
+    - kind: pytest
+      test: test_output.py::test_every_list_endpoint_paginates_by_cursor_rather_than_by_offset
+      category: business_rule
+      weight: 3
+      cov: C-CF-171
+    - kind: pytest
+      test: test_output.py::test_routes_for_a_comparison_bench_an_editorial_archive_a_change_history_and_a_documentation_site_answer_not_found
+      category: presentation
+      weight: 1
+      cov: C-CN-04
+    - kind: pytest
+      test: test_output.py::test_routes_for_fine_tuning_a_training_job_and_a_file_upload_answer_not_found
+      category: presentation
+      weight: 1
+      cov: C-CN-02, C-OV-07
+    - kind: pytest
+      test: test_output.py::test_routes_for_federated_sign_in_and_a_second_factor_answer_not_found
+      category: security
+      weight: 5
+      cov: C-CN-05
+    - kind: pytest
+      test: test_output.py::test_no_seeded_version_declares_a_file_input_and_no_dropzone_renderer_is_reachable
+      category: presentation
+      weight: 1
+      cov: C-CF-62
+    - kind: pytest
+      test: test_output.py::test_health_and_catalogue_routes_answer_without_a_session_while_terms_states_the_terms_of_use
+      category: presentation
+      weight: 1
+      cov: C-UF-04
+    - kind: pytest
+      test: test_output.py::test_error_surface_never_returns_a_raw_stack_trace_or_a_framework_overlay
+      category: security
+      weight: 5
+      cov: C-FE-33
+    - kind: pytest
+      test: test_output.py::test_no_route_serves_a_comment_a_like_a_follow_a_direct_message_or_a_forum
+      category: presentation
+      weight: 1
+      cov: C-OV-06
+- id: launch_surface_and_accessibility_hold_on_every_public_route
+  purpose: "The not-found page, the sitemap, the favicon, the cookie choice, the page view record, the focus ring and the dark theme all hold"
+  substeps:
+    - kind: browser
+      do: "Open an address that resolves to nothing and observe the product not-found page keeping the header and footer, naming the address tried and listing three closest model addresses"
+      cov: C-CF-164
+    - kind: browser
+      do: "Open / as a first time visitor and observe the cookie band asking once about non essential cookies, accept it and reload to observe the band gone"
+      cov: C-FE-43
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_not_found_and_renders_the_product_own_page
+      category: presentation
+      weight: 1
+      cov: C-CF-11
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_every_public_route_and_robots_names_the_sitemap_absolute_address
+      category: presentation
+      weight: 1
+      cov: C-CF-163
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_and_declared_in_the_document_head
+      category: presentation
+      weight: 1
+      cov: C-CF-168
+    - kind: pytest
+      test: test_output.py::test_every_public_route_carries_a_distinct_document_title_and_meta_description
+      category: presentation
+      weight: 1
+      cov: C-CF-161
+    - kind: pytest
+      test: test_output.py::test_every_public_route_declares_a_social_preview_title_and_an_image_that_resolves
+      category: presentation
+      weight: 1
+      cov: C-FE-16, C-DM-25
+    - kind: pytest
+      test: test_output.py::test_page_view_of_a_public_model_route_is_recorded_and_readable_by_that_model_owner
+      category: data_integrity
+      weight: 5
+      cov: C-OV-01
+    - kind: pytest
+      test: test_output.py::test_nothing_the_browser_downloads_carries_a_token_value_or_a_database_password
+      critical: true
+      category: security
+      weight: 5
+      cov: C-DC-14
+    - kind: browser
+      do: "Open northlight/scribe-2 and tab through the page observing a visible focus ring on every interactive control including the copy control"
+      cov: C-CF-24
+    - kind: browser
+      do: "Switch the footer theme control to dark and observe every route rendering with the neutral ramp inverted and no layout difference"
+      cov: C-UX-26, C-UX-25
+    - kind: pytest
+      test: test_output.py::test_body_text_meets_the_contrast_bar_against_its_ground_in_both_themes
+      category: presentation
+      weight: 1
+      cov: C-UX-28
+    - kind: pytest
+      test: test_output.py::test_every_content_image_carries_alternative_text_and_decorative_graphics_carry_none
+      category: presentation
+      weight: 1
+      cov: C-UX-30
+    - kind: pytest
+      test: test_output.py::test_each_route_carries_one_first_level_heading_with_no_skipped_levels
+      category: presentation
+      weight: 1
+      cov: C-UX-31
+    - kind: pytest
+      test: test_output.py::test_body_face_and_identifier_face_resolve_to_the_declared_families
+      category: presentation
+      weight: 1
+      cov: C-UX-08
+    - kind: browser
+      do: "Open / and observe the poster register: a corner to corner wash running from a violet through a red into an amber, overlaid with a fine dot halftone, carrying white type with a hard offset shadow and no blur"
+      cov: C-UX-15
+    - kind: browser
+      do: "Scroll past the hero and observe the wash ending at a hard horizontal edge with no fade, the document register beginning on a near-white neutral ground with deep neutral ink and hairline rules and no shadow on any element"
+      cov: C-FE-09, C-UX-03
+    - kind: browser
+      do: "Observe the palette roles in use: secondary ink carrying every metadata line as a mid neutral, the live status mark a teal dot inside a green ring, cost emphasis a deep orange on an amber band, an informational cross reference a vivid blue, and no status carried by colour alone"
+      cov: C-UX-07
+    - kind: browser
+      do: "Observe the interface icon set drawn as geometry with a caret right, a caret down, a close mark, a filled status dot, a prohibit mark, an arrow rising into an arc and a cog, every decorative icon hidden from assistive technology and every icon inheriting the surrounding colour"
+      cov: C-CF-49, C-FE-03
+    - kind: browser
+      do: "Observe the brand glyph as three polygons forming a stepped bracket, and the determinate progress ring as two stacked circular paths whose value is driven by its own dash at a linear timing"
+      cov: C-FE-05
+    - kind: browser
+      do: "Observe the default motion as a quick symmetrical colour change on point and on focus, content arriving after a fetch fading in, a busy indicator turning, and the hero cycle filling a ring over ten seconds before the next sample"
+      cov: C-UX-17, C-UX-19, C-FE-04
+    - kind: browser
+      do: "With a reduced motion preference set, observe the hero cycle frozen on its first sample with manual paging controls, the rails as ordinary scrollable lists with a visible affordance, and the quick colour change on hover kept"
+      cov: C-UX-21, C-FE-23
+    - kind: browser
+      do: "Observe the declared landmarks for the banner, the navigation, the main region and the footer, the two catalogue columns as labelled regions, and the skip link moving focus to the main region"
+      cov: C-UX-32
+    - kind: browser
+      do: "At a narrow viewport observe every surface as a single column with a comfortable gutter, every console table becoming one card per row, and every tab strip becoming a select"
+      cov: C-FE-36
+    - kind: browser
+      do: "Switch the theme control to system and observe the theme following the operating system live without a reload, with the choice stored server visibly so the first paint is already correct"
+      cov: C-CF-130, C-TR-02
+    - kind: pytest
+      test: test_output.py::test_document_head_declares_the_favicon_and_a_meta_description_on_every_public_route
+      category: presentation
+      weight: 1
+      cov: C-CF-162
+    - kind: pytest
+      test: test_output.py::test_cookie_choice_is_stored_under_mp_cookie_choice_and_the_band_does_not_reappear
+      category: business_rule
+      weight: 3
+      cov: C-CF-157
+    - kind: pytest
+      test: test_output.py::test_announcement_band_dismissal_is_keyed_by_the_promotion_identifier_so_a_later_promotion_reappears
+      category: business_rule
+      weight: 3
+      cov: C-CF-158
+    - kind: pytest
+      test: test_output.py::test_type_scale_renders_body_secondary_badge_and_long_form_prose_at_the_declared_sizes
+      category: presentation
+      weight: 1
+      cov: C-UX-10
+    - kind: pytest
+      test: test_output.py::test_display_face_resolves_on_the_hero_and_prose_is_never_set_in_the_monospace_family
+      category: presentation
+      weight: 1
+      cov: C-UX-09
+    - kind: browser
+      do: "Open a model page and observe three bands at the top of the route, the status bar reading All services are online behind the status dot, the narrow tier menu trigger reading Menu and the closing action reading Get started"
+      cov: C-FE-06, C-FE-40
+    - kind: browser
+      do: "On the home route observe two horizontal rails running in opposite directions at walking pace under one shared movement definition, pausing under a pointer, beside a chip group that is a real radio group with a group label and arrow key movement"
+      cov: C-FE-24, C-FE-14
+    - kind: pytest
+      test: test_output.py::test_favicon_is_served_at_its_declared_address_and_declared_in_the_document_head_of_every_route
+      category: presentation
+      weight: 1
+      cov: C-UX-23
+    - kind: pytest
+      test: test_output.py::test_body_copy_badge_text_panel_head_and_hero_render_at_their_declared_sizes_and_line_heights
+      category: presentation
+      weight: 1
+      cov: C-UX-12, C-UX-13 (earned: C-UX-12: the step measures the rendered display step on the home route, which is the route title scale)
+    - kind: pytest
+      test: test_output.py::test_no_icon_package_or_icon_font_and_no_supplied_picture_font_file_or_sound_ships
+      category: presentation
+      weight: 1
+      cov: C-TR-06, C-FE-02 (earned: C-TR-06: the test walks every resource the page requested, which is where an unnamed library would appear)
+    - kind: pytest
+      test: test_output.py::test_publisher_monogram_is_generated_from_a_hash_of_the_handle_and_is_never_inverted
+      category: presentation
+      weight: 1
+      cov: C-FE-39, C-FE-38 (earned: C-FE-39: the test reloads the same handle to prove the generated mark is stable)
+    - kind: pytest
+      test: test_output.py::test_status_indicator_reports_an_operational_a_degraded_and_an_incident_state
+      category: business_rule
+      weight: 3
+      cov: C-CF-78
+    - kind: browser
+      do: "Observe the announcement band carrying a dismiss control at its right edge, dismissing it and watching the header reflow upward as a height change without the page jumping"
+      cov: C-FE-08
+    - kind: browser
+      do: "Observe the editorial icon set as stroked paths on a small square grid with round caps, the wordmark as the three polygons followed by the product name letterforms, and an account avatar as a mirrored cell grid generated from the account identifier"
+      cov: C-UF-03
+    - kind: browser
+      do: "Observe the status indicator carrying an operational state, a degraded state and an incident state, and an outlined button tinting its ground faintly while moving its border to the ink colour"
+      cov: C-UX-06
+    - kind: browser
+      do: "Scroll every public route and observe that no property is animated against scroll position, with fallback faces metric adjusted so a font swap does not reflow the page"
+      cov: C-CF-169
+    - kind: pytest
+      test: test_output.py::test_favicon_route_is_served_and_a_content_type_policy_forbids_sniffing_on_every_response
+      category: security
+      weight: 5
+      cov: C-TR-20
+    - kind: pytest
+      test: test_output.py::test_catalogue_route_stays_readable_with_script_disabled_and_carries_no_client_only_content
+      category: presentation
+      weight: 1
+      cov: C-TR-03, C-CF-148
+    - kind: browser
+      do: "Observe the inverted panel near the foot of the home route carrying four cells whose charts render from real values, and a cell without its value rendering without a chart"
+      cov: C-FE-26, C-UF-15
+    - kind: browser
+      do: "Observe every content image carrying alternative text that names what it shows, with a model cover naming its model address and a decorative graphic carrying none"
+      cov: C-UX-29
+    - kind: browser
+      do: "At a narrow viewport open the menu disclosure and observe focus moving into the panel, staying trapped inside it, the document behind locked without a layout shift, and focus returning to the trigger on close"
+      cov: C-FE-10, C-FE-11
