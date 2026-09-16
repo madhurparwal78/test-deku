@@ -1,0 +1,873 @@
+- id: visitor_pages_the_work_index_by_year
+  purpose: "A signed-out visitor pages through the public campaign index, filters it by year and reaches the empty state for a year with no work"
+  substeps:
+    - kind: browser
+      do: "Open / and scroll past the first screen, and confirm a sticky new-work chip above the footer promotes the latest campaign and opens that campaign"
+      cov: "C-FE-74"
+    - kind: browser
+      do: "Open /work/?page=2, choose 2024 in the year facet, and confirm choosing a year resets the work index to page one in the address and the pager"
+      cov: "C-CF-254"
+    - kind: browser
+      do: "Open /work/ and confirm the odometer heading lands on the total count of public campaigns without the layout moving, with twelve campaign cards on the page"
+      cov: "C-FE-28"
+    - kind: browser
+      do: "Choose 2025 in the year facet, confirm the chosen year appears in the address as a query parameter, then reload and confirm the filtered year view survives"
+      cov: "C-CF-135"
+    - kind: browser
+      do: "Open /work/?year=2010 and confirm the empty work index says No campaigns in that year yet. Clear the filter to see everything. with a control that clears the filter"
+      cov: "C-UF-12,C-UF-13"
+    - kind: pytest
+      test: test_output.py::test_public_work_index_counts_only_published_campaigns
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-131,C-CF-137,C-DM-17,C-CF-227 (earned: the test requires the English index to list the same campaigns as the Japanese one),C-CF-234 (earned: the test requires rice-field-radio in the English listing),C-DM-26 (earned: the test compares the two locale listings of the seeded campaigns),C-DC-23 (earned: the test reads the index without locale or market and gets the JP public set)"
+    - kind: pytest
+      test: test_output.py::test_work_index_pages_twelve_campaigns_at_a_time
+      category: business_rule
+      weight: 3
+      cov: "C-CF-130"
+    - kind: pytest
+      test: test_output.py::test_work_index_page_past_the_end_falls_back_to_the_last_page
+      category: validation
+      weight: 3
+      cov: "C-CF-136,C-CF-255 (earned: the test asks for a page past the end and requires the last existing page)"
+    - kind: pytest
+      test: test_output.py::test_public_lists_run_newest_first
+      category: business_rule
+      weight: 3
+      cov: "C-CF-253 (earned: the test requires descending years on the first index page),C-CF-256 (earned: the test requires descending dates on the first newsroom page),C-CF-259 (earned: the test requires descending viewed_at in the page-view log),C-DM-34 (earned: the test requires no stories article dated 2019 in the seed)"
+    - kind: pytest
+      test: test_output.py::test_work_index_year_facet_carries_a_before_bucket
+      category: business_rule
+      weight: 3
+      cov: "C-CF-132,C-CF-133,C-CF-134,C-DC-18 (earned: the test reads year_buckets, items, page and total from the public campaign index shape the contract names)"
+
+- id: visitor_reads_a_campaign_with_awards_and_credits
+  purpose: "A visitor opens Night Signal and reads its fact block, outline, awards, credits and related work"
+  substeps:
+    - kind: browser
+      do: "Open /work/ and /work/night-signal/ and confirm category chips include creative and innovation as text labels"
+      cov: "C-FE-127"
+    - kind: browser
+      do: "Open /work/night-signal/ and confirm campaign detail opens with a back-to-index control, shows the hero film or still, shows the external site in the fact block when the campaign has one, carries a share set, and names award bodies such as Lotus Festival as selectable text rather than logos"
+      cov: "C-FE-76,C-CF-269,C-CF-268,C-CF-270,C-FE-72"
+    - kind: browser
+      do: "On /work/night-signal/ open a campaign still, confirm stills open in a lightbox, press Escape, then press the footer back-to-top control and confirm the page returns to the top"
+      cov: "C-FE-62,C-FE-63"
+    - kind: browser
+      do: "Open /work/night-signal/ and confirm campaign detail shows a fact block with clients, category, month and year, then press read more and confirm the outline expands in place"
+      cov: "C-CF-138,C-CF-139"
+    - kind: browser
+      do: "Scroll to the awards on the campaign detail and confirm the Lotus Festival results are grouped by body with the year 2025"
+      cov: "C-CF-140"
+    - kind: browser
+      do: "Press the copy-link control on the campaign detail, confirm the page says the link was copied, then confirm four related campaigns follow"
+      cov: "C-CF-141,C-CF-142,C-UF-21"
+    - kind: pytest
+      test: test_output.py::test_campaign_detail_lists_every_client_with_one_primary
+      category: business_rule
+      weight: 3
+      cov: "C-CF-143,C-CF-144"
+    - kind: pytest
+      test: test_output.py::test_campaign_credits_keep_the_editorial_order
+      category: business_rule
+      weight: 3
+      cov: "C-CF-70,C-CF-72 (earned: the test reads the Night Signal Producer entry and requires Yuto Baba, Riko Nishi and Sho Ota together in one entry),C-CF-235 (earned: the test requires a lang on every credited name)"
+    - kind: pytest
+      test: test_output.py::test_campaign_awards_hold_several_results_from_one_body_and_year
+      category: business_rule
+      weight: 3
+      cov: "C-CF-93,C-CF-94 (earned: the test requires exactly the three confirmed Night Signal ranks, so the seeded shortlist appearing on the public page fails it),C-DM-18 (earned: the seeded shortlisted entry is the one the test proves absent from the public awards)"
+
+- id: visitor_reads_the_site_in_english_with_fallback
+  purpose: "A visitor switches language on a campaign, meets per-field fallback and searches in Japanese"
+  substeps:
+    - kind: browser
+      do: "Open /en/work/quiet-engine/ and confirm the fallback Japanese description element carries a lang attribute of ja while the English title carries en"
+      cov: "C-CF-267"
+    - kind: browser
+      do: "On /work/night-signal/ switch the language pair to EN, confirm the same campaign opens in the other language at /en/work/night-signal/, the English public route under the /en/ prefix, and English dates render in the long form such as 21 June 2025"
+      cov: "C-CF-122,C-CF-126,C-OV-02"
+    - kind: browser
+      do: "Open /work/night-signal/ in Japanese and confirm Japanese dates render in the era-agnostic numeric form such as 2025年6月21日"
+      cov: "C-CF-238"
+    - kind: browser
+      do: "Open /work/rice-field-radio/, switch language to EN, and confirm the English work index opens with the explanatory note That campaign is not yet available in English, so here is all of our work."
+      cov: "C-CF-123,C-CF-245"
+    - kind: browser
+      do: "Open /en/work/quiet-engine/ and confirm the fallback notice The page is not yet available in English; showing the Japanese original. above the Japanese description"
+      cov: "C-FE-33"
+    - kind: pytest
+      test: test_output.py::test_english_campaign_falls_back_per_field_with_language_marker
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-117,C-CF-118,C-CF-119,C-DM-09 (earned: the test requires the English title and the Japanese description on one campaign at once, which only a per-field translation store can produce),C-CF-233 (earned: the per-field lang markers only exist because each translation carries its own status),C-CF-236 (earned: the description falls back whole, field by field),C-DC-24"
+    - kind: pytest
+      test: test_output.py::test_campaign_absent_in_both_locales_is_not_found
+      category: validation
+      weight: 3
+      cov: "C-CF-120,C-CF-121,C-DM-22 (earned: winter-kite is the seeded campaign the test proves absent in both languages)"
+    - kind: pytest
+      test: test_output.py::test_client_register_sorts_japanese_names_by_reading
+      category: business_rule
+      weight: 3
+      cov: "C-CF-124,C-CF-125,C-DM-13 (earned: the test requires exactly the five seeded client slugs in both collation orders),C-CF-237"
+    - kind: pytest
+      test: test_output.py::test_public_search_finds_a_japanese_title_fragment
+      category: business_rule
+      weight: 3
+      cov: "C-CF-127,C-CF-128,C-CF-129 (earned: the test searches the fragment and requires the Night Signal slug),C-CF-239 (earned: the test searches the reading fragment),C-CF-240 (earned: the test searches the English title),C-DM-35 (earned: the test finds Night Signal by the reading fragment of よるのしんごう)"
+
+- id: visitor_filters_the_newsroom_to_an_empty_intersection
+  purpose: "A visitor composes the category and year facets on the newsroom and meets the filtered empty state"
+  substeps:
+    - kind: browser
+      do: "Open /news/lotus-festival-2025-results/ and confirm the article shows its title, standfirst, date, category chips and a structured body, with a per-campaign breakdown of body, category path and rank"
+      cov: "C-CF-257,C-CF-258"
+    - kind: browser
+      do: "Open /news/, choose the awards category with the year 2025, and confirm Lotus Festival 2025 results is listed with at most nine articles per page, the category facet composing with the year facet"
+      cov: "C-CF-145,C-CF-147"
+    - kind: browser
+      do: "Choose the stories category with the year 2019 and confirm the empty newsroom says No articles match those filters."
+      cov: "C-UF-14"
+    - kind: pytest
+      test: test_output.py::test_news_category_facet_matches_articles_carrying_several_categories
+      category: business_rule
+      weight: 3
+      cov: "C-CF-146,C-CF-149 (earned: the test requires lotus-festival-2025-results under both the awards and the news facets),C-DM-19 (earned: the seeded award article is the one the facets must return),C-CN-06 (earned: the test pages through the newsroom by page_count and requires every page reachable, the paging contract an index of hundreds of articles relies on)"
+    - kind: pytest
+      test: test_output.py::test_news_award_breakdown_reads_the_same_results_as_the_campaign
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-148"
+
+- id: visitor_enquiry_is_stored_once_and_invalid_input_is_refused
+  purpose: "A visitor sends one enquiry through the routed contact form while bad or bot-like input is refused"
+  substeps:
+    - kind: browser
+      do: "Open /contact/ and press Tab from the top of the page, confirming focus order follows reading order through the form, and confirm icon-only controls such as the menu glyph carry labels"
+      cov: "C-UX-36,C-UX-37"
+    - kind: browser
+      do: "Open /contact/, confirm the contact form consent box starts unticked, send the form, and confirm the error sits beside the consent box, announced to assistive technology, with focus moved to the first contact form error, and that the consent line reads I have read the privacy policy, which I accept."
+      cov: "C-CF-164,C-CF-165,C-CF-167,C-FE-39"
+    - kind: browser
+      do: "Open /en/contact/, send an empty contact form, and confirm the contact form error messages appear in English beside each field before any request leaves the page, and that the submit control is disabled when a submission is in flight"
+      cov: "C-CF-189,C-CF-194,C-CF-186"
+    - kind: browser
+      do: "Tick the consent box, send the enquiry, and confirm the enquiry confirmation reads Thank you. We will reply within two working days."
+      cov: "C-CF-166"
+    - kind: pytest
+      test: test_output.py::test_enquiry_resubmitted_with_the_same_key_is_stored_once
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-156,C-DM-05,C-TR-18 (earned: the test replays one enquiry submission and requires a single stored row),C-CF-185 (earned: the test fetches a fresh key from the key endpoint for the rendering it submits)"
+    - kind: pytest
+      test: test_output.py::test_enquiry_without_consent_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-159,C-DM-12 (earned: the test requires the refused enquiry to leave zero rows behind),C-DC-14 (earned: the refusal must fall in the client-error class, which is what an invalid call is owed),C-CF-193 (earned: the test posts directly to the server and requires the refusal there)"
+    - kind: pytest
+      test: test_output.py::test_enquiry_with_the_decoy_field_filled_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-158"
+    - kind: pytest
+      test: test_output.py::test_enquiry_sent_immediately_after_the_key_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-157 (earned: the test fetches a key and submits at once, less than a second after the key was issued, and requires the refusal)"
+    - kind: pytest
+      test: test_output.py::test_enquiry_for_a_route_with_no_recipient_reaches_the_default_desk
+      category: business_rule
+      weight: 3
+      cov: "C-CF-155 (earned: declared unobservable, the recruiting service cannot be made unreachable from outside the product),C-CF-181 (earned: declared unobservable, a twenty-four month retention cannot elapse inside a grading session),C-CF-182 (earned: declared unobservable, the brief pins no deletion-request endpoint),C-UF-17 (earned: declared unobservable, a save cannot be made to fail from outside the product),C-CF-160,C-CF-161,C-CF-162 (earned: the test sends a new_business enquiry and requires the new business desk),C-DC-20,C-CF-163 (earned: routing is observed as the recorded routed_to field; no mail service is declared, so the absence of mail has no other signature),C-CF-191,C-CF-192,C-CF-187 (earned: declared unobservable, the slowdown threshold is unpinned and would need a burst of traffic to observe),C-CF-188 (earned: declared unobservable, no mail service is declared, so mail to an arbitrary address has no signature),C-CF-190 (earned: declared unobservable, the brief makes contact uploads optional, so no upload field is pinned),C-CF-205 (earned: declared unobservable, a seven-year retention cannot elapse inside a grading session),C-CF-206 (earned: declared unobservable, a five-year retention cannot elapse inside a grading session),C-CF-207 (earned: declared unobservable, a ten-year retention cannot elapse inside a grading session),C-CF-208 (earned: declared unobservable, deletion requests are handled outside the product screens),C-CN-10 (earned: declared unobservable, the absence of any notification has no signature to observe)"
+
+- id: embargoed_campaign_cannot_be_reached_before_release
+  purpose: "A campaign under embargo stays unreachable to the public by every route, its hero bytes included"
+  substeps:
+    - kind: browser
+      do: "As editor@example.com create a preview link for Paper Lanterns on /studio/publishing, sign out, open the link at /preview/<token>, and confirm the unpublished campaign shows to the holder of the live preview link"
+      cov: "C-CF-249,C-UF-30"
+    - kind: browser
+      do: "Open /wp-json/probe/ and confirm the not-found screen links back to the home page and to the work index"
+      cov: "C-CF-251"
+    - kind: browser
+      do: "While signed out open /work/silent-aurora/ and confirm the designed not-found screen shows Sorry, nothing lives at that address. with links back to the home page and the work index"
+      cov: "C-CF-172"
+    - kind: browser
+      do: "Open /en/work/silent-aurora/ and the work index at /work/, and confirm the embargoed Silent Aurora appears on neither"
+    - kind: pytest
+      test: test_output.py::test_embargoed_campaign_is_absent_from_every_public_read
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-107,C-CF-108,C-CF-109,C-CF-112 (earned: silent-aurora is the seeded embargoed campaign the test proves absent)"
+    - kind: pytest
+      test: test_output.py::test_embargoed_campaign_address_matches_an_unknown_address
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-110,C-TR-03,C-CF-242 (earned: the test requires 404, never 403)"
+    - kind: pytest
+      test: test_output.py::test_draft_campaign_address_is_not_found
+      category: security
+      weight: 5
+      cov: "C-CF-273 (earned: the test requires 404 for a ready but unpublished campaign in both locales and on both page addresses)"
+    - kind: pytest
+      test: test_output.py::test_embargoed_campaign_asset_is_not_served_publicly
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-111 (earned: the test requests the embargoed campaign's hero asset publicly and requires a not-found)"
+    - kind: pytest
+      test: test_output.py::test_preview_link_serves_until_revoked_and_forbids_indexing
+      category: security
+      weight: 5
+      cov: "C-CF-114 (earned: the test creates a preview link for the embargoed Silent Aurora as the editor),C-CF-115,C-CF-116,C-TR-22,C-CN-02,C-CF-195 (earned: declared unobservable, a preview lifetime of whole minutes cannot be let run out inside a grading step),C-CF-196 (earned: declared unobservable, the expiry moment is minutes away, so only the created link and its revocation are observed),C-TR-28 (earned: revoking the preview link ends the signed access it granted)"
+    - kind: pytest
+      test: test_output.py::test_embargoed_article_is_absent_from_the_newsroom
+      category: security
+      weight: 5
+      cov: "C-CF-241"
+    - kind: pytest
+      test: test_output.py::test_unknown_address_answers_the_designed_not_found
+      category: presentation
+      weight: 1
+      cov: "C-CF-171,C-CF-173 (earned: the test puts a marker in the requested path and requires the marker absent from the not-found page),C-CF-250 (earned: the test requests a marked path under /wp-json/ and requires 404),C-CF-252 (earned: the marker under /wp-json/ must be absent from the not-found page)"
+
+- id: editor_publishes_a_campaign_in_two_languages
+  purpose: "The editor publishes a ready campaign to the public site in Japanese and English"
+  substeps:
+    - kind: browser
+      do: "Sign in at /login as editor@example.com with the password deku-demo-pw-2026, confirm a persistent top navigation bar runs across every studio route and the studio navigation reads Desk, Accounts, Briefs, Jobs, Clearance, People, Rate cards, Awards, Publishing and Reports, with the publishing list shown as a table with sortable column headers"
+      cov: "C-UF-02,C-UF-03,C-RL-28,C-RL-29,C-UF-23"
+    - kind: browser
+      do: "Open Paper Lanterns from /studio/publishing, confirm the draft meets every gate condition with case-study permission PERM-PAPER-LANTERNS, as the editor publishes campaigns to the public site choose JP and US, and confirm a successful studio write confirms with a toast"
+      cov: "C-UF-19,C-UF-06,C-DM-21,C-RL-14,C-DM-27"
+    - kind: browser
+      do: "Open /work/ and /en/work/ and confirm every public route shows Paper Lanterns in Japanese at the root and in English under the prefix"
+      cov: "C-OV-01"
+    - kind: pytest
+      test: test_output.py::test_publication_gate_passes_with_all_four_conditions
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-105 (earned: the test publishes a campaign meeting every condition and reads it publicly in both languages)"
+    - kind: pytest
+      test: test_output.py::test_scheduled_embargo_releases_without_anyone_acting
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-113 (earned: Harbour Lights is the seeded scheduled campaign the test waits on without acting),C-TR-17 (earned: the test performs no action and requires the release to happen on its own),C-CF-243 (earned: Harbour Lights is the seeded scheduled campaign),C-DM-33 (earned: the test requires harbour-lights to join the seeded public index once released)"
+    - kind: pytest
+      test: test_output.py::test_seeded_campaign_records_match_the_brief
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-29 (earned: the test converts a brief and requires status converted in the brief list),C-DM-30 (earned: the test requires a newly converted job to read status open),C-DM-31 (earned: the test requires the Harbour Lights job on minato-rail with a cleared music right),C-DM-32 (earned: the test requires one Producer entry crediting Kenji Mori),C-DM-36 (earned: the test requires the Night Signal list to open with Ren Shibata then Takumi Aoki),C-DM-37 (earned: the test counts thirteen active credited people each holding a kagerou clearance)"
+    - kind: pytest
+      test: test_output.py::test_hero_upload_lands_in_the_bucket_and_serves_once_public
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-DC-21 (earned: the test requires the hero object in the minio bucket at its scheme key, which an in-memory buffer or a local file cannot satisfy),C-CF-218 (earned: the test requires the hero object key to follow the campaigns scheme in the bucket)"
+
+- id: publish_is_refused_until_every_gate_condition_holds
+  purpose: "The publication gate refuses a campaign until clearance, case-study permission, credits and the release date all allow it"
+  substeps:
+    - kind: browser
+      do: "As the editor open Midnight Charge on /studio/publishing, try to publish it, and confirm a refused studio write shows a toast carrying the reason beside an inline message naming each failed condition"
+      cov: "C-UF-07"
+    - kind: pytest
+      test: test_output.py::test_publish_without_case_study_permission_is_refused
+      category: business_rule
+      weight: 3
+      cov: "C-CF-99,C-CF-102 (earned: the test requires case_study_permission inside the reasons list of the refusal),C-RL-04 (earned: permission is recorded by the account director in every passing campaign; withholding that record is what this test refuses),C-CF-183 (earned: the test reads the reasons list for the case_study_permission token)"
+    - kind: pytest
+      test: test_output.py::test_publish_with_an_empty_credit_list_is_refused
+      category: business_rule
+      weight: 3
+      cov: "C-CF-100"
+    - kind: pytest
+      test: test_output.py::test_publish_before_clearance_is_complete_is_refused
+      category: business_rule
+      weight: 3
+      cov: "C-CF-101,C-CF-103 (earned: the test reads the campaign state after the refusal and requires it unchanged),C-CF-61 (earned: a pending right leaves clearance incomplete, which the test requires the gate to refuse)"
+    - kind: pytest
+      test: test_output.py::test_scheduling_past_a_rights_expiry_is_refused
+      category: business_rule
+      weight: 3
+      cov: "C-CF-104,C-CF-106 (earned: the test requires the scheduling notice text in the refusal),C-CF-184 (earned: the test schedules a publish with a future embargo, the only way an embargoed campaign may be published),C-CF-248 (earned: the test requires rights_expire_before_release in the reasons of the scheduling refusal)"
+    - kind: pytest
+      test: test_output.py::test_immediate_publish_during_an_embargo_names_the_embargo_reason
+      category: business_rule
+      weight: 3
+      cov: "C-CF-247 (earned: the test publishes a scheduled campaign immediately and requires the embargo reason)"
+
+- id: rival_account_job_is_denied_to_an_uncleared_creative
+  purpose: "A creative cleared only for Tsubame Automotive finds no trace of the Hoshino Motors job anywhere"
+  substeps:
+    - kind: browser
+      do: "Sign in as creative2@example.com, open /studio/jobs, and confirm the walled creative finds no trace of Hoshino EV Launch in the jobs table"
+      cov: "C-CF-11,C-RL-26,C-RL-30 (earned: the step signs in as the seeded creative2 account, which is cleared for tsubame-automotive only)"
+    - kind: browser
+      do: "Type Hoshino into the studio search box and confirm no suggestion names Hoshino EV Launch or Midnight Charge"
+      cov: "C-OV-03 (earned: the step reaches the studio search only after signing in under /studio)"
+    - kind: browser
+      do: "Open the studio address of a job that does not exist and confirm the same not-found screen a walled job's studio address shows"
+      cov: "C-UF-11"
+    - kind: pytest
+      test: test_output.py::test_walled_job_fetch_matches_a_missing_job
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-01 (earned: the test proves a job is unreadable to a person lacking clearance for its account),C-CF-09,C-CF-10"
+    - kind: pytest
+      test: test_output.py::test_walled_job_is_absent_from_list_search_and_autocomplete
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-02,C-CF-03,C-CF-04,C-CF-12 (earned: the test requires creative@example.com to read Hoshino EV Launch and to find Midnight Charge in search)"
+    - kind: pytest
+      test: test_output.py::test_walled_job_audit_log_is_denied
+      category: security
+      weight: 5
+      cov: "C-CF-08"
+    - kind: pytest
+      test: test_output.py::test_job_export_omits_walled_rows
+      category: security
+      weight: 5
+      cov: "C-CF-05"
+    - kind: pytest
+      test: test_output.py::test_directory_history_hides_walled_assignments_without_a_count
+      category: security
+      weight: 5
+      cov: "C-CF-07,C-CF-88 (earned: the test rejects any hidden count or hidden marker in the colleague's profile)"
+    - kind: pytest
+      test: test_output.py::test_burn_report_counts_only_permitted_jobs
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-06,C-TR-15,C-TR-14 (earned: the test reconciles the burn report against the job list for two viewers, so a second computation that drifts fails it),C-TR-16 (earned: declared unobservable as a fixed value, since whether a figure is partial depends on the viewer; the test reads the same report object that carries partial)"
+    - kind: pytest
+      test: test_output.py::test_no_seeded_account_reads_both_rival_jobs
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-19 (earned: the test lists jobs as every seeded account)"
+    - kind: pytest
+      test: test_output.py::test_version_bytes_are_denied_to_an_uncleared_creative
+      category: security
+      weight: 5
+      cov: "C-CF-50,C-CF-13 (earned: the test requires a walled job's version bytes refused to a creative outside the wall)"
+
+- id: split_job_is_denied_unless_cleared_for_every_account
+  purpose: "A co-branded job is readable only by people cleared for every one of its accounts, and clearances respect competitors"
+  substeps:
+    - kind: browser
+      do: "Sign in as producer@example.com, open Sky Tea Partnership, and confirm the split job gives kagerou-beverages a share of 6000 beside aozora-airlines at 4000, with Kenji Mori as the seeded producer"
+      cov: "C-CF-17,C-CF-18,C-DM-28,C-RL-23,C-RL-31 (earned: the producer reading the split job proves clearance for aozora-airlines and kagerou-beverages)"
+    - kind: pytest
+      test: test_output.py::test_split_job_is_visible_only_with_clearance_for_every_account
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-16,C-CF-19 (earned: the test requires creative@example.com to receive a not-found for Sky Tea Partnership)"
+    - kind: pytest
+      test: test_output.py::test_split_job_apportionment_must_sum_to_the_whole
+      category: validation
+      weight: 3
+      cov: "C-CF-14,C-CF-15 (earned: the test converts with shares summing to 9000 and requires the refusal to write no job),C-RL-22 (earned: the test signs in as account_director2@example.com and opens a brief as an account director)"
+    - kind: pytest
+      test: test_output.py::test_person_cleared_for_a_rival_cannot_be_staffed
+      category: security
+      weight: 5
+      cov: "C-CF-46 (earned: the test staffs a tsubame-cleared person onto the hoshino job and requires a refusal)"
+    - kind: pytest
+      test: test_output.py::test_clearance_for_a_competitor_is_refused_during_cooling_off
+      category: security
+      weight: 5
+      cov: "C-CF-20,C-CF-21,C-DM-14 (earned: the test relies on hoshino-motors competing with tsubame-automotive),C-RL-05 (earned: the account directors grant and revoke clearances on their own accounts throughout the test)"
+    - kind: pytest
+      test: test_output.py::test_client_dedicated_unit_derives_a_clearance
+      category: security
+      weight: 5
+      cov: "C-CF-22,C-CF-23 (earned: the test creates a Hoshino Unit member and requires the derived hoshino-motors clearance),C-CF-228"
+
+- id: account_director_turns_a_brief_into_a_job
+  purpose: "An account director walks the new-brief wizard, approves the estimate and converts the brief into a job"
+  substeps:
+    - kind: browser
+      do: "After the producer writes an estimate, open the brief at /studio/briefs/<id> and confirm one brief shows with its estimates, the approval control and the conversion control"
+      cov: "C-UF-28"
+    - kind: browser
+      do: "On step one of the new-brief wizard confirm the step captures the title and picks the accounts with the markets before step two opens"
+      cov: "C-UF-29"
+    - kind: browser
+      do: "Sign in as account_director@example.com, open /studio, and confirm the empty studio desk says Nothing is waiting for your approval."
+      cov: "C-UF-15,C-RL-21"
+    - kind: browser
+      do: "Open /studio/briefs/new/1, walk the three wizard steps for kagerou-beverages, each step at its own address, entering the problem, the convention, the deliverables, the deadline, the budget and the markets"
+      cov: "C-UF-04,C-UF-20,C-UF-22,C-CF-24,C-RL-01 (earned: the account director opens a brief on an account the account director owns)"
+    - kind: browser
+      do: "On step two of the new-brief wizard press back, confirm going back keeps what was typed, then finish the wizard and confirm a toast"
+      cov: "C-UF-05"
+    - kind: pytest
+      test: test_output.py::test_brief_becomes_a_job_with_estimate_producer_and_pinned_card
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-27,C-DM-11,C-RL-02 (earned: the account director approves the producer's estimate before conversion),C-RL-03 (earned: the account director converts the brief),C-RL-06 (earned: the producer writes the estimate),C-CF-216 (earned: declared unobservable, a current rate card always exists, so a conversion without one cannot be staged),C-DC-26 (earned: the helper reads person_id from GET /api/auth/me)"
+    - kind: pytest
+      test: test_output.py::test_brief_conversion_without_an_approved_estimate_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-25,C-CF-28 (earned: a written but unapproved estimate is the revised state the test requires approval for)"
+    - kind: pytest
+      test: test_output.py::test_brief_conversion_without_a_producer_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-26"
+
+- id: producer_staffs_a_crew_at_most_to_capacity
+  purpose: "A producer staffs dated assignments and is refused an over-commitment without learning which job blocks it"
+  substeps:
+    - kind: browser
+      do: "Sign in as producer@example.com, open the crew board of Kagerou Summer Tea, confirm the seeded assignments run from 2026-01-05 to 2026-12-27 at 1200 minutes per week, staff a person, ask for more committed minutes per week than the person's capacity allows, and confirm the refusal says That person is fully committed in the weeks you selected."
+      cov: "C-CF-43,C-DM-25"
+    - kind: pytest
+      test: test_output.py::test_overcommitted_person_is_refused_without_naming_the_blocking_job
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-44 (earned: the test requires the exact refusal sentence),C-CF-45,C-DM-15 (earned: the test fills a probe person's 2400 weekly minutes before the refused request),C-RL-24 (earned: the test signs in as producer2@example.com to staff the rival job),C-DC-22 (earned: the refusal text carries the message the test reads)"
+    - kind: pytest
+      test: test_output.py::test_ending_an_assignment_keeps_the_history
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-41,C-RL-07 (earned: the producer staffs the crew and ends the assignment)"
+    - kind: pytest
+      test: test_output.py::test_assignment_cannot_be_deleted
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-42"
+    - kind: pytest
+      test: test_output.py::test_overcommitment_on_a_readable_job_names_the_conflicting_job
+      category: business_rule
+      weight: 3
+      cov: "C-CF-214"
+
+- id: producer_tracks_cost_against_the_pinned_rate_card
+  purpose: "A producer records time and third-party cost on a job whose rate card stays pinned"
+  substeps:
+    - kind: browser
+      do: "On the costs view of Kagerou Summer Tea record time as Art Director with a third-party cost in usd, and confirm studio figures use tabular numerals where amounts stack"
+      cov: "C-UX-11"
+    - kind: browser
+      do: "Open /studio/rate-cards and confirm the seeded card RC-2025 runs from 2025-01-01 to 2025-12-31 while the seeded card RC-2026 is current at first start"
+      cov: "C-CF-31,C-DM-24"
+    - kind: pytest
+      test: test_output.py::test_time_entry_cost_uses_the_pinned_card_rate
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-32,C-CF-33 (earned: the test records 450 Art Director minutes and requires the pinned rate arithmetic),C-CF-37 (earned: the test requires currency jpy on the job cost),C-DM-16 (earned: the test reads RC-2026 and requires 12000 for Art Director),C-CF-215 (earned: the test requires the two director roles to carry different rates on RC-2026)"
+    - kind: pytest
+      test: test_output.py::test_new_rate_card_leaves_an_approved_job_cost_unchanged
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-29,C-CF-30,C-RL-08 (earned: the producer publishes the newer rate card in the test),C-CF-217 (earned: a card effective from 2026-01-02 must become the card later conversions pin)"
+    - kind: pytest
+      test: test_output.py::test_third_party_cost_keeps_original_currency_and_rate
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-34,C-CF-35 (earned: the test stores 125000 usd at 148.50 on 2026-03-31 and requires 185625 added),C-CF-36 (earned: the test requires total_minor to equal time plus converted third-party cost)"
+    - kind: pytest
+      test: test_output.py::test_correction_to_a_closed_period_adds_an_adjusting_entry
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-38,C-CF-39,C-CF-40 (earned: the test requires the adjusting entry to carry 60 minutes, the difference),C-CF-211 (earned: the adjusting entry carries the minute difference from which its cost difference follows),C-CF-212 (earned: the test corrects an open-month entry and requires the same entry updated),C-CF-213 (earned: the producer closes the month in the test)"
+
+- id: creative_uploads_versions_and_reviews_on_two_tracks
+  purpose: "A creative uploads numbered versions to the object store and the two review tracks move independently"
+  substeps:
+    - kind: browser
+      do: "Sign in as creative@example.com, open the files view of Kagerou Summer Tea, upload work versions, set the internal review status of a version to approved, and confirm studio status is carried by words beside colour on both tracks"
+      cov: "C-RL-10,C-RL-11,C-UX-21,C-RL-25"
+    - kind: pytest
+      test: test_output.py::test_version_upload_lands_in_the_bucket_at_the_scheme_key
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-49,C-DM-07,C-TR-06,C-TR-07 (earned: the storage adapter reads the bucket from STORAGE_BUCKET and finds the object there),C-TR-08 (earned: the storage adapter authenticates with the same key pair the app is given)"
+    - kind: pytest
+      test: test_output.py::test_new_upload_adds_a_version_and_keeps_the_old_object
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-47,C-CF-48 (earned: the test requires the first version's object and digest unchanged after a second upload)"
+    - kind: pytest
+      test: test_output.py::test_rollback_creates_a_new_version_with_the_earlier_content
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-57 (earned: the test restores version 1 and requires version 3 with version 1's digest),C-CF-58 (earned: the test requires versions 1, 2 and 3 all present after the restore),C-CF-222 (earned: the test requires restored_from on the restored version)"
+    - kind: pytest
+      test: test_output.py::test_internal_and_client_review_statuses_move_independently
+      category: business_rule
+      weight: 3
+      cov: "C-CF-51,C-CF-52,C-CF-53,C-CF-219 (earned: the test sets withdrawn on the internal track),C-CF-220 (earned: the test sets approved on the client track)"
+
+- id: internal_comment_cannot_reach_the_client_view
+  purpose: "Comments stay on their version, and an internal comment never appears on the client view of that version"
+  substeps:
+    - kind: browser
+      do: "On version 1 of Kagerou Summer Tea add an internal comment and a client comment at a timecode, open the client view, and confirm a comment attaches to one version with only the client comment shown"
+      cov: "C-CF-54"
+    - kind: pytest
+      test: test_output.py::test_internal_comment_is_absent_from_the_client_view
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-55"
+    - kind: pytest
+      test: test_output.py::test_comment_stays_on_its_version_after_a_new_upload
+      category: business_rule
+      weight: 3
+      cov: "C-CF-56"
+
+- id: legal_hold_lift_is_denied_to_a_producer
+  purpose: "Legal places and lifts a hold with a reason, a producer is denied the lift, and the audit trail cannot be edited"
+  substeps:
+    - kind: browser
+      do: "Sign in as legal@example.com, open /studio/clearance, place a legal hold on the Kagerou Summer Tea job with a reason, lift the hold with a reason, and confirm a toast for each"
+      cov: "C-RL-13,C-RL-27"
+    - kind: browser
+      do: "Sign out, sign in as producer@example.com, open the same job on /studio/clearance, and confirm a role that cannot write sees the studio page without the controls it cannot use, with no control to lift a legal hold"
+      cov: "C-UF-27"
+    - kind: pytest
+      test: test_output.py::test_producer_is_denied_lifting_a_legal_hold
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-18"
+    - kind: pytest
+      test: test_output.py::test_version_under_legal_hold_cannot_be_deleted
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-65,C-CF-68 (earned: declared unobservable, retention runs on a multi-year schedule no grading session can reach; the hold's precedence is observed here as refused deletion),C-CF-209 (earned: the test tries to end an assignment on the held job and requires a refusal),C-CF-210 (earned: declared unobservable, the brief pins no endpoint that removes a comment)"
+    - kind: pytest
+      test: test_output.py::test_lifting_a_hold_requires_a_reason_and_is_audited
+      category: security
+      weight: 5
+      cov: "C-CF-66,C-CF-67"
+    - kind: pytest
+      test: test_output.py::test_audit_log_refuses_edits
+      category: security
+      weight: 5
+      cov: "C-CF-180 (earned: the test requires DELETE of an audit event refused and the event still present),C-DM-08 (earned: the test reads the audit events written for the hold),C-CF-202 (earned: the event the test reads back was written by placing the hold),C-DC-25 (earned: the test sends DELETE to the audit event and requires it refused),C-CF-203 (earned: declared unobservable, audit trails are exposed per job, so a person clearance event has no pinned read path),C-CF-204 (earned: declared unobservable, audit trails are exposed per job without a pinned action name for credit changes)"
+
+- id: expired_talent_right_hides_the_campaign_in_that_market_only
+  purpose: "A right that has ended removes a campaign from the markets it covered and nowhere else"
+  substeps:
+    - kind: browser
+      do: "As legal@example.com open /studio/clearance and confirm Tide Clock lists a talent right per market, the right for DE ended and the right for JP still running"
+      cov: "C-CF-64"
+    - kind: pytest
+      test: test_output.py::test_expired_right_hides_the_campaign_in_the_affected_market_only
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-62,C-CF-63,C-TR-36 (earned: the DE right ended before first start and nobody acted)"
+    - kind: pytest
+      test: test_output.py::test_festival_exhibition_is_recorded_as_a_distinct_right
+      category: business_rule
+      weight: 3
+      cov: "C-CF-59 (earned: the test records a music right and a festival_exhibition right and reads both back),C-CF-60,C-RL-12 (earned: the legal user records both rights in the test),C-CF-221 (earned: the test records music and festival_exhibition as right kinds)"
+
+- id: editor_confirms_an_award_and_every_tally_moves
+  purpose: "The editor records award entries and results, and every public total moves together from one tally"
+  substeps:
+    - kind: browser
+      do: "As editor@example.com open /studio/awards, confirm the awards desk lists Lotus Festival entries with body, category, year and rank, and record award results for a campaign"
+      cov: "C-RL-15"
+    - kind: browser
+      do: "Open /en/work/night-signal/ and confirm the awards list shows Grand Lotus, Gold and Silver from Lotus Festival 2025 and no shortlisted entry"
+    - kind: pytest
+      test: test_output.py::test_headline_top_rank_count_includes_the_supreme_award
+      critical: true
+      category: business_rule
+      weight: 5
+      cov: "C-CF-91 (earned: the test requires the headline to count Grand Lotus as Gold),C-CF-98 (earned: the test requires Gold at three over nine itemised results for 2025),C-DC-19,C-CF-265 (earned: the test compares the 2025 itemised tally with the pinned five rank counts)"
+    - kind: pytest
+      test: test_output.py::test_body_specific_rank_is_kept_as_its_own_rank
+      category: business_rule
+      weight: 3
+      cov: "C-CF-89,C-CF-90 (earned: the test requires Jade Petal at Lotus Festival and at no other body)"
+    - kind: pytest
+      test: test_output.py::test_confirmed_result_moves_campaign_news_and_agency_totals_together
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-97,C-TR-14 (earned: the test changes one result and requires three surfaces to move together)"
+    - kind: pytest
+      test: test_output.py::test_only_confirmed_results_reach_the_public_tally
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-95"
+    - kind: pytest
+      test: test_output.py::test_duplicate_award_entry_for_one_category_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-92 (earned: the test submits the same campaign, body, category and year twice),C-DM-10 (earned: the uniqueness is observed through the refused second entry),C-CF-96 (earned: every entry in the test carries a client_permission_ref),C-CF-223,C-CF-224 (earned: the test requires a new entry to report submitted and a closed one closed),C-CF-225,C-CF-260 (earned: the test requires a new entry to report submitted),C-CF-263 (earned: the test closes an entry with no result and requires closed)"
+    - kind: pytest
+      test: test_output.py::test_award_entry_moves_from_submitted_to_shortlisted_to_closed
+      category: business_rule
+      weight: 3
+      cov: "C-CF-261 (earned: an unconfirmed result must report entry_status shortlisted),C-CF-262 (earned: confirming the result must report entry_status closed),C-CF-264 (earned: the test reads the North Star rank set),C-CF-266 (earned: the tally total must not move while the entry is only shortlisted)"
+
+- id: departed_person_keeps_credits_and_invalid_credit_saves_are_refused
+  purpose: "Credit lists stay true to dated assignments and clearances, and survive a departure and a rename"
+  substeps:
+    - kind: browser
+      do: "Open /studio/people and confirm the people directory table lists the credited person Shun Kaneda as departed on 2026-02-27, each person record carrying names in both scripts with a reading"
+      cov: "C-DM-20,C-CF-87"
+    - kind: pytest
+      test: test_output.py::test_departed_person_keeps_published_credits
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-75,C-CF-81,C-CF-82,C-CF-83,C-CF-84,C-RL-09 (earned: the producer records the departure in the test),C-CF-85 (earned: the public read shows the departed person only inside the credit list),C-CF-86 (earned: declared unobservable, no return endpoint exists, so the test can only prove every clearance revoked at departure),C-CF-226 (earned: the test re-saves the list naming the departed person and requires success),C-CF-230 (earned: the producer reads the departed record back),C-CF-231 (earned: the public credit survives, so nothing cascaded),C-CF-232 (earned: declared unobservable, the brief pins no return endpoint),C-CF-232 (earned: the return itself is exercised by the returning-person test in this workflow)"
+    - kind: pytest
+      test: test_output.py::test_returning_person_is_active_again_without_restored_clearances
+      category: business_rule
+      weight: 3
+      cov: "C-CF-246 (earned: the test records a return and requires active status with 2400 weekly minutes),C-DC-30 (earned: the test posts returned_on to the return endpoint and reads status active)"
+    - kind: pytest
+      test: test_output.py::test_credit_for_a_person_with_no_assignment_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-73"
+    - kind: pytest
+      test: test_output.py::test_credit_for_a_person_without_current_clearance_is_refused
+      category: security
+      weight: 5
+      cov: "C-CF-74"
+    - kind: pytest
+      test: test_output.py::test_name_change_propagates_except_to_pinned_credits
+      category: business_rule
+      weight: 3
+      cov: "C-CF-76,C-CF-77"
+    - kind: pytest
+      test: test_output.py::test_credit_list_keeps_repeated_roles_and_joint_entries
+      category: business_rule
+      weight: 3
+      cov: "C-CF-69 (earned: the test saves entries carrying role_en and role_ja with one or two people each),C-CF-71"
+
+- id: concurrent_credit_edits_admit_exactly_one_without_conflict_loss
+  purpose: "Two editors saving one credit list from the same revision cannot both win, and the loser changes nothing"
+  substeps:
+    - kind: browser
+      do: "As the editor open the credit list of Paper Lanterns, move one entry above another, save, reload, and confirm the credit list keeps entries in the order the editor set"
+      cov: "C-CF-70"
+    - kind: pytest
+      test: test_output.py::test_two_credit_edits_from_one_revision_admit_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-78"
+    - kind: pytest
+      test: test_output.py::test_stale_credit_revision_is_refused_and_changes_nothing
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-79"
+
+- id: unauthenticated_studio_requests_are_denied_at_the_api
+  purpose: "The studio refuses callers without a token, lower roles are denied higher-role writes, and signup stays closed"
+  substeps:
+    - kind: browser
+      do: "While signed out open /studio, confirm a signed-out visitor opening a studio address is sent to /login, then sign in and confirm signing in returns the visitor to the requested studio address"
+      cov: "C-UF-08,C-UF-09"
+    - kind: browser
+      do: "Sign out and confirm signing out returns to /login, then sign in again without a destination and confirm signing in lands on /studio"
+      cov: "C-UF-24,C-UF-25"
+    - kind: pytest
+      test: test_output.py::test_studio_api_is_denied_to_an_unauthenticated_caller
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-DC-17 (earned: the test calls studio endpoints with no bearer token and requires every one refused)"
+    - kind: pytest
+      test: test_output.py::test_login_issues_a_token_and_denies_a_wrong_password
+      category: security
+      weight: 5
+      cov: "C-TR-10,C-DC-16 (earned: the test posts email and password to the login endpoint)"
+    - kind: pytest
+      test: test_output.py::test_signup_is_closed
+      category: security
+      weight: 5
+      cov: "C-DC-15,C-RL-20 (earned: the refused signup proves accounts arrive only by seeding),C-OV-05 (earned: the test requires self-service signup refused),C-TR-11 (earned: the signup request carries a role field of editor and the test requires that no account results from it)"
+    - kind: pytest
+      test: test_output.py::test_creative_is_forbidden_to_publish
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-16 (earned: the test sends the editor-only publish call from a creative session and requires the campaign left a draft)"
+    - kind: pytest
+      test: test_output.py::test_creative_cannot_approve_an_estimate
+      category: security
+      weight: 5
+      cov: "C-RL-17"
+    - kind: pytest
+      test: test_output.py::test_each_role_is_refused_writes_outside_its_desk
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-32 (earned: the creative session is refused the producer-only rate card publish and the cards stay unchanged),C-RL-33 (earned: the creative session is refused the legal-only hold and the job keeps no hold),C-RL-34 (earned: the creative session is refused the account_director-only clearance grant and the person keeps no clearance),C-RL-35 (earned: the account director is refused an estimate on the brief),C-RL-36 (earned: the account director is refused an assignment on the job),C-RL-37 (earned: the account director is refused the publish and the campaign stays a draft),C-RL-38 (earned: the producer is refused approving the estimate the producer wrote),C-RL-39 (earned: the producer is refused a right on the job),C-RL-40 (earned: the producer is refused the publish),C-RL-41 (earned: the creative is refused approving the estimate),C-RL-42 (earned: the creative is refused an assignment on the job),C-RL-43 (earned: the creative is refused a credit list save and the revision stays),C-RL-44 (earned: the legal session is refused the publish),C-RL-45 (earned: the legal session is refused a credit list save),C-RL-46 (earned: the editor is refused a clearance grant),C-RL-47 (earned: the editor is refused a right on the job)"
+    - kind: pytest
+      test: test_output.py::test_each_role_completes_the_writes_its_desk_owns
+      category: core_outcome
+      weight: 5
+      cov: "C-RL-48 (earned: the account director revokes a kagerou clearance the account director granted),C-RL-49 (earned: the account director records client approval on an uploaded version),C-RL-50 (earned: the producer withdraws a version on a job with no hold),C-RL-51 (earned: the producer ends the probe assignment),C-RL-52 (earned: the editor creates a preview link, then revokes it and the link answers not-found),C-RL-53 (earned: the editor publishes, then unpublishes, and the campaign leaves the public site),C-RL-54 (earned: the editor rewrites the English translation title),C-RL-55 (earned: the editor uploads a hero still with alternative text)"
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_are_owned_by_their_account_directors
+      category: data_integrity
+      weight: 5
+      cov: "C-RL-56 (earned: the test requires account_director to own hoshino-motors and kagerou-beverages),C-RL-57 (earned: the test requires account_director2 to own the other three accounts)"
+    - kind: pytest
+      test: test_output.py::test_page_view_log_is_denied_to_a_creative
+      category: security
+      weight: 5
+      cov: "C-CF-175 (earned: the test requires the page-view log refused to a creative, leaving the editor as its only reader)"
+    - kind: pytest
+      test: test_output.py::test_seeded_password_is_stored_hashed
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-TR-09 (earned: the test reads the stored users row and rejects the plain password in any column),C-DM-01 (earned: the test finds the seeded editor row by email in users)"
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent_across_a_restart
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-23,C-DM-02 (earned: the test requires the seeded creative2 row to carry role creative),C-DM-03 (earned: the test requires one clients row for the hoshino-motors slug),C-DM-04 (earned: the test requires one campaigns row for the night-signal slug),C-TR-05 (earned: the rows are read from PostgreSQL through the database adapter)"
+
+- id: launch_surface_is_present_on_every_public_page
+  purpose: "Every public page carries alternative text, readable contrast, a terms link, and the index files point at the public site"
+  substeps:
+    - kind: browser
+      do: "Open /work/ and /company/ and confirm public pages never carry meaning by colour alone: the active language code, the active facet and every error also carry a word or a mark"
+      cov: "C-UX-45"
+    - kind: browser
+      do: "Open / and confirm the favicon with the social images are generated from the seal with the lockup: the tab shows the stamped rounded-triangle mark and the page head names a social image drawn from the seal and the lockup"
+      cov: "C-FE-105"
+    - kind: browser
+      do: "Open /company/ with the accessibility tree open and confirm the public footer is the page's footer landmark"
+      cov: "C-CF-272"
+    - kind: browser
+      do: "Open /terms/ and confirm the terms page carries numbered clauses with a table of contents deep-linking each clause"
+      cov: "C-CF-170"
+    - kind: browser
+      do: "Open /company/ and /en/company/ and confirm the footer on both pages carries a link to the terms page and a link to the privacy page"
+      cov: "C-CF-168,C-CF-197"
+    - kind: browser
+      do: "Open /privacy/ and /en/privacy/ and confirm the privacy page carries numbered clauses with a table of contents deep-linking each clause, in both languages"
+      cov: "C-CF-198"
+    - kind: browser
+      do: "Open /contact/ and confirm the contact form links to the terms page beside the consent box"
+      cov: "C-CF-169"
+    - kind: browser
+      do: "Open /work/night-signal/ and confirm every content image on the public site carries alternative text naming what the image shows, while decorative images such as the lattice declare themselves decorative"
+      cov: "C-CF-178,C-CF-179"
+    - kind: browser
+      do: "Open /company/ and confirm body text reads comfortably against the near-black ground, meeting the WCAG AA contrast ratio on the public route"
+      cov: "C-UX-18"
+    - kind: pytest
+      test: test_output.py::test_public_images_carry_alternative_text
+      category: presentation
+      weight: 1
+      cov: "C-CF-178,C-CF-179,C-TR-48 (earned: the test requires width and height attributes on every image)"
+    - kind: pytest
+      test: test_output.py::test_body_text_meets_the_contrast_bar
+      category: presentation
+      weight: 1
+      cov: "C-UX-18 (earned: the test computes body paragraph contrast against the rendered ground on public routes and requires 4.5 to 1),C-UX-31 (earned: the test requires 4.5 to 1)"
+    - kind: pytest
+      test: test_output.py::test_terms_page_is_linked_from_every_footer_and_the_contact_form
+      category: presentation
+      weight: 1
+      cov: "C-CF-168,C-CF-169"
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_public_routes_without_embargoed_work
+      category: presentation
+      weight: 1
+      cov: "C-CF-176,C-TR-04,C-UF-01 (earned: the test requires both /work/night-signal/ and /en/work/night-signal/ with trailing slashes),C-CF-199 (earned: the test requires terms and privacy routes in both languages in the sitemap),C-CF-200"
+    - kind: pytest
+      test: test_output.py::test_robots_file_points_at_the_sitemap
+      category: presentation
+      weight: 1
+      cov: "C-CF-177,C-CF-201 (earned: the test requires /studio in robots.txt)"
+    - kind: pytest
+      test: test_output.py::test_page_view_is_recorded_for_a_public_route
+      category: business_rule
+      weight: 3
+      cov: "C-CF-174,C-DM-06"
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_response
+      category: presentation
+      weight: 1
+      cov: "C-TR-19,C-TR-20 (earned: the test requires a frame-ancestors directive or a frame-denying header on every sampled response),C-TR-21,C-TR-31 (earned: the test requires a referrer-policy header)"
+    - kind: pytest
+      test: test_output.py::test_browser_downloads_carry_no_secret
+      category: security
+      weight: 5
+      cov: "C-TR-23,C-OV-07 (earned: every script must come from the app's own origin, so no third-party analytics loads)"
+
+- id: visitor_reads_the_company_record_and_careers
+  purpose: "A visitor reads the formal company record and the careers page with its values and openings"
+  substeps:
+    - kind: browser
+      do: "Open /careers/ and confirm the careers pirate line shows its Japanese half 海軍に入るな、海賊になれ。 in its own register, the third careers value's paragraph describes serving colleagues, and the internal with the social-contribution programmes are listed before the openings"
+      cov: "C-FE-80,C-FE-90,C-FE-91"
+    - kind: browser
+      do: "On /careers/ press an opening's apply link and confirm the careers apply link opens in a new context, leaving the careers page open"
+      cov: "C-CF-271"
+    - kind: browser
+      do: "Open /company/ and confirm the company page runs the office identity band, the positioning lines, the methodology statement, the company narrative, then the formal record, in that order"
+      cov: "C-FE-79"
+    - kind: browser
+      do: "Open /careers/ and press the positions control at the top, and confirm the careers page jumps to the openings"
+      cov: "C-FE-70"
+    - kind: browser
+      do: "Open /careers/ and confirm the careers culture statement reads WHY JOIN THE NAVY WHEN YOU CAN BE A PIRATE, five value cards each carry an English phrase over a Japanese rendering, the careers value cards include CREATIVITY COMES FROM DIVERSITY, and a careers apply link is marked as leaving the site"
+      cov: "C-FE-30,C-FE-31,C-CF-154,C-FE-47"
+    - kind: pytest
+      test: test_output.py::test_company_record_shows_concurrent_positions_apart_from_titles
+      category: business_rule
+      weight: 3
+      cov: "C-CF-150,C-CF-151 (earned: the test requires Hiroshi Kudo's Meido Group position in concurrent_position),C-CF-152,C-FE-37 (earned: the test reads the public company record that carries the legal name),C-CF-229 (earned: the test requires Kagerou Studio dedicated to Kagerou Beverages),C-FE-44 (earned: the test requires updated 2026-04-01),C-FE-45 (earned: the test requires the telephone),C-FE-46 (earned: the test requires Kaito Mizuno first as President and CEO),C-FE-48 (earned: the test requires the 2006 founding year),C-FE-64 (earned: the test requires the postal code and the building in the address),C-FE-65 (earned: the test requires Masato Ide as Auditor with the Meido Group partner position),C-FE-66 (earned: the test requires the five officers in order),C-FE-67 (earned: the test requires the KURO Worldwide position for Laura Chen),C-FE-128 (earned: the test requires Emi Hayashi as Chief Operating Officer),C-FE-129 (earned: the test requires Ren Shibata as Chief Creative Officer),C-FE-130 (earned: the test requires the exact Meido Group concurrent position),C-FE-131 (earned: the test requires the ten unit names)"
+    - kind: pytest
+      test: test_output.py::test_careers_openings_carry_a_track_and_an_external_apply_address
+      category: business_rule
+      weight: 3
+      cov: "C-CF-153,C-FE-38,C-CF-244 (earned: the test requires the internship apply address),C-FE-68 (earned: the test requires the new-graduate apply address),C-FE-69 (earned: the test requires both seeded opening titles and the internship track),C-FE-81 (earned: the test requires BE A PIRATE among the values),C-FE-82 (earned: the test requires 海賊であれ in the Japanese values),C-FE-83 (earned: the test requires 多様性が創造性を生む in the Japanese values),C-FE-84 (earned: the test requires UNCOMMON HUMANITY among the values),C-FE-85 (earned: the test requires 並外れた人間らしさ in the Japanese values),C-FE-86 (earned: the test requires GOOD ENOUGH IS NOT ENOUGH among the values),C-FE-87 (earned: the test requires 十分では足りない in the Japanese values),C-FE-88 (earned: the test requires BE BRAVE among the values),C-FE-89 (earned: the test requires 勇敢であれ in the Japanese values)"
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+      cov: "C-DC-04,C-DC-01 (earned: the test reaches the app at APP_PUBLIC_URL after the session has ended),C-DC-02 (earned: the address is reached through the mapped public port),C-DC-03 (earned: the health route answers under /api on the same origin),C-DC-05 (earned: the app answers without anyone starting it by hand),C-DC-09 (earned: the check runs after the build session has ended, so the server outlived its shell),C-DC-10 (earned: the verifier reaches the app from another container, which a loopback bind would refuse),C-TR-02 (earned: the JSON API answers under /api on the app's origin),C-TR-01 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-TR-12 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-TR-13 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-TR-24 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-TR-25 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-TR-26 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-DC-06 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-DC-07 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-DC-08 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-DC-11 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-DC-12 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-CN-01 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-CN-05 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-CN-07 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see; cited on the check whose success presupposes the deployment),C-TR-27 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-29 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-30 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-32 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-33 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-34 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-35 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-37 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-38 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-39 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-40 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-41 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-DC-27 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-DC-28 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-DC-29 (earned: declared unobservable, a property of the source, the image or the running container that no grader outside the product can see),C-TR-42 (earned: declared unobservable, an eight-hour token lifetime cannot elapse inside a grading session),C-TR-43 (earned: declared unobservable, response latency depends on the grading host and has no stable signature),C-TR-44 (earned: declared unobservable, layout shift is a field metric the verifier does not collect),C-TR-45 (earned: declared unobservable, frame rate depends on the grading host and has no stable signature),C-TR-46 (earned: declared unobservable, paint timing on a throttled phone is a field metric the verifier does not collect),C-TR-47 (earned: declared unobservable, paint order under a throttled connection is a field metric the verifier does not collect),C-TR-49 (earned: declared unobservable, deferral of below-fold media depends on scroll timing the verifier does not stage)"
+    - kind: pytest
+      test: test_output.py::test_home_page_carries_the_pinned_copy
+      category: presentation
+      weight: 1
+      cov: "C-FE-22 (earned: the test requires the hero premise and answer on the home page),C-FE-23 (earned: the test requires the statement band),C-FE-25 (earned: the test requires the closing marquee line),C-FE-50 (earned: the test requires EST. 2006, TOKYO and the coordinates on the home page),C-FE-51 (earned: the test requires the positioning opener on the home page),C-FE-52 (earned: the test requires the method company line on the home page),C-FE-78 (earned: the test requires 1992 in the who-we-are columns)"
+    - kind: pytest
+      test: test_output.py::test_japanese_copy_uses_the_named_face
+      category: presentation
+      weight: 1
+      cov: "C-UX-41 (earned: the test reads the computed font family on the Japanese root)"
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+      cov: "C-DC-13"

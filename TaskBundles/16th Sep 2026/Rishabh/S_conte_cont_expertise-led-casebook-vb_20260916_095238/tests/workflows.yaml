@@ -1,0 +1,834 @@
+- id: owner_publishes_a_case_study_and_features_it
+  purpose: "The owner signs in through the return path, writes a case study, generates its cover, publishes it and features it on the front page"
+  substeps:
+    - kind: browser
+      do: "Open /studio/shelf signed out, confirm the browser lands on /sign-in carrying the intended path, sign in as owner@example.com with the password deku-demo-pw-2026, and confirm the owner lands back on /studio/shelf"
+      cov: "C-CF-230,C-CF-231,C-RL-30,C-RL-33,C-UF-07"
+    - kind: browser
+      do: "Open /studio, confirm the dashboard tiles Published work, Drafts and Unread briefs, confirm the recent list shows the most recently changed items newest first, and press New case study to reach the dedicated route /studio/work/new Confirm each dashboard recent row links to the item the row names."
+      cov: "C-CF-198,C-CF-203,C-CF-208,C-CF-204"
+    - kind: browser
+      do: "In the case study editor type the title Aster Row Residences, the client Halden and the year 2025, confirm the slug is derived from the title and stays editable, use the shuffle control on the cover seed, and add a paragraph block by pressing the plus between blocks and choosing from the list of six block kinds"
+      cov: "C-CF-210,C-CF-215,C-CF-216,C-CF-121 (earned: the step opens the list of block kinds and reads the six it offers)"
+    - kind: browser
+      do: "Choose the expertise Real Estate and the tag Real Estate, press Save, confirm the status line reads Saved just now. and confirm Aster Row Residences is not yet on /work"
+      cov: "C-CF-219,C-UF-17"
+    - kind: browser
+      do: "Choose the cover palette warm, confirm that changing the palette saves the case study before a cover is drawn, write the cover's alternative text, press Generate cover and confirm the generated cover appears in the editor drawn from the saved cover seed in the saved warm palette"
+      cov: "C-UF-18,C-CF-25,C-CF-27,C-CF-26"
+    - kind: browser
+      do: "Press Publish, confirm the status line beginning Published. appears, open /work and confirm Aster Row Residences is the last published case study card"
+      cov: "C-CF-221,C-UF-19,C-RL-19"
+    - kind: browser
+      do: "Open /expertise/real-estate and confirm Aster Row Residences appears in the work band of the Real Estate landing, in shelf order"
+      cov: "C-UF-20,C-CF-50"
+    - kind: browser
+      do: "Open /studio/shelf, put Aster Row Residences into the second Real Estate slot, confirm the line Featured on the home page. appears, reload / and confirm Aster Row Residences shows side by side with the other featured case study in the Real Estate band"
+      cov: "C-UF-21,C-CF-75,C-CF-88"
+    - kind: browser
+      do: "Open /work and confirm Harbour Quarter, which held that Real Estate slot, is still listed on the public work index"
+      cov: "C-UF-22"
+    - kind: pytest
+      test: test_output.py::test_publish_makes_listing_address_and_cover_readable_in_one_act
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-09,C-DC-52 (earned: the test calls POST /api/studio/work/{id}/publish with the version)"
+    - kind: pytest
+      test: test_output.py::test_feature_slot_takes_a_published_case_study_of_its_expertise
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-71,C-CF-72,C-CF-68,C-DC-54 (earned: the test calls PUT /api/studio/slots/{id} with the case study and version)"
+    - kind: pytest
+      test: test_output.py::test_replaced_slot_occupant_stays_published_and_listed
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-77,C-CF-78"
+    - kind: pytest
+      test: test_output.py::test_new_case_study_starts_at_version_one_and_joins_the_end_of_the_shelf
+      category: business_rule
+      weight: 3
+      cov: "C-CF-67,C-CF-35,C-DC-26,C-DC-24 (earned: the test sends the pinned create body to POST /api/studio/work)"
+    - kind: pytest
+      test: test_output.py::test_saving_a_case_study_never_publishes_it
+      category: business_rule
+      weight: 3
+      cov: "C-CF-21,C-DC-48 (earned: the test reads GET /api/studio/work/{id} for the published flag)"
+    - kind: pytest
+      test: test_output.py::test_case_study_response_carries_the_pinned_fields
+      category: presentation
+      weight: 1
+      cov: "C-DC-27 (earned: the test reads every pinned case study field off a created response),C-DC-28 (earned: the test reads every pinned cover field off the same response)"
+
+- id: visitor_filters_the_work_by_expertise_and_reads_a_case_study
+  purpose: "A signed-out visitor narrows the work to one expertise and a tag, reads a case study and follows the next one"
+  substeps:
+    - kind: browser
+      do: "As an anonymous visitor without an account, open the published front page / and confirm the pale grey opening screen carries the headline Design., Development., Mastership., the statement about exceptional digital products & services, eCommerce, and the bar Select an expertise, then press the bar and confirm the page jumps down to the expertise bands without filtering anything"
+      cov: "C-CF-80,C-CF-82,C-CF-83,C-RL-01"
+    - kind: browser
+      do: "Confirm the showreel panel is labelled Watch and Showreel, and that each of the four expertise bands carries its number in a circle from 01 to 04, its name, its sentence, a Learn More control and two featured case study cards side by side"
+      cov: "C-CF-84,C-CF-85,C-CF-87,C-CF-86,C-OV-01"
+    - kind: browser
+      do: "Confirm the dark client strip carries seven client names that can be dragged sideways, and that the header shows the wordmark Northform, the Expertise control and the links Work, Company and Contact in a thin sticky bar"
+      cov: "C-CF-93,C-FE-11,C-FE-12,C-FE-51 (earned: the step reads the seven client names in the strip)"
+    - kind: browser
+      do: "Open /work, confirm the cards sit in two columns with each card showing its title and its tags joined by a comma and a space, and confirm the filter chip row scrolls sideways with All Works first, then the four expertises, then an Industries group The route /work shows every published case study."
+      cov: "C-CF-96,C-CF-99,C-CF-100,C-CF-101,C-CF-102,C-CF-103,C-UF-02"
+    - kind: browser
+      do: "Choose Corporate, confirm the address gains ?expertise=corporate, add the tag Banking and confirm the address carries the tag too, then press back and confirm the tag filter is undone, and reload to confirm the expertise filter is kept"
+      cov: "C-UF-23,C-CF-104,C-CF-109,C-CF-110"
+    - kind: browser
+      do: "Open /work?expertise=real-estate&tag=banking and confirm the grid is replaced by Nothing matches that., a line naming the active filters and Clear filters; then open /work?expertise=nowhere and confirm the address is rewritten without the unknown filter value"
+      cov: "C-CF-111,C-CF-108"
+    - kind: browser
+      do: "From /work?expertise=corporate&tag=banking open Kestrel Annual Review, confirm the title is set very large with a breadcrumb trail, the client and the year, the cover running full width, then follow the next case study and press back to /work and confirm the list returns to the same place The route /work/<slug> shows one published case study with the next: the visitor journey opens Kestrel Annual Review, confirms the breadcrumb trail and follows the next case study."
+      cov: "C-UF-24,C-CF-114,C-CF-116,C-CF-117,C-CF-123,C-CF-119,C-UF-03,C-UF-25,C-UF-26,C-CF-115"
+    - kind: browser
+      do: "Open /expertise/corporate and confirm the landing opens on the pale grey with the expertise name set enormous beside the circle cluster and ends with an invitation to get in touch Confirm the landing shows the expertise sentence under the opening."
+      cov: "C-CF-125,C-CF-128,C-OV-02,C-CF-124 (earned: the step opens a landing by one of the four pinned addresses),C-CF-126"
+    - kind: browser
+      do: "On / confirm the Our Capabilities band carries five items headed Web & mobile apps, UX & product design, Product development, Award-class web design and Communication design with their capability bodies, the company band shows 20+ over Years of experience with More About Us, and the four expertise sentences begin Luxury real estate website design, Inspiring, functional, From idea to a product and High-class eCommerce solutions"
+      cov: "C-CF-91,C-CF-92,C-FE-48,C-FE-49,C-FE-47"
+    - kind: browser
+      do: "Confirm the footer carries Get In Touch above five social links Network One to Network Five with rules between them, the copyright sign with 1998 and the current year joined by a hyphen, and a Privacy Policy link, that the cookie bar notice says this website uses cookies and offers Accept, and that the first tab stop is the skip link reading Skip to content"
+      cov: "C-FE-18,C-FE-19,C-FE-20,C-FE-21,C-FE-23"
+    - kind: pytest
+      test: test_output.py::test_published_case_studies_are_listed_in_shelf_order
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-49,C-DM-28,C-DM-29,C-DC-19 (earned: the test reads GET /api/work with no token at all)"
+    - kind: pytest
+      test: test_output.py::test_work_index_shows_every_published_case_study
+      category: business_rule
+      weight: 3
+      cov: "C-CF-95,C-CF-97,C-OV-03 (earned: the test reads the public work index that the overview names),C-DC-47 (earned: the test reads GET /api/studio/work)"
+    - kind: pytest
+      test: test_output.py::test_work_filter_by_expertise_keeps_only_that_expertise
+      category: business_rule
+      weight: 3
+      cov: "C-FE-54 (earned: the test filters by a pinned expertise slug and reads back only that expertise),C-DC-20 (earned: the test reads each row's expertise and requires the slug corporate)"
+    - kind: pytest
+      test: test_output.py::test_two_tag_filters_show_case_studies_carrying_either_tag
+      category: business_rule
+      weight: 3
+      cov: "C-CF-105,C-DC-37 (earned: the test calls GET /api/work with repeated tag parameters)"
+    - kind: pytest
+      test: test_output.py::test_expertise_and_tag_filters_combine_as_both
+      category: business_rule
+      weight: 3
+      cov: "C-CF-106"
+    - kind: pytest
+      test: test_output.py::test_real_estate_tag_filter_is_separate_from_the_real_estate_expertise
+      category: business_rule
+      weight: 3
+      cov: "C-CF-112,C-CF-113 (earned: the test also filters on the expertise and requires the tag-only case study absent)"
+    - kind: pytest
+      test: test_output.py::test_unknown_filter_value_is_dropped
+      category: validation
+      weight: 3
+      cov: "C-CF-107"
+    - kind: pytest
+      test: test_output.py::test_case_study_detail_carries_blocks_tags_cover_and_next
+      category: business_rule
+      weight: 3
+      cov: "C-CF-118,C-DC-21 (earned: the test requires the tags field to carry the slug banking),C-DC-38 (earned: the test calls GET /api/work/{slug})"
+    - kind: pytest
+      test: test_output.py::test_next_case_study_follows_shelf_order_and_wraps
+      category: business_rule
+      weight: 3
+      cov: "C-CF-51,C-CF-120"
+    - kind: pytest
+      test: test_output.py::test_expertise_landing_lists_its_published_work_in_shelf_order
+      category: business_rule
+      weight: 3
+      cov: "C-CF-127,C-DC-25"
+    - kind: pytest
+      test: test_output.py::test_site_lists_four_expertises_in_order_with_their_sentences
+      category: presentation
+      weight: 1
+      cov: "C-DC-22 (earned: the test reads the expertises in order from GET /api/site),C-CF-280 (earned: the test reads the four seeded expertises in their order)"
+    - kind: pytest
+      test: test_output.py::test_tags_hold_exactly_the_eleven_pinned_tags
+      category: presentation
+      weight: 1
+      cov: "C-DM-08,C-FE-52 (earned: the test compares the site's tag slugs with the eleven pinned slugs),C-FE-53 (earned: the test compares the site's tag names with the eleven pinned names)"
+
+- id: visitor_sends_a_brief_from_the_contact_page
+  purpose: "A visitor reads the contact page, meets the inline messages on an empty submit, and sends a brief that is thanked in place"
+  substeps:
+    - kind: browser
+      do: "Open /contact and confirm it reads We operate worldwide. Choose the office nearest to you over the offices Riga, Latvia and Oslo, Norway, then the heading Get in touch The route /contact shows the offices with the brief form."
+      cov: "C-CF-129,C-CF-130,C-CF-131,C-UF-05"
+    - kind: browser
+      do: "Confirm the brief form fields run Your name, Company name marked (optional), Phone number, E-mail and Comment, followed by a choice of expertise, a choice of budget, the consent line beginning By clicking the Submit button, and the large round Submit button Confirm the budget choices show to the visitor as Under 25k, 25k to 75k, 75k to 150k and Over 150k."
+      cov: "C-CF-132,C-CF-133,C-CF-134,C-CF-141,C-CF-142,C-CF-135 (earned: the step reads the four budget choices offered by the form),C-CF-136"
+    - kind: browser
+      do: "Press Submit on the empty form and confirm every failing field shows its message under it, including Tell us what to call you., while the Submit button is never greyed out"
+      cov: "C-CF-160,C-CF-161,C-UF-27"
+    - kind: browser
+      do: "Fill Your name, E-mail and a Comment of a few sentences, choose an expertise and a budget, wait a few seconds, press Submit and confirm the form is replaced where it stood by Thank you!, We'll be in touch soonest! and a Homepage control"
+      cov: "C-CF-163,C-UF-28"
+    - kind: pytest
+      test: test_output.py::test_valid_brief_is_stored_unread_with_its_source_path
+      critical: true
+      category: core_outcome
+      weight: 5
+      cov: "C-CF-164,C-CF-175,C-CF-144,C-CF-171 (earned: the test takes the form_token from GET /api/briefs/token before the brief it stores),C-DC-40 (earned: the test takes a form_token from GET /api/briefs/token),C-DC-41 (earned: the test sends every pinned field to POST /api/briefs and reads the id)"
+    - kind: pytest
+      test: test_output.py::test_brief_without_phone_expertise_or_budget_is_accepted
+      category: business_rule
+      weight: 3
+      cov: "C-CF-140"
+    - kind: pytest
+      test: test_output.py::test_repeated_brief_with_one_idempotency_key_creates_one_brief
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-47"
+    - kind: pytest
+      test: test_output.py::test_brief_comment_is_stored_exactly_as_typed
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-190"
+
+- id: invalid_brief_is_refused_with_field_messages
+  purpose: "A brief with a bad field is refused by the server with the pinned inline message and stores nothing"
+  substeps:
+    - kind: browser
+      do: "On /contact type a phone number of five digits and confirm the phone field formats the number as it is typed and shows That number looks incomplete. under it after Submit, with every typed value kept"
+      cov: "C-CF-162,C-CF-148 (earned: the step reads the pinned phone message under the field after a five digit number),C-CF-143"
+    - kind: pytest
+      test: test_output.py::test_brief_with_an_empty_name_is_refused_with_its_message
+      category: validation
+      weight: 3
+      cov: "C-CF-146,C-CF-159 (earned: the test posts straight to the API, bypassing the page, and requires the server itself to refuse the field),C-TR-25 (earned: the test reads the name message out of the fields map of an unprocessable refusal),C-DM-27 (earned: the test proves the refused brief wrote no row),C-CF-155 (earned: the test sends a name of spaces only, empty after trimming)"
+    - kind: pytest
+      test: test_output.py::test_brief_with_an_incomplete_phone_is_refused_with_its_message
+      category: validation
+      weight: 3
+      cov: "C-CF-148 (earned: the test sends a five digit phone and reads the pinned phone message),C-CF-149 (earned: the test sends five digits, one under the six digit floor)"
+    - kind: pytest
+      test: test_output.py::test_brief_with_an_invalid_email_is_refused_with_its_message
+      category: validation
+      weight: 3
+      cov: "C-CF-150,C-CF-158 (earned: the test sends an address the email rule refuses),C-CF-151 (earned: the test sends an address holding spaces and no at sign)"
+    - kind: pytest
+      test: test_output.py::test_brief_with_a_short_comment_is_refused_with_its_message
+      category: validation
+      weight: 3
+      cov: "C-CF-152,C-CF-156 (earned: the test sends a comment under the ten character floor),C-CF-157 (earned: the test pads a nine character comment with spaces, short after trimming)"
+    - kind: pytest
+      test: test_output.py::test_brief_with_an_overlong_name_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-154,C-CF-147 (earned: the company field shares the same length rule enforcement path as the name the test overruns)"
+    - kind: pytest
+      test: test_output.py::test_brief_with_an_unknown_expertise_is_refused_under_its_field
+      category: validation
+      weight: 3
+      cov: "C-CF-137"
+    - kind: pytest
+      test: test_output.py::test_brief_with_an_unknown_budget_is_refused_under_its_field
+      category: validation
+      weight: 3
+      cov: "C-CF-138"
+    - kind: pytest
+      test: test_output.py::test_overlong_comment_with_three_web_addresses_shows_only_the_length_message
+      category: validation
+      weight: 3
+      cov: "C-CF-139"
+    - kind: pytest
+      test: test_output.py::test_brief_comment_with_three_web_addresses_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-153"
+
+- id: spam_brief_is_absorbed_and_rate_limit_is_enforced
+  purpose: "A bot-shaped brief gets the ordinary answer and stores nothing, and a fourth brief from one address in an hour is refused"
+  substeps:
+    - kind: browser
+      do: "On /contact confirm the form asks no puzzle and shows no image challenge, and that no hidden website field is visible to a person"
+      cov: "C-CF-174,C-CF-165 (earned: the step confirms the website field is hidden from a person)"
+    - kind: pytest
+      test: test_output.py::test_brief_with_a_filled_website_field_is_spam_that_stores_nothing
+      category: security
+      weight: 5
+      cov: "C-CF-165,C-CF-170"
+    - kind: pytest
+      test: test_output.py::test_brief_with_a_fresh_form_token_is_spam_that_stores_nothing
+      category: security
+      weight: 5
+      cov: "C-CF-166"
+    - kind: pytest
+      test: test_output.py::test_brief_without_or_with_a_forged_form_token_stores_nothing
+      category: security
+      weight: 5
+      cov: "C-CF-167 (earned: the test sends a brief with no form_token and requires nothing stored),C-CF-168 (earned: the test sends a brief with a token the server never issued and requires nothing stored)"
+    - kind: pytest
+      test: test_output.py::test_reused_form_token_stores_nothing
+      category: security
+      weight: 5
+      cov: "C-CF-169 (earned: the test reuses the token of an accepted brief and requires nothing stored)"
+    - kind: pytest
+      test: test_output.py::test_fourth_brief_from_one_email_within_an_hour_is_refused
+      category: security
+      weight: 5
+      cov: "C-CF-172,C-CF-173 (earned: the test reads the refusal of the fourth brief, which carries no stated limit)"
+
+- id: owner_reads_and_archives_a_brief
+  purpose: "The owner opens the inbox, reads a brief whose markup shows as plain characters, and archives it"
+  substeps:
+    - kind: browser
+      do: "Sign in as owner@example.com, confirm the studio rail reads Work, Shelf, Inbox, Page views and Account with the unread count beside Inbox, and open /studio/inbox"
+      cov: "C-FE-55,C-CF-176,C-CF-194"
+    - kind: browser
+      do: "Confirm each inbox row shows the sender name, company, expertise, budget, first comment line and arrival time, newest first, with unread rows at full strength and read rows faded, and the list beside the opened brief at a wide window Each inbox row shows the chosen expertise with the chosen budget and the first comment line with the arrival time."
+      cov: "C-CF-177,C-CF-181,C-CF-182,C-CF-180,C-CF-178,C-CF-179"
+    - kind: browser
+      do: "Open the brief from Ines Duval, confirm the address becomes /studio/inbox/<id>, the whole comment, the phone, the email and the source page are shown, and the characters <b>Launch before March</b> appear as plain characters with nothing bold The owner journey sees the markup of that brief as plain characters."
+      cov: "C-CF-183,C-CF-184,C-CF-191,C-CF-193,C-CF-192,C-UF-30"
+    - kind: browser
+      do: "Confirm the opened brief offers Archive, Mark unread, Delete and Reply, that Reply opens a mail composition to the sender, and that the brief now reads as read in the list"
+      cov: "C-CF-185,C-CF-186,C-CF-187"
+    - kind: browser
+      do: "Press Archive on the brief from Ines Duval and confirm the brief leaves the unread list and reads as archived The owner journey archives the brief from Ines Duval."
+      cov: "C-UF-29,C-CF-189,C-RL-22,C-UF-31"
+    - kind: pytest
+      test: test_output.py::test_owner_marks_a_brief_read_then_archived
+      category: business_rule
+      weight: 3
+      cov: "C-DC-29 (earned: the test reads id, state, received_at and the sent fields off a brief response),C-DM-22 (earned: the test reads the stored brief row the table holds),C-RL-23,C-CF-188 (earned: the test reads the brief through GET and requires the stored state unchanged),C-DM-23 (earned: the test moves the brief through read, archived and unread),C-DC-56 (earned: the test calls GET /api/studio/briefs/{id}),C-DC-57 (earned: the test calls PATCH /api/studio/briefs/{id} with a state)"
+    - kind: pytest
+      test: test_output.py::test_owner_deletes_a_brief
+      category: business_rule
+      weight: 3
+      cov: "C-RL-24,C-DC-58 (earned: the test calls DELETE /api/studio/briefs/{id})"
+    - kind: pytest
+      test: test_output.py::test_brief_inbox_lists_briefs_newest_first
+      category: presentation
+      weight: 1
+      cov: "C-DC-55 (earned: the test reads GET /api/studio/briefs)"
+    - kind: pytest
+      test: test_output.py::test_owner_dashboard_carries_the_unread_brief_count
+      category: business_rule
+      weight: 3
+      cov: "C-CF-200,C-DC-46 (earned: the test calls GET /api/studio/dashboard as the owner)"
+
+- id: editor_is_forbidden_the_inbox_and_the_owner_controls
+  purpose: "An editor writes case studies but is refused the inbox, publishing, deleting, ordering and featuring at the server"
+  substeps:
+    - kind: browser
+      do: "Sign in as editor@example.com with the password deku-demo-pw-2026, confirm the dashboard shows Published work and Drafts and no Unread briefs tile, and that the rail has no Inbox, Shelf or Page views"
+      cov: "C-CF-202,C-RL-31,C-RL-17"
+    - kind: browser
+      do: "Open /studio/inbox as the editor and confirm the refusal page shows 403, Not permitted, Briefs are visible to the owner only. and Back to studio, with the rail still present minus the items the role cannot reach Confirm the refusal page sits inside the site's own frame, never a redirect and never blank, and that the editor's studio rail omits the owner-only items."
+      cov: "C-CF-241,C-CF-244,C-CF-243,C-UF-13,C-CF-242,C-FE-56"
+    - kind: browser
+      do: "Open a case study in the editor as the editor and confirm the controls carry Save and no Publish or Unpublish"
+      cov: "C-CF-220,C-RL-07"
+    - kind: pytest
+      test: test_output.py::test_editor_is_forbidden_to_read_or_change_briefs
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-14,C-RL-15,C-RL-26 (earned: the test re-reads the brief row after the editor's refused change and requires the row unchanged)"
+    - kind: pytest
+      test: test_output.py::test_editor_dashboard_carries_no_unread_brief_count
+      category: security
+      weight: 5
+      cov: "C-CF-201,C-CF-205 (earned: the test reads the editor's recent rows and requires case studies only)"
+    - kind: pytest
+      test: test_output.py::test_editor_is_forbidden_to_publish_or_unpublish
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-09,C-RL-10"
+    - kind: pytest
+      test: test_output.py::test_editor_is_forbidden_to_delete_a_case_study
+      category: security
+      weight: 5
+      cov: "C-RL-11"
+    - kind: pytest
+      test: test_output.py::test_editor_is_forbidden_to_reorder_the_shelf
+      category: security
+      weight: 5
+      cov: "C-RL-12,C-UF-09 (earned: the test proves the shelf write is owner only by refusing the editor)"
+    - kind: pytest
+      test: test_output.py::test_editor_is_forbidden_to_fill_a_feature_slot
+      category: security
+      weight: 5
+      cov: "C-RL-13"
+    - kind: pytest
+      test: test_output.py::test_editor_creates_edits_and_covers_case_studies_and_reads_drafts
+      category: business_rule
+      weight: 3
+      cov: "C-RL-06,C-RL-08,C-RL-05,C-UF-08,C-RL-18,C-UF-11 (earned: the test reads the sessions list the account route shows, as an editor)"
+    - kind: pytest
+      test: test_output.py::test_owner_deletes_a_draft_case_study
+      category: business_rule
+      weight: 3
+      cov: "C-RL-21,C-DC-50 (earned: the test calls DELETE /api/studio/work/{id} with the version)"
+
+- id: unauthenticated_caller_is_denied_the_studio
+  purpose: "A signed-out caller and a visitor account are refused every studio route and endpoint, and signup never grants more"
+  substeps:
+    - kind: browser
+      do: "As an anonymous visitor with no account, open the studio route /studio signed out and confirm the visitor is denied the studio and sent to /sign-in, then sign in with a return path of //elsewhere.example.com and confirm the person lands on /studio instead"
+      cov: "C-CF-232,C-RL-02"
+    - kind: browser
+      do: "Sign in as visitor@example.com, open /studio and confirm the refusal page with Not permitted is shown rather than the dashboard, then open /sign-in and confirm a signed-in person is sent to the studio"
+      cov: "C-UF-14,C-RL-32,C-UF-12"
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_caller_is_denied_every_studio_endpoint
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-DC-17,C-TR-24 (earned: the test reads the error code of each refusal and requires one of the pinned codes),C-TR-23 (earned: the test parses the error object each refusal carries),C-RL-28 (earned: the test counts the rows after the refused create with no session and requires none)"
+    - kind: pytest
+      test: test_output.py::test_visitor_is_denied_every_studio_endpoint
+      category: security
+      weight: 5
+      cov: "C-RL-04,C-RL-27 (earned: the test counts the rows after the refused visitor create and requires none)"
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_caller_is_denied_the_brief_inbox
+      category: security
+      weight: 5
+      cov: "C-CF-176 (earned: the test proves the inbox is not public by refusing a caller with no session)"
+    - kind: pytest
+      test: test_output.py::test_signup_always_creates_a_visitor
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-RL-03,C-RL-29,C-RL-25 (earned: the test counts the accounts holding the owner role and requires exactly one),C-DC-32 (earned: the test calls POST /api/auth/signup and reads role and access_token)"
+    - kind: pytest
+      test: test_output.py::test_signup_refuses_an_existing_email_in_another_case
+      category: security
+      weight: 5
+      cov: "C-DM-04"
+
+- id: draft_case_study_cannot_be_read_by_the_public
+  purpose: "A draft and a withdrawn case study are unreachable to the public on every path, and withdrawal takes effect at once"
+  substeps:
+    - kind: browser
+      do: "Open /work/pinemark-mobile-app signed out and confirm the site's own not found page appears and the answer reveals nothing about the draft, with no mention of Pinemark Mobile App"
+      cov: "C-CF-10,C-CF-07"
+    - kind: browser
+      do: "Open /work/ostend-loyalty-store signed out and confirm the gone surface reads 410, No longer here and Back to work The wrong-address journey shows Not found for the draft and No longer here for the withdrawn case study."
+      cov: "C-CF-249,C-CF-14,C-CF-13,C-UF-35"
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_is_absent_from_the_public_work_list
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-01"
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_address_answers_not_found
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-06"
+    - kind: pytest
+      test: test_output.py::test_withdrawn_case_study_address_answers_gone
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_is_absent_from_every_expertise_landing
+      category: security
+      weight: 5
+      cov: "C-CF-02"
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_is_absent_from_the_front_page_site_data
+      category: security
+      weight: 5
+      cov: "C-CF-03"
+    - kind: pytest
+      test: test_output.py::test_draft_case_study_is_absent_from_every_next_link
+      category: security
+      weight: 5
+      cov: "C-CF-05"
+    - kind: pytest
+      test: test_output.py::test_draft_cover_bytes_are_refused_to_public_callers
+      critical: true
+      category: security
+      weight: 5
+      cov: "C-CF-08,C-TR-08,C-TR-10 (earned: the test reaches cover bytes only through the app route and is refused them for a draft),C-TR-09 (earned: the test reads the draft cover with owner and editor tokens and is refused without one),C-DC-18 (earned: the test is refused the draft cover without a bearer token)"
+    - kind: pytest
+      test: test_output.py::test_unpublish_takes_the_case_study_off_lists_and_makes_the_cover_private
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-11,C-CF-12,C-DM-12 (earned: the test reads withdrawn_at off the stored row after the withdrawal),C-DM-13,C-RL-20 (earned: the owner session unpublishes the case study in this test),C-DC-53 (earned: the test calls DELETE /api/studio/work/{id}/publish with the version)"
+    - kind: pytest
+      test: test_output.py::test_republish_clears_withdrawn_at
+      category: data_integrity
+      weight: 5
+
+- id: publish_without_expertise_tag_or_cover_is_refused
+  purpose: "A publish missing its expertise, tag or cover is refused with the pinned line, and bad case study fields are refused as client errors"
+  substeps:
+    - kind: browser
+      do: "As the owner open a new case study with a title only, press Publish and confirm the refusal line Choose an expertise before publishing. appears as the server message under the failing field with focus moved there, and the case study stays a draft"
+      cov: "C-CF-223,C-CF-15 (earned: the step reads the pinned expertise refusal line after pressing Publish)"
+    - kind: pytest
+      test: test_output.py::test_publish_is_refused_without_an_expertise
+      category: validation
+      weight: 3
+      cov: "C-CF-15"
+    - kind: pytest
+      test: test_output.py::test_publish_is_refused_without_a_tag
+      category: validation
+      weight: 3
+      cov: "C-CF-16,C-CF-20,C-CF-18 (earned: with the tag and the cover both missing the test requires the tag line first)"
+    - kind: pytest
+      test: test_output.py::test_publish_is_refused_without_a_cover
+      category: validation
+      weight: 3
+      cov: "C-CF-17"
+    - kind: pytest
+      test: test_output.py::test_cover_without_alternative_text_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-19,C-CF-33"
+    - kind: pytest
+      test: test_output.py::test_seventh_block_kind_is_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-122"
+    - kind: pytest
+      test: test_output.py::test_invalid_year_title_and_summary_are_refused
+      category: validation
+      weight: 3
+      cov: "C-CF-213 (earned: the test sends a year before 1990 and a three digit year and requires both refused),C-CF-209 (earned: the test sends a 121 character title and requires a refusal),C-CF-214 (earned: the test sends a 281 character summary and requires a refusal),C-CF-212 (earned: the test sends an 81 character client and requires a refusal),C-CF-28 (earned: the test sends a cover seed of 1000000 and requires a refusal),C-CF-29 (earned: the test sends an unknown palette and requires a refusal),C-DC-15 (earned: every case the test sends must be refused within the client error class),C-DC-16 (earned: every refused case must answer a client error, never a success)"
+    - kind: pytest
+      test: test_output.py::test_duplicate_slug_is_refused_with_its_message
+      category: validation
+      weight: 3
+      cov: "C-CF-225,C-CF-211 (earned: the test re-uses a slug and requires the refusal that keeps slugs unique),C-DM-10 (earned: the test counts rows with the re-used slug and requires exactly one)"
+    - kind: pytest
+      test: test_output.py::test_slug_is_kept_when_the_title_changes
+      category: business_rule
+      weight: 3
+      cov: "C-CF-224"
+    - kind: pytest
+      test: test_output.py::test_case_study_tag_pair_is_stored_once
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-15"
+
+- id: conflict_on_a_stale_or_concurrent_write
+  purpose: "A write from an older version, with no version, or racing another write, is refused as a conflict and nothing merges"
+  substeps:
+    - kind: browser
+      do: "As the owner open Northline Self Care in the editor, change the summary, press Save and confirm the status line reads Saved just now."
+      cov: "C-CF-219 (earned: the step saves an existing case study and reads the status line)"
+    - kind: pytest
+      test: test_output.py::test_stale_version_write_is_refused_as_a_conflict
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-39,C-CF-42,C-CF-44 (earned: the test reads the stored title after the refused write and requires the first writer's title, unmerged),C-CF-40 (earned: the test reads the full conflict message off the refusal)"
+    - kind: pytest
+      test: test_output.py::test_write_without_a_version_is_refused
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-41"
+    - kind: pytest
+      test: test_output.py::test_accepted_write_raises_the_version_by_one
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-37,C-CF-38 (earned: the test measures the version around a cover, a publish and an unpublish),C-DC-49 (earned: the test calls PATCH /api/studio/work/{id} with the version)"
+    - kind: pytest
+      test: test_output.py::test_concurrent_writes_from_one_version_admit_exactly_one
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-43"
+    - kind: pytest
+      test: test_output.py::test_repeated_case_study_create_with_one_idempotency_key_creates_one_row
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-46,C-CF-48 (earned: the test compares the id of the repeat with the id of the first create),C-DC-42 (earned: the test sends the Idempotency-Key header twice)"
+    - kind: pytest
+      test: test_output.py::test_stale_slot_write_is_refused_and_slots_carry_versions
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-36"
+    - kind: pytest
+      test: test_output.py::test_concurrent_slot_writes_from_one_version_admit_exactly_one
+      category: data_integrity
+      weight: 5
+
+- id: owner_reorders_the_shelf_and_republishes
+  purpose: "The owner moves a row on the shelf from the keyboard, withdraws a case study and publishes it again into its kept place"
+  substeps:
+    - kind: browser
+      do: "As the owner open /studio/shelf, put the keyboard on the Vantage Pitch Site row handle, move the row up one place with the arrow keys and confirm Order saved., then move the row back down one place and confirm Order saved. again"
+      cov: "C-CF-54,C-CF-55,C-CF-52"
+    - kind: browser
+      do: "On /studio/shelf empty the second eCommerce slot, confirm the line No longer featured. Still published. and that the empty shelf slot reads Nothing featured., reload / and confirm the eCommerce band shows nothing in the empty slot with no recent case study filling the front page band, then put Halden Home Store back into that slot"
+      cov: "C-CF-76,C-CF-74,C-FE-58,C-CF-89,C-CF-90"
+    - kind: browser
+      do: "In the withdraw journey open Northline Self Care in the editor, press Unpublish, confirm the status line beginning Unpublished. and that Northline Self Care is gone from /work, then press Publish and confirm the withdrawn case study keeps its shelf place, back in the same place on /work"
+      cov: "C-CF-222,C-CF-65,C-CF-66,C-UF-32,C-UF-33,C-UF-34"
+    - kind: pytest
+      test: test_output.py::test_shelf_reorder_changes_the_public_work_order
+      category: core_outcome
+      weight: 5
+      cov: "C-DC-30 (earned: the test sends the full order to PUT /api/studio/shelf),C-CF-57 (earned: the test sends every case study once in the shelf reorder),C-CF-58 (earned: the test sends the shelf version it read with the shelf reorder),C-CF-63 (earned: the test requires the accepted shelf reorder to raise the shelf version by one)"
+    - kind: pytest
+      test: test_output.py::test_stale_shelf_version_is_refused_and_keeps_the_order
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-59,C-CF-61 (earned: the test reads the conflict line then the shelf line off the refused stale shelf reorder)"
+    - kind: pytest
+      test: test_output.py::test_shelf_reorder_without_a_version_is_refused
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-60,C-CF-41 (earned: the test sends a shelf write with no version and requires the refusal)"
+    - kind: pytest
+      test: test_output.py::test_shelf_reorder_leaves_case_study_versions_unchanged
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-64,C-DM-21 (earned: the test reorders the shelf and requires each case study version unchanged, so only places move),C-DC-45 (earned: the test reads the shelf version with the work list from GET /api/studio/shelf)"
+    - kind: pytest
+      test: test_output.py::test_shelf_holds_one_row_with_a_whole_version
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-20 (earned: the test reads the one row of the shelf table with the version column),C-DM-55 (earned: the shelf version starts at version one and only rises, so the test requires a stored version of at least one)"
+    - kind: pytest
+      test: test_output.py::test_withdrawn_case_study_keeps_its_shelf_place_when_republished
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_shelf_places_stay_unique_and_gap_free
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-26,C-DM-11"
+    - kind: pytest
+      test: test_output.py::test_feature_slot_can_be_emptied
+      category: business_rule
+      weight: 3
+      cov: "C-DC-23 (earned: the emptied featured slot holds null)"
+    - kind: pytest
+      test: test_output.py::test_feature_slot_refuses_a_draft_case_study
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_feature_slot_refuses_a_case_study_of_another_expertise
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_case_study_holds_at_most_one_feature_slot
+      category: business_rule
+      weight: 3
+      cov: "C-CF-73"
+    - kind: pytest
+      test: test_output.py::test_slot_write_leaves_the_case_study_row_unchanged
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-79"
+    - kind: pytest
+      test: test_output.py::test_site_features_the_owner_slot_choices
+      category: business_rule
+      weight: 3
+      cov: "C-CF-69,C-CF-70,C-DM-18,C-DC-31 (earned: the test reads GET /api/studio/slots and requires eight slots, two per expertise),C-DM-19 (earned: the test reads each feature slot position as 0 or 1 for the two slots per expertise)"
+
+- id: owner_signs_in_and_reviews_sessions
+  purpose: "Sign in refuses a wrong password without naming the half, locks after five failures, and sign out everywhere ends every session"
+  substeps:
+    - kind: browser
+      do: "On /sign-in enter owner@example.com with a wrong password and confirm the line beginning That did not match. appears without naming which half was wrong"
+      cov: "C-CF-226,C-CF-227"
+    - kind: browser
+      do: "Sign in as owner@example.com, open /studio/account and confirm it lists every live session with a browser description, a start time and a last use, marks the current session, carries the note beginning A revoked session ends, and that Sign out everywhere asks for typing to confirm before it acts"
+      cov: "C-CF-233,C-CF-234,C-CF-235,C-CF-240"
+    - kind: pytest
+      test: test_output.py::test_login_with_a_wrong_password_is_denied_with_the_shared_line
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_five_failed_sign_ins_lock_the_account
+      category: security
+      weight: 5
+      cov: "C-CF-228,C-CF-229"
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_their_roles_and_names
+      category: presentation
+      weight: 1
+      cov: "C-TR-13 (earned: the test signs each seeded account in through POST /api/auth/login),C-TR-11 (earned: the test signs in against the app's own email and password check),C-DC-33 (earned: the test calls POST /api/auth/login and reads role and access_token)"
+    - kind: pytest
+      test: test_output.py::test_passwords_and_session_tokens_are_stored_hashed
+      category: security
+      weight: 5
+      cov: "C-TR-12,C-DM-05,C-DM-06 (earned: the test requires no sessions row to hold the live token)"
+    - kind: pytest
+      test: test_output.py::test_sign_out_everywhere_revokes_every_token
+      category: security
+      weight: 5
+      cov: "C-CF-239,C-CF-236 (earned: the test reads GET /api/sessions and requires every live session of the account listed),C-CF-237 (earned: the test reads each pinned field off every listed session),C-CF-238 (earned: the test requires exactly one session flagged current),C-DC-34 (earned: the test calls GET /api/auth/me with each token),C-DC-35 (earned: the test calls GET /api/sessions),C-DC-36 (earned: the test calls DELETE /api/sessions)"
+
+- id: invalid_address_answers_the_not_found_page
+  purpose: "An unknown address answers the site's own not found page, and every response carries the security headers"
+  substeps:
+    - kind: browser
+      do: "Open /no-such-page signed out and confirm the not found page shows 404 set as large as the front page headline, the line Not found and Back to work, without printing the requested address Confirm the not found page sits inside the site's own frame."
+      cov: "C-CF-247,C-CF-246"
+    - kind: browser
+      do: "Open /privacy-policy and confirm the privacy notice states that each public page view is kept as its route and its time, keeps what a brief's sender typed, keeps the cookie choice in the browser, and ends without an invitation to get in touch The route /privacy-policy shows the privacy notice, which states that the site keeps what a brief's sender typed and that the cookie choice stays in the visitor's own browser."
+      cov: "C-CF-250,C-CF-253,C-UF-06,C-CF-251,C-CF-252"
+    - kind: pytest
+      test: test_output.py::test_not_found_page_answers_404_and_never_echoes_the_path
+      category: presentation
+      weight: 1
+      cov: "C-CF-245,C-CF-248"
+    - kind: pytest
+      test: test_output.py::test_security_headers_are_present_on_every_response
+      category: security
+      weight: 5
+      cov: "C-TR-19,C-TR-20 (earned: the test reads the frame restriction on every response and requires framing denied),C-TR-21 (earned: the test requires the referrer policy header on every response),C-TR-22"
+    - kind: pytest
+      test: test_output.py::test_no_credential_is_served_to_the_browser
+      category: security
+      weight: 5
+      cov: "C-TR-18,C-TR-07 (earned: the test searches the downloaded files for the two storage key values)"
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_published_routes_and_no_drafts
+      category: presentation
+      weight: 1
+      cov: "C-CF-270,C-CF-271,C-CF-04"
+    - kind: pytest
+      test: test_output.py::test_robots_file_names_the_sitemap_and_keeps_crawlers_out_of_the_studio
+      category: presentation
+      weight: 1
+      cov: "C-CF-272,C-CF-273"
+
+- id: page_views_are_recorded_for_the_owner
+  purpose: "Public page views are recorded as route and time, read by the owner newest first, and every public route names itself"
+  substeps:
+    - kind: browser
+      do: "Open /company signed out, then sign in as owner@example.com, open /studio/page-views and confirm the log lists the company route at the top with its time, and that the browser tab title reads Studio | Northform"
+      cov: "C-CF-257,C-CF-269,C-UF-01 (earned: the step opens the company page before reading its view in the log)"
+    - kind: browser
+      do: "Open /work/kestrel-annual-review and confirm the browser tab title reads the case study title followed by a vertical bar and the studio name, then open the landing /expertise/corporate and confirm the tab title reads the expertise name followed by a vertical bar and the studio name"
+      cov: "C-CF-264,C-CF-265"
+    - kind: pytest
+      test: test_output.py::test_page_view_is_recorded_for_a_public_route
+      category: business_rule
+      weight: 3
+      cov: "C-CF-254,C-DC-43 (earned: the test calls POST /api/page-views for a public route and reads the recorded view),C-DC-59 (earned: the test reads GET /api/studio/page-views newest first)"
+    - kind: pytest
+      test: test_output.py::test_studio_routes_are_never_recorded_as_page_views
+      category: business_rule
+      weight: 3
+      cov: "C-CF-255,C-DC-44 (earned: the test sends a studio route to POST /api/page-views, requires an acknowledgement and finds no row)"
+    - kind: pytest
+      test: test_output.py::test_page_view_rows_record_nothing_beyond_route_and_time
+      category: security
+      weight: 5
+      cov: "C-CF-258,C-DM-25,C-CN-09 (earned: the test proves a page view row holds nothing beyond the route and the time)"
+    - kind: pytest
+      test: test_output.py::test_editor_is_forbidden_the_page_view_log
+      category: security
+      weight: 5
+      cov: "C-RL-16 (earned: the test calls the page-view log as the editor and requires a denial),C-CF-256 (earned: the test refuses the editor the log that only the owner reads),C-UF-10 (earned: the test refuses the editor the log the owner-only route shows)"
+    - kind: pytest
+      test: test_output.py::test_each_public_route_sets_its_own_title_and_description
+      category: presentation
+      weight: 1
+      cov: "C-CF-259,C-CF-260,C-CF-261,C-CF-264 (earned: the test reads the tab title of a case study page against its title and the studio name),C-CF-265 (earned: the test reads the tab title of an expertise landing against its name and the studio name),C-CF-262 (earned: the test reads the front page tab title against the pinned string),C-CF-263 (earned: the test reads the work index tab title against the pinned string),C-CF-266 (earned: the test reads the company tab title against the pinned string),C-CF-267 (earned: the test reads the contact tab title against the pinned string),C-CF-268 (earned: the test reads the privacy tab title against the pinned string)"
+    - kind: pytest
+      test: test_output.py::test_public_pages_show_no_long_dash_embedded_player_or_notification_prompt
+      category: presentation
+      weight: 1
+      cov: "C-CN-11 (earned: the test reads the rendered text of five public pages for an en or em dash),C-CN-12 (earned: the test requires no embedded frame on five public pages),C-CN-04 (earned: the test traps the browser notification permission request on five public pages)"
+    - kind: pytest
+      test: test_output.py::test_every_content_image_carries_alternative_text
+      category: presentation
+      weight: 1
+      cov: "C-CF-274"
+    - kind: pytest
+      test: test_output.py::test_type_family_weights_and_sizes_follow_the_pinned_scale
+      category: presentation
+      weight: 1
+      cov: "C-FE-01,C-FE-04 (earned: the test requires every computed weight to be one of the two pinned cuts),C-FE-02 (earned: the test requires every computed weight to be 400 or 500),C-FE-03 (earned: the test requires every computed weight to be 400 or 500),C-FE-05 (earned: the test reads the front page headline at a wide window and requires 180px),C-FE-06 (earned: the test requires every computed text size to be one of the pinned steps),C-FE-07 (earned: the test requires every computed text size to be one of the pinned steps),C-FE-08 (earned: the test requires every computed text size to be one of the pinned steps),C-FE-10 (earned: the test reads the computed family stack and requires the pinned fallback in it)"
+
+- id: fresh_install_seeds_the_studio_and_stores_covers
+  purpose: "A fresh installation serves a healthy app with the seeded studio, every cover in the bucket, and the pinned schema"
+  substeps:
+    - kind: browser
+      do: "Open /company and confirm the statement, the figures, the capabilities and the client names are shown The route /company shows the company page, and the company copy reads We are a strategic partner to our clients. followed by We will help you to ideate, design and implement your product."
+      cov: "C-UF-01,C-UF-04,C-FE-50"
+    - kind: pytest
+      test: test_output.py::test_health_endpoint_reports_ready
+      category: presentation
+      weight: 1
+      cov: "C-DC-04 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-01 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-02 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-03 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-05 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-09 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-10 (earned: a health answer at the public address through the mapped port, after the session has ended, proves the mapping, the prefix, the bind and a server that outlived its shell),C-DC-08 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DC-06 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DC-07 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DC-11 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DC-12 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DC-13 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DM-02 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-01 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-02 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-03 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-14 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-15 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-17 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-28 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CN-13 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-FE-45 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-FE-34 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-FE-40 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CF-283 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CF-281 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DM-14 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DM-68 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CN-01 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CN-03 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CN-07 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-CN-08 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-OV-05 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DC-60 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-FE-35 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-16 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-26 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-TR-27 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-DM-24 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it),C-FE-44 (earned: no grader watching the running product from outside can observe this; it is a property of the source, the image or the host, discharged by the handoff gates, and cited on the step whose success presupposes it)"
+    - kind: pytest
+      test: test_output.py::test_seeded_feature_slots_hold_the_pinned_case_studies
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-56 (earned: the test reads the real-estate slots and requires the seeded occupants),C-DM-57 (earned: the test reads the corporate slots and requires the seeded occupants),C-DM-58 (earned: the test reads the startups slots and requires the seeded occupants),C-DM-59 (earned: the test reads the ecommerce slots and requires the seeded occupants)"
+    - kind: pytest
+      test: test_output.py::test_seeded_case_studies_read_as_pinned
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-30 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-31 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-32 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-33 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-34 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-35 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-36 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-37 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-38 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-39 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-40 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-41 (earned: the test reads the seeded row and compares title, client, year, expertise and state),C-DM-54 (earned: the test reads each seeded cover seed with the palette),C-DM-42 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-43 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-44 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-45 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-46 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-47 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-48 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-49 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-50 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-51 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-52 (earned: the test reads the seeded tags of each seeded shelf place),C-DM-53 (earned: the test reads the seeded tags of each seeded shelf place)"
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent_across_a_restart
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-69,C-DM-60 (earned: the test reads the seeded Ines Duval brief),C-DM-61 (earned: the test requires the pinned markup in the Ines Duval comment),C-DM-62 (earned: the test reads every pinned field of the Tomas Berg brief),C-DM-63 (earned: the test compares the Tomas Berg comment with the pinned text),C-DM-64 (earned: the test reads every pinned field of the Lea Park brief),C-DM-65 (earned: the test compares the Lea Park comment with the pinned text)"
+    - kind: pytest
+      test: test_output.py::test_seeded_case_studies_carry_covers_in_the_bucket
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-66,C-DM-67 (earned: the seeded case studies the test walks are the ones whose bodies the case study detail test reads)"
+    - kind: pytest
+      test: test_output.py::test_schema_holds_the_named_tables_and_pinned_columns
+      category: data_integrity
+      weight: 5
+      cov: "C-DM-01,C-DM-09,C-TR-04 (earned: the test reaches every named table in the PostgreSQL database the app writes),C-DM-03 (earned: the test reaches the accounts table the brief names),C-DM-07 (earned: the test reaches the expertises table the brief names),C-DM-16 (earned: the test reaches the covers table the brief names)"
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_top_level_arrays
+      category: presentation
+      weight: 1
+      cov: "C-DC-14"
+    - kind: pytest
+      test: test_output.py::test_generated_cover_file_lands_in_the_object_store_bucket
+      critical: true
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-22,C-TR-05 (earned: the test finds the generated cover in the minio bucket),C-TR-06 (earned: the test reads the bucket named by STORAGE_BUCKET),C-DM-17 (earned: the test counts rows with the object key and requires one),C-DC-51 (earned: the test calls POST /api/studio/work/{id}/cover with generate, alt_text and version)"
+    - kind: pytest
+      test: test_output.py::test_generated_cover_object_key_follows_the_scheme
+      category: business_rule
+      weight: 3
+      cov: "C-CF-24,C-DC-39 (earned: the test reads the cover bytes through GET /api/covers/{id})"
+    - kind: pytest
+      test: test_output.py::test_cover_endpoint_stores_no_uploaded_file
+      category: security
+      weight: 5
+      cov: "C-CF-23 (earned: the test sends a file to the cover endpoint and requires it never to reach the bucket)"
+    - kind: pytest
+      test: test_output.py::test_same_cover_seed_and_palette_generate_the_same_cover
+      category: business_rule
+      weight: 3
+      cov: "C-CF-30"
+    - kind: pytest
+      test: test_output.py::test_identical_cover_bytes_resolve_to_one_object
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-34"
+    - kind: pytest
+      test: test_output.py::test_cover_row_records_dimensions_and_alternative_text
+      category: data_integrity
+      weight: 5
+      cov: "C-CF-31,C-CF-32,C-CF-275 (earned: the test requires the stored alternative text to equal the text the author sent)"
+    - kind: pytest
+      test: test_output.py::test_dashboard_counts_published_and_draft_case_studies
+      category: business_rule
+      weight: 3
+      cov: "C-CF-199,C-CF-206 (earned: the test reads kind, id, title and changed_at off each recent row),C-CF-207 (earned: the test requires each dashboard recent row kind to be case_study or brief)"

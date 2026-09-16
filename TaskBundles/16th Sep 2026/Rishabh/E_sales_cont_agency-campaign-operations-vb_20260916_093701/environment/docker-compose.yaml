@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16.4-bookworm@sha256:e62fbf9d3e2b49816a32c400ed2dba83e3b361e6833e624024309c35d334b412
+    environment:
+      POSTGRES_USER: deku_admin
+      POSTGRES_PASSWORD: deku-local-dev
+      POSTGRES_DB: deku
+    volumes:
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deku_admin -d deku"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-10-13T13-34-11Z@sha256:9535594ad4122b7a78c6632788a989b96d9199b483d3bd71a5ceae73a922cdfa
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: deku-storage-key-2026
+      MINIO_ROOT_PASSWORD: deku-storage-secret-2026
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "MC_HOST_local=http://deku-storage-key-2026:deku-storage-secret-2026@localhost:9000 mc ls local/ > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  minio-init:
+    image: quay.io/minio/minio:RELEASE.2024-10-13T13-34-11Z@sha256:9535594ad4122b7a78c6632788a989b96d9199b483d3bd71a5ceae73a922cdfa
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "mc alias set local http://minio:9000 deku-storage-key-2026 deku-storage-secret-2026 && mc mb --ignore-existing local/deku && mc anonymous set none local/deku && tail -f /dev/null"]
+
+  main:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4173:4173"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  minio-data:
