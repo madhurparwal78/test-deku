@@ -1,0 +1,436 @@
+- id: visitor_applies_and_the_organisation_is_provisioned
+  purpose: An application walked end to end provisions an organisation whose opening entries balance
+  substeps:
+    - kind: browser
+      do: Start an application from the hero capture and walk the business, ownership, identity, document and review steps to a decision, then confirm a visitor ends by submitting an application that provisions an organisation, then that raising a payment is a dedicated address rather than a panel
+      cov: C-UF-06, C-CF-50, C-OV-03, C-FE-27
+    - kind: pytest
+      test: test_output.py::test_application_provisions_an_organisation_with_balanced_opening_entries
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_application_stores_attestation_text_shown_at_acceptance
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: Upload a formation document at the documents step and see the upload acknowledged, then confirm a stored object's key follows the scheme `vault/{kind}/{owner_id}/{sha256_of_bytes}.{ext}`
+      cov: C-CF-56, C-CF-133
+    - kind: pytest
+      test: test_output.py::test_uploaded_formation_document_lands_in_the_object_store_at_its_key
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: browser
+      do: At the review step confirm the deposit agreement is presented as the partner bank's own document rather than as this product's
+      cov: C-CF-58
+
+- id: concurrent_postings_and_ledger_edits_rejected
+  purpose: Two hundred simultaneous postings leave a derived balance equal to the exact sum, and an edit against an entry is refused by the engine
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_two_hundred_concurrent_postings_keep_the_derived_balance_exact
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_balance_as_at_a_past_date_is_answerable
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_ledger_entry_update_and_delete_are_refused_by_the_database
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: public_routes_are_titled_linked_and_canonical
+  purpose: Every public route carries its own title and description, resolves its links, and no address serves home with a success status
+  substeps:
+    - kind: browser
+      do: Walk the product, solutions, resources and legal routes from the navigation and the footer, then confirm the route table's every public address answers, then that the header carries the five items from `Products` to `Pricing`
+      cov: C-UF-01, C-CF-23, C-FE-10
+    - kind: pytest
+      test: test_output.py::test_every_public_route_carries_a_unique_title_and_description
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_every_internal_link_on_a_public_route_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_sitemap_lists_published_routes_and_robots_names_the_sitemap
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_favicon_asset_is_served_and_declared_in_the_document_head
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_path_is_not_found_and_no_path_serves_home_with_success
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_campaign_paths_redirect_permanently
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Open the developer reference on its inverted ground and read the resource index and the terminal panel, then confirm the command-line control reads `Install CLI`
+      cov: C-CF-44, C-FE-21, C-FE-22
+    - kind: pytest
+      test: test_output.py::test_developer_reference_lists_fifteen_resources_with_descriptions
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_worked_request_and_response_state_one_amount
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_developer_reference_resources_match_the_served_api
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Open an unknown address and confirm the not-found page carries a route to the support library
+      cov: C-UF-18
+
+- id: editor_publishes_and_the_draft_is_denied_to_a_visitor
+  purpose: A published page becomes readable and listed, an unqualified page is refused, and a draft is denied to a signed-out caller
+  substeps:
+    - kind: browser
+      do: Sign in as the editor, write a page, publish it, and open its public address, then confirm publishing a record makes the record readable, adds the route to the sitemap
+      cov: C-UF-12, C-RL-04, C-CF-47
+    - kind: pytest
+      test: test_output.py::test_publishing_a_draft_makes_the_page_readable_and_listed
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_editorial_form_refuses_invalid_input_and_writes_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_with_an_unregistered_marker_cannot_be_published
+      category: validation
+      weight: 3
+    - kind: browser
+      do: Sign out and open the seeded draft address, finding no content, then confirm a Visitor cannot read a draft page
+      cov: C-RL-02, C-RL-01
+    - kind: pytest
+      test: test_output.py::test_draft_page_is_denied_to_a_signed_out_caller
+      critical: true
+      category: security
+      weight: 5
+
+- id: ach_payment_settles_then_is_returned_five_days_later
+  purpose: A settled ACH credit is returned days afterwards, the reversal posts, and the account goes negative as a valid state
+  substeps:
+    - kind: browser
+      do: Raise an ACH payment, approve it, settle it, deliver the return and read the negative balance on the account
+      cov: C-UF-08, C-CF-88
+    - kind: pytest
+      test: test_output.py::test_ach_payment_moves_through_in_transit_to_settled
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_settled_ach_payment_returned_after_five_days_posts_a_reversal
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_return_codes_drive_different_recipient_behaviour
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Raise a payment after the ACH cutoff and read the date the interface states it is scheduled for, then confirm an outcome is an inline banner above the surface the outcome changed
+      cov: C-CF-95, C-FE-28
+    - kind: pytest
+      test: test_output.py::test_post_cutoff_payment_is_scheduled_to_the_next_banking_day
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_realtime_payment_sends_on_a_holiday_sunday
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_wire_recall_is_recorded_as_a_request_not_a_cancellation
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Raise a wire and confirm the interface states the irreversibility of a wire before the control is pressed
+      cov: C-CF-90
+
+- id: initiator_and_bookkeeper_cannot_move_money
+  purpose: The payment creator is refused their own approval, an edit after approval returns the payment to pending, and a bookkeeper reaches no money-moving route
+  substeps:
+    - kind: browser
+      do: Sign in as the initiator, raise a payment, and find the approval control refused, then confirm an approver moves a pending payment to approved
+      cov: C-UF-07, C-RL-10
+    - kind: pytest
+      test: test_output.py::test_initiator_cannot_approve_their_own_payment
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_editing_an_approved_payment_returns_it_to_pending
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Sign in as the bookkeeper, categorise a transaction, and find every payment control absent and refused, then confirm signing out stops the token working
+      cov: C-UF-05, C-RL-11
+    - kind: pytest
+      test: test_output.py::test_bookkeeper_cannot_move_money_at_the_api
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_unauthenticated_product_and_editorial_routes_are_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_step_up_grant_is_scoped_to_one_action
+      category: security
+      weight: 5
+
+- id: visitor_reads_home_and_the_persistent_disclosure
+  purpose: The home route opens on its headline with the partner-bank disclosure on the first screen
+  substeps:
+    - kind: browser
+      do: Open the home route and read the headline, the email capture and the disclosure sentence without scrolling, then confirm the layout archetype is a top navigation carrying five centred items, then that the announcement bar carries `Real-time payments are here - instant, free, 24/7/365.`
+      cov: C-UX-19, C-FE-17, C-FE-18, C-FE-09
+    - kind: pytest
+      test: test_output.py::test_disclosure_is_served_in_the_document_of_every_claiming_route
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_page_home_leads_with_one_primary_action
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_health_route_and_reserved_directories_exist
+      category: presentation
+      weight: 1
+    - kind: browser
+      do: Read the feature stack heading above the three expanding rows, then confirm the page leads with one primary action distinct from every secondary one
+      cov: C-FE-19, C-UX-20
+    - kind: browser
+      do: Confirm the cookie bar is anchored to the foot rather than rendered as a modal, that every icon is drawn geometry rather than an image file, and that an internal drawing reference is unique per instance
+      cov: C-FE-12, C-FE-06, C-FE-07
+    - kind: browser
+      do: Count the type roles on the page, three exist and no fourth, interface type sits a shade heavier on the variable axis than reading type, and text roles sit in a ladder parallel to icon roles
+      cov: C-FE-05, C-UX-09, C-UX-08
+
+- id: seeded_rows_exist_in_postgres
+  purpose: Every seeded organisation, account, fee and footnote is a stored row and seeding repeats without duplicating
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_seeded_organisations_and_bank_accounts_are_stored_rows
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seed_is_idempotent_no_duplicate_rows
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_rows_live_in_postgres_and_survive_a_restart_of_the_process
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_fee_records_carry_the_pinned_amounts
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_footnote_registry_holds_seven_markers
+      category: business_rule
+      weight: 3
+
+- id: one_fee_source_agrees_across_every_surface
+  purpose: The pricing page, the legal fee schedule and the fee-stating support answer state one amount
+  substeps:
+    - kind: browser
+      do: Read the domestic wire fee on the pricing page, in the legal fee schedule and in the support answer, then confirm the pricing page renders its amounts from the fee record
+      cov: C-UF-11, C-CF-19, C-CF-20
+    - kind: pytest
+      test: test_output.py::test_one_fee_source_agrees_across_pricing_schedule_and_support_answer
+      critical: true
+      category: business_rule
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_support_answers_carry_stable_anchors_and_structured_data
+      category: presentation
+      weight: 1
+
+- id: available_balance_excludes_a_live_hold
+  purpose: A hold is a posting that lowers available without moving current, expires by a job, and interest rounding has a home
+  substeps:
+    - kind: browser
+      do: Open an account and read the current balance beside the available balance, each labelled, then confirm the interface labels which balance the interface is showing, then that the page ground stays visibly separate from a raised surface without a shadow
+      cov: C-CF-77, C-UX-04
+    - kind: pytest
+      test: test_output.py::test_available_balance_excludes_a_live_hold_and_spending_uses_available
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_expired_card_hold_is_released_by_a_posting_without_a_prior_read
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_interest_residual_account_absorbs_the_rounding_difference
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_credit_account_balance_carries_the_opposite_sign
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Read the account list and confirm a credit balance carries the opposite sign to a deposit balance, with a negative amount rendered explicitly rather than by colour alone, and every amount set in a monospace with tabular figures
+      cov: C-CF-74, C-FE-16, C-UX-10
+    - kind: browser
+      do: Open the money display beside each balance and confirm the display receives a minor amount plus a currency rather than a formatted string
+      cov: C-FE-14
+
+- id: card_clearing_exceeds_its_authorisation
+  purpose: A tip takes a clearing above its authorisation, the hold releases, and an unmatched clearing still posts
+  substeps:
+    - kind: browser
+      do: Open the card and read the authorisation, then the clearing that replaced it, with the two linked
+      cov: C-UF-09, C-CF-99
+    - kind: pytest
+      test: test_output.py::test_card_clearing_above_its_authorisation_posts_and_releases_the_hold
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_card_clearing_with_no_authorisation_posts_to_the_unmatched_account
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_spend_control_decline_names_the_rule_that_fired
+      category: business_rule
+      weight: 3
+
+- id: cross_organisation_statement_download_denied
+  purpose: A statement downloads for its own organisation only, from the object it was generated into
+  substeps:
+    - kind: browser
+      do: Sign in as the second organisation's owner and find the first organisation's statement unreachable, then confirm a bookkeeper downloads a statement streamed from the object store
+      cov: C-UF-10, C-RL-07
+    - kind: pytest
+      test: test_output.py::test_cross_organisation_statement_download_is_denied
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_statement_object_regenerates_byte_identical_after_a_correction
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: sanctions_update_blocks_a_listed_counterparty
+  purpose: Loading a later list version blocks a party that was clean, and a payment to a listed counterparty is refused before submission
+  substeps:
+    - kind: browser
+      do: Load the later sanctions version and read the blocked recipient with the review it raised
+      cov: C-UF-15, C-CF-111
+    - kind: pytest
+      test: test_output.py::test_sanctions_list_update_blocks_a_newly_matching_recipient
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_payment_to_a_listed_counterparty_is_blocked_before_submission
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_erasure_request_restricts_access_and_preserves_the_ledger
+      category: data_integrity
+      weight: 5
+
+- id: duplicate_idempotency_key_creates_one_payment
+  purpose: Fifty simultaneous replays of one key produce one payment and one response, and a changed replay is refused
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_fifty_concurrent_requests_on_one_idempotency_key_create_one_payment
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_same_idempotency_key_with_a_changed_amount_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_out_of_order_webhook_delivery_leaves_the_correct_final_state
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_payment_rate_limit_is_lower_than_the_read_limit
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_money_travels_as_a_decimal_string_with_its_currency
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_logs_carry_a_request_identifier_and_no_amount
+      category: presentation
+      weight: 1
+
+- id: agent_token_payment_waits_for_a_human_approval
+  purpose: An agent proposes a payment that waits for a person, the audit chain names both, and a reconciliation break is raised without a posting
+  substeps:
+    - kind: browser
+      do: Open the agent list, revoke the agent, and confirm the authorising person is still signed in, then confirm loading a partner-bank file raises a typed break
+      cov: C-UF-13, C-UF-14, C-CF-132
+    - kind: pytest
+      test: test_output.py::test_audit_chain_names_the_agent_and_its_authorising_human
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reconciliation_break_is_raised_with_no_automatic_posting
+      critical: true
+      category: data_integrity
+      weight: 5
+
+- id: rendered_surface_meets_the_stated_bars
+  purpose: The rendered pages meet the contrast, keyboard, alternative-text and narrow-viewport bars the brief states
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_page_body_text_meets_the_contrast_bar
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_narrow_viewport_has_no_sideways_overflow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_content_images_carry_alternative_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_keyboard_focus_ring_is_visible_on_every_control
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_money_columns_use_tabular_figures
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_page_view_record_is_stored_and_read_only_by_the_editor
+      category: business_rule
+      weight: 3
+    - kind: browser
+      do: Walk the home route from the keyboard, navigation reaches every control with a visible focus ring, the focus outline changes colour along with everything else, and Escape closes an open panel returning focus to the opening control
+      cov: C-UX-26, C-UX-15, C-UX-23
+    - kind: browser
+      do: Confirm body text meets the WCAG AA contrast bar on both grounds, each route carries one first-rank heading, every content image carries alternative text, and an icon-only control carries a name saying what the control does
+      cov: C-UX-24, C-UX-25, C-UX-28, C-UX-27
+    - kind: browser
+      do: Resize upward from a narrow viewport through the six ascending breakpoints and confirm nothing overflows sideways and the layout is mobile first
+      cov: C-UX-29, C-UX-30
+    - kind: browser
+      do: Point at, press, focus and disable a control and confirm it carries resting, pointed-at, pressed, focused and unavailable states
+      cov: C-UX-21
