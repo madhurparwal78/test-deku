@@ -1,0 +1,933 @@
+- id: shopper_buys_a_suitcase_as_a_guest
+  purpose: "A guest chooses a colourway, adds the suitcase to the cart and places a paid order that opens its billing account in killbill, takes the stock down and delivers the confirmation email"
+  substeps:
+    - kind: browser
+      do: "Open /products/passage-luggage-cabin and choose the Deep End Blue colourway thumbnail: the line Color: now shows the Deep End Blue colourway name, choosing the colourway replaces the whole media stack, and the product page address now carries the sku PSG-CAB-DEB"
+      cov: "C-UF-24, C-FE-111, C-FE-117, C-FE-125"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin, read the rail and the price row: on the product page the rail collapses to the wordmark block alone; the price row shows $179, then MRP: before the struck list price $299, with Incl of all taxes beneath the price row"
+      cov: "C-FE-20, C-FE-120, C-FE-121"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the buy panel buttons PERSONALISE above ADD TO CART; choose ADD TO CART and find the cart drawer opens holding the new line with the same lines and summary as /cart, the cart drawer heading carrying the item count 1; then open / and find the rail cart row shows the item count 1 beside CART"
+      cov: "C-UF-25, C-FE-16, C-FE-124, C-FE-153, C-FE-224"
+    - kind: browser
+      do: "Choose Checkout in the cart drawer: /checkout serves the three checkout sections, Contact & delivery, Delivery method and Payment, opening in turn with the order summary beside them on a wide screen; the checkout country is fixed to the United States; fill Contact & delivery with a new email and 1120 NW Couch Street, Portland, OR, 97209, phone +1 503 555 0110"
+      cov: "C-UF-07, C-FE-160, C-FE-161, C-FE-220"
+    - kind: browser
+      do: "Choose Standard under Delivery method, keep Pay now under Payment and choose Place order; the guest order goes from the drawer through /checkout to the confirmation, which reads Thank you. Your order is confirmed. with a VS- number, shows the lines, the address and Arriving with the from and to dates"
+      cov: "C-UF-26, C-UF-27, C-FE-170"
+    - kind: pytest
+      test: test_output.py::test_checkout_opens_the_billing_account_in_killbill
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_guest_checkout_creates_a_guest_order
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_paid_order_rows_are_persisted_with_captured_prices
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_confirmation_email_is_delivered_once
+      critical: true
+      category: notification
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_confirmation_email_names_the_order
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_checkout_totals_match_the_worked_examples
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_checkout_empties_the_cart
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_order_numbers_count_up_from_the_seed
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_delivery_estimate_follows_the_method
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_personalisation_travels_to_the_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_refused_checkout_sends_no_email
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_non_order_actions_send_no_email
+      category: notification
+      weight: 3
+
+- id: visitor_browses_luggage_by_size_and_collection
+  purpose: "A visitor opens the rail panels, lands on size and line collections and moves sideways through the chip strip"
+  substeps:
+    - kind: browser
+      do: "Open / with an empty cart and read the chrome: the wordmark reads valisette in lower case, the ticker alternates Road Week - Up to 50% off with LIVE NOW, the rail category block lists Luggage, Backpacks & Briefcases, Totes, Slings & Crossbodies, Accessories, Wallets, Gift Card and Clearance Sale, and the rail shows no cart row at all while the cart is empty"
+      cov: "C-OV-02, C-FE-04, C-FE-12, C-FE-17"
+    - kind: browser
+      do: "On /, open the Luggage rail entry: the first two rail categories open a panel; in the Luggage panel choose Cabin under By Size and land on /collections/cabin, whose chip strip shows one chip per sibling collection with each collection name"
+      cov: "C-UF-21, C-FE-13, C-FE-99"
+    - kind: browser
+      do: "Open the Luggage panel from the rail again and read it: the luggage panel carries the By Size, By Collection and Highlights columns; the By Size column lists Tech Range, Cabin, Check-in, Check-in Large, Trunk, Kids Luggage, Sets and View All; the By Collection column lists Passage, Contour, Meridian, Ridge, Coastal, Solstice and Kids Luggage; the Highlights column lists Best Sellers and On Sale; its image cards read Passage Collection and Meridian Collection"
+      cov: "C-FE-23, C-FE-24, C-FE-208, C-FE-209, C-FE-210"
+    - kind: browser
+      do: "On /collections/cabin, open the trail wedge beside the collection name and find it opens a list of sibling collections; choose the Sets chip in the chip strip and land on /collections/sets; the last chip reads View all and leads to the parent collection; open the panel again, choose the Meridian entry and land on /collections/meridian under The Meridian Series"
+      cov: "C-UF-22, C-UF-23, C-FE-98, C-FE-101"
+    - kind: browser
+      do: "Open /collections/all and find every product stacked by category: the six categories Luggage, Backpacks & Briefcases, Totes, Slings & Crossbodies, Accessories and Wallets appear in table order, each under its own banner above its products"
+      cov: "C-CF-143, C-UF-03"
+    - kind: browser
+      do: "On /, choose Totes, then Gift Card, in the rail categories and find the other rail categories lead straight to /collections/totes and to the gift card page /pages/gift-cards"
+      cov: "C-FE-14"
+    - kind: browser
+      do: "Open the Backpacks & Briefcases rail entry: the bags panel carries the Collection, By Use and Highlights columns; the bags panel Collection column lists Backpacks, Briefcases, Duffles, Diaper Bags, Kids Backpacks and View All, and the By Use column lists Work, Travel and Diaper & Kids; choose the panel's View All and find it leads to the panel's category /collections/backpacks-and-briefcases"
+      cov: "C-FE-25, C-FE-27, C-FE-211, C-FE-212"
+    - kind: pytest
+      test: test_output.py::test_collections_are_listed_in_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_collection_detail_carries_banner_title_with_siblings
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_collection_membership_follows_the_rules
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_panel_entries_resolve_to_collections
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_handles_answer_not_found
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_collection_pages_hold_twenty_four_cards
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_cards_carry_four_colourways_with_the_overflow
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_best_sellers_hold_the_top_twenty
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_home_bestseller_grid_matches_the_collection
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_luggage_carries_a_size_class_bags_a_bag_type
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_products_carry_one_category_with_at_most_one_line
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_use_tag_collections_follow_the_product_table
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_collection_documents_render_on_the_server
+      category: business_rule
+      weight: 3
+
+- id: shopper_filters_a_collection_down_to_empty
+  purpose: "A shopper filters, sorts and pages a collection whose state lives in the address, down to the empty state"
+  substeps:
+    - kind: browser
+      do: "Open /collections/luggage, where sorting and filtering sit in the left column beside the product wall; open FILTER BY and find the filter groups Size, Colour, Price and Availability with In stock only, Clear all and Apply; choose the pink colour and the cabin size, apply, and find two cards, the filter count beside FILTER BY and the collection address carrying size=cabin and colour=pink as parameters"
+      cov: "C-UF-28, C-UX-05, C-FE-106, C-FE-109"
+    - kind: browser
+      do: "Reload the filtered collection /collections/luggage?size=cabin&colour=pink and find the reload keeps the same two cards; clear the chosen pink colour value on its own and find each chosen filter value clears alone; then choose Clear all and find the unfiltered collection restores twenty cards"
+      cov: "C-UF-29, C-UF-30, C-FE-108"
+    - kind: browser
+      do: "On /collections/luggage open SORT BY: the sort list reads Featured, Best selling, Price, low to high, Price, high to low and Newest; choose Price, high to low and find choosing a sort reorders the grid in place without a page change, Passage Luggage - Set of 3 first"
+      cov: "C-FE-103, C-FE-105"
+    - kind: browser
+      do: "Compare the rail on /collections/luggage with the rail on /, /cart and /pages/stores: the fourth rail block carrying both SORT BY and FILTER BY appears on the collection page, and the home page, the cart and the store directory show no fourth rail block at all"
+      cov: "C-FE-19"
+    - kind: browser
+      do: "Open /collections/on-sale, find twenty-four cards, choose Load more and find Load more appends cards to thirty-four with page=2 in the address"
+      cov: "C-UF-31"
+    - kind: browser
+      do: "From /collections/on-sale?page=2 open a product, then press the browser back control and find returning from the product keeps the loaded collection depth of thirty-four cards"
+      cov: "C-UF-32"
+    - kind: browser
+      do: "Open /collections/wallets?price_min=100&price_max=200 so the collection has no match, and find Nothing here matches that yet. over Clear the filters, or browse the whole range."
+      cov: "C-UF-45"
+    - kind: pytest
+      test: test_output.py::test_collection_sorts_follow_the_rules
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_sort_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_filters_combine_across_groups
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_colour_filter_matches_families
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_price_range_includes_both_ends
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_in_stock_filter_keeps_stocked_products
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_paging_continues_a_sorted_filtered_list
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_card_links_carry_the_chosen_colourway
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_failed_load_more_keeps_the_cards
+      category: business_rule
+      weight: 3
+
+- id: product_page_answers_every_question
+  purpose: "A shopper reads a product page end to end: colourways, sizes, instalments, tabs, cross-sell and the cards that lead to it"
+  substeps:
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the product details: the feature carousel counts 1/8 with the first panel headed Aviation-grade telescope handle, and the feature carousel headings continue Silent wheels, Water resistant, Indestructible and lightweight, Thoughtful details, Make it truly yours, 3 years warranty and 30 day trial; the cross-sell block offers Packing Cubes (Set of 6) over The End of Digging. and Travel Pillow over Your Window Seat Upgrade.; the delivery estimate reads Expected Delivery in with a from and to date; the trust chips read Durable, Lightweight shell, 30 Day Return Policy and 3 Years Warranty"
+      cov: "C-FE-112, C-FE-128, C-FE-130, C-FE-131, C-FE-207"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the buy panel tabs Colors, Personalise and Compare; choose the PERSONALISE button and find the button opens the personalise tab; open Compare, choose Meridian Luggage - Cabin and find Your Pick beside the chosen product with weight_kg, capacity_litres and dimensions values aligned"
+      cov: "C-FE-114, C-FE-144, C-FE-145"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the size tiles: the viewed product tile, marked chosen, beside each sibling size tile, with the size tile captions Cabin, Medium, Large and Save on Sets"
+      cov: "C-FE-118, C-FE-119"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the instalment line or pay in 4 - $44.75 today - 0% interest, the first instalment being the live price $179 over four rounded up to the cent"
+      cov: "C-FE-122, C-FE-123"
+    - kind: browser
+      do: "Open /products/passage-luggage-cabin?sku=PSG-CAB-CSP, the sold-out Corner Shop Pink colourway, and find an unavailable SOLD OUT button in place of ADD TO CART"
+      cov: "C-FE-126"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin choose the cross-sell ADD beside Packing Cubes (Set of 6) and find the cart gains the first colourway of that item, Hold The Grey"
+      cov: "C-FE-129"
+    - kind: browser
+      do: "On /collections/luggage, read the Meridian Luggage - Cabin card swatch row: up to four discs then +3; choose a different disc and find choosing the disc switches the card picture, prices and link in place without reloading or moving the card; choose the card title and find the whole card cell except the swatch discs is one link to the product"
+      cov: "C-FE-72, C-FE-74, C-FE-203"
+    - kind: browser
+      do: "On /collections/luggage, read the card badge corners: a card shows at most one badge, SOLD OUT, HOT or MUST HAVE, with HOT on Passage Luggage - Cabin and MUST HAVE on Passage Luggage - Set of 3"
+      cov: "C-FE-76"
+    - kind: pytest
+      test: test_output.py::test_product_detail_lists_variants_in_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_product_detail_carries_its_fields
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_product_siblings_are_the_line_sizes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_discount_percent_is_derived
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_colourway_badges_follow_the_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_luggage_dimensions_follow_the_size_class
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_media_lists_four_views_with_alt_text
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_only_luggage_is_personalisable
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_price_exception_on_static_blue
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_swatches_carry_names_with_pressed_state
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_drawn_pictures_carry_alternative_text
+      category: presentation
+      weight: 1
+
+- id: coverage_dialog_and_accordions_explain_the_luggage
+  purpose: "The coverage dialog, the accordions and the legal block carry the pinned copy over a catalogue seeded as the tables state"
+  substeps:
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the luggage coverage strip: 1-Year, AIRLINE DAMAGE COVER, a struck $49 and a Details link; choose Details and find a dialog opens rather than a page, carrying the coverage eyebrow, headline and the promise sentence If an airline damages your bag in transit, we repair or replace it., Plan value over FREE, Validity over 1 Year, and a three-step list Spot damage at the belt?, Tell us within 7 days, We repair or replace, whose step bodies read Get a damage report from the airline desk before you leave the airport., Share the report and photographs of the damage. and Your luggage. Free."
+      cov: "C-FE-132, C-FE-133, C-FE-135, C-FE-136, C-FE-213, C-FE-216"
+    - kind: browser
+      do: "In the open coverage dialog read Also covered under warranty with Shell over Cracks, dents & colour fades, Wheels & trolley over Wobbles, stiff handles, buttons and Hardware over Zippers, handles, feet & logo plate; the Not covered list with Theft & loss, Overpacking, Wear & tear, Scratches & scuffs, Heat, fire & chemicals and Commercial use; the closing line Part of valisette Shield, valisette's damage protection programme.; and the coverage dialog Know More link to /pages/airline-damage-policy; press Escape and find the coverage dialog closes, holding focus until then; reopen it and close it with the drawn cross"
+      cov: "C-FE-134, C-FE-137, C-FE-138, C-FE-139, C-FE-214, C-FE-215"
+    - kind: browser
+      do: "On /products/passage-luggage-cabin scroll to the product accordions: Dimension, Description, Warranty & Return and More Information, in that order; Dimension is open on arrival showing Weight, Capacity and External dimensions with 3.23 Kg, 40L and 54 x 37.5 x 23.5 cm; open Warranty & Return and find the drawer carries Not 100% Sure?, No strings attached., the refund paragraph naming the support address care@valisette.example.com and 3 Years worry-free warranty."
+      cov: "C-FE-146, C-FE-147, C-FE-148, C-FE-217"
+    - kind: browser
+      do: "Open More Information on /products/passage-luggage-cabin and read Valisette Travelware Co., Unit 4, Coastline Works, 118 Canal Street, Portland, OR 97209, USA, Country of Origin: and Vietnam, Mexico; below, the trial banner reads 30 over days trial with the trial banner body Try out your valisette for 30 days., the compare module reads COMPARE with Wish to Compare your bag? and Your Pick, and a Recently Viewed strip closes the product page"
+      cov: "C-FE-149, C-FE-150, C-FE-151, C-FE-152, C-FE-218"
+    - kind: pytest
+      test: test_output.py::test_seeded_products_match_the_table
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_colourway_families_match_the_table
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_swatches_are_hex_strings
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_skus_follow_the_prefix_code_scheme
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_prices_are_integer_cents
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_catalogue_rows_are_stored
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_stock_matches_the_table
+      category: data_integrity
+      weight: 5
+
+- id: expired_sale_reprices_the_cart
+  purpose: "Road Week runs on the server clock, and once it ends every read and every checkout uses the list price"
+  substeps:
+    - kind: browser
+      do: "On /products/passage-luggage-cabin read the offer strip: The Road Week Sale over Up to 50% off beside Pay in 4 over Interest-free on every order, and the countdown reading Sale Extended! Ends in with days, hours, minutes and seconds figures separated by colons, labelled D, H, M and S"
+      cov: "C-FE-140, C-FE-141"
+    - kind: browser
+      do: "On /, choose an item in the ticker and find every ticker item links to /collections/on-sale"
+      cov: "C-FE-07"
+    - kind: pytest
+      test: test_output.py::test_sale_is_active_with_road_week
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_sale_end_reprices_the_cart_at_checkout
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_countdown_ignores_the_visitor_clock
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_offer_strip_expires_on_the_product_page
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_units_sold_counts_paid_orders_only
+      category: business_rule
+      weight: 3
+
+- id: concurrent_checkouts_for_the_last_unit
+  purpose: "Two checkouts for the last unit make one paid order and one refusal, and a repeated checkout key is one order"
+  substeps:
+    - kind: browser
+      do: "Open /products/contour-luggage-cabin?sku=CTR-CAB-CSP, add it to the cart, then raise the cart line stepper to 3 past the stock: the refusal line Only 2 left in stock. shows beside the alert mark and the stepper stays at the quantity it had; then remove the line"
+      cov: "C-UF-33"
+    - kind: pytest
+      test: test_output.py::test_concurrent_checkouts_sell_the_last_unit_once
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_repeated_checkout_key_returns_one_order
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_simultaneous_checkout_repeats_make_one_order
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_provider_refuses_a_reused_external_key
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_concurrent_movement_with_checkout_never_overdraws
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_checkout_refuses_more_than_the_stock
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sold_out_line_is_marked_in_the_cart
+      category: business_rule
+      weight: 3
+
+- id: cart_quantity_limit_holds
+  purpose: "The cart survives reloads, holds personalisation and never holds more units than the colourway has in stock"
+  substeps:
+    - kind: browser
+      do: "Add Mini Sling from /products/mini-sling, then open /cart, which serves the cart with its summary; the cart summary reads Subtotal, Discount as a negative amount, Delivery as Free, Total, then a Checkout button"
+      cov: "C-UF-06, C-FE-155, C-FE-219"
+    - kind: browser
+      do: "With an empty cart, open /checkout and find the empty checkout redirects to /cart; the empty cart shows Your cart is empty with CONTINUE SHOPPING, and choosing CONTINUE SHOPPING leads to /collections/all"
+      cov: "C-UF-19, C-UF-47, C-FE-158"
+    - kind: browser
+      do: "Open /products/mini-sling, add the Mini Sling to the cart, reload the page, then close the browser page state by navigating to /cart again; the cart line persists across reloads with the same quantity"
+      cov: "C-CF-194"
+    - kind: browser
+      do: "Open /products/meridian-luggage-cabin, open the Personalise tab and read Design not created yet. Start customising, type AM in the personalise form and watch the characters remaining count drop, choose the front placement from front or top, add to the cart, open /cart and find the cart line showing the picture, title, colourway, size class, the personalisation Initials: AM, front, a quantity stepper, the line total and a remove control; then remove the line"
+      cov: "C-CF-204, C-CF-206, C-FE-143, C-FE-154"
+    - kind: pytest
+      test: test_output.py::test_stock_ceiling_refuses_the_extra_units
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_stock_bound_is_read_at_every_change
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_sold_out_colourway_is_refused
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cart_quantity_must_be_positive
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_sku_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_line_colourway_never_changes
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cart_add_holds_no_stock
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cart_lines_change_then_leave
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_adding_the_same_sku_merges_lines
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cart_summary_is_arithmetic
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_cart_is_created_without_an_account
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_cart_claim_attaches_once
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signed_in_cart_is_attached_to_the_account
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invalid_personalisation_is_rejected
+      category: validation
+      weight: 3
+
+- id: customer_cannot_read_another_customers_order
+  purpose: "A customer reads the account's own orders and gets the not-found answer for any other order"
+  substeps:
+    - kind: browser
+      do: "Open /account/login?next=/account and sign in with the own email and password sign-in as customer@example.com with deku-demo-pw-2026; signing in returns to the next path /account, which greets the shopper with Hello, Aarav and shows the default address above the three latest orders"
+      cov: "C-CF-01, C-UF-14, C-FE-188, C-FE-189"
+    - kind: browser
+      do: "Signed in as customer@example.com, open the rail account row and find Order History with Logout beneath it; open Order History and find /account/orders is a table of number, date, total and state columns with VS-100002 listed above VS-100001, and read the web address of an opened order, where the order number VS-100001 is the only order identifier in the address"
+      cov: "C-CF-294, C-UF-38, C-FE-18, C-FE-221"
+    - kind: browser
+      do: "Open order VS-100001 from Order History: the order page shows the lines as bought, Passage Luggage - Cabin in Field Olive, size class cabin, quantity 1, at the captured price $179, then the delivery address 42 Alder Lane, the state Fulfilled, the arrival window and the amount charged $179; order states read as words such as Pending, Paid, Fulfilled and Cancelled"
+      cov: "C-UF-39, C-FE-190, C-FE-236, C-FE-237"
+    - kind: browser
+      do: "Signed in as customer@example.com, open /account/login and find a signed-in visitor lands on /account instead; then choose Logout from the rail and find signing out returns to /"
+      cov: "C-UF-16, C-UF-18"
+    - kind: browser
+      do: "Sign out, sign in as customer2@example.com with deku-demo-pw-2026, open /account/orders/VS-100001 and find another account's order number shows the same not-found page as the missing number /account/orders/VS-999999"
+      cov: "C-UF-20"
+    - kind: pytest
+      test: test_output.py::test_other_accounts_order_is_refused_like_a_missing_one
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_other_accounts_address_is_not_found
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_guest_order_is_owner_only
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_order_read_is_refused_without_a_session
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signed_out_account_pages_send_to_login
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_customer_lists_own_orders_newest_first
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_customer_reads_own_order_with_captured_lines
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_order_states_stay_in_the_set
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_orders_are_persisted
+      category: data_integrity
+      weight: 5
+
+- id: customer_denied_owner_endpoints
+  purpose: "Signup makes a customer, and a customer or a signed-out caller is denied every owner endpoint at the server"
+  substeps:
+    - kind: browser
+      do: "Open /account/register and read the form: the heading Create an account, fields for Name, Email, Password and Confirm password, and a CREATE ACCOUNT button; create a new customer account with a fresh email and matching passwords, signing in without a next path lands on /account, and Order History shows No orders yet. for the new account"
+      cov: "C-RL-30, C-UF-15, C-UF-48, C-FE-184"
+    - kind: browser
+      do: "Open /account/register and type two differing passwords in Password and Confirm password: the differing passwords show The two passwords do not match. and sending nothing creates no account"
+      cov: "C-FE-185"
+    - kind: pytest
+      test: test_output.py::test_owner_endpoints_deny_customers_and_visitors
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_guarded_endpoints_deny_missing_or_foreign_tokens
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_role_in_body_is_ignored
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_signup_creates_a_customer_with_a_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_no_credential_reaches_the_browser
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_public_reads_need_no_session
+      category: business_rule
+      weight: 3
+
+- id: owner_restocks_fulfils_and_cancels_orders
+  purpose: "The owner edits the catalogue, records stock movements and moves paid orders on, and the ledger of movements stays whole"
+  substeps:
+    - kind: pytest
+      test: test_output.py::test_owner_renames_reprices_and_delists
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_owner_stock_movement_changes_stock
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_owner_lists_every_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_owner_fulfils_a_paid_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_owner_cancel_restores_stock_with_a_new_movement
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_stock_movements_cannot_be_edited
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_owner_order_transitions_are_limited
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_stock_equals_the_sum_of_movements
+      critical: true
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_stock_movements_are_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invalid_variant_prices_are_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_movements_open_each_colourway
+      category: data_integrity
+      weight: 5
+
+- id: invalid_checkout_or_corporate_account_is_refused
+  purpose: "Checkout refuses bad input and a corporate account the provider does not hold in USD, writing nothing"
+  substeps:
+    - kind: browser
+      do: "On /checkout with a line in the cart, type 9720 as the postcode and not-an-email as the email, then choose Place order: the checkout fields reject the invalid input next to the field named, keeping what was typed"
+      cov: "C-FE-167"
+    - kind: browser
+      do: "Signed in as customer@example.com with a Mini Sling line in the cart, open /checkout: a signed-in checkout fills in the email with the default address 42 Alder Lane; the delivery choices read Standard with Free, 3 to 5 days and Express with $15, 1 to 2 days; choose Express and find the checkout total updates as the delivery choice changes, without placing the order"
+      cov: "C-FE-162, C-FE-163, C-FE-164"
+    - kind: browser
+      do: "Under Payment find Pay now chosen by default beside Bill a corporate account; choose Bill a corporate account, type orbit-acme into the Corporate account reference field and choose Place order; the refused corporate account is explained above the button, That corporate account is billed in EUR. Corporate orders are billed in USD., with the cart intact"
+      cov: "C-FE-165, C-FE-168"
+    - kind: pytest
+      test: test_output.py::test_checkout_validation_writes_nothing
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_empty_cart_checkout_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_invalid_address_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_malformed_requests_are_client_errors
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_signed_in_checkout_links_the_order
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_corporate_account_is_refused
+      critical: true
+      category: validation
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_foreign_currency_corporate_account_is_refused
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_corporate_order_bills_the_existing_account
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_billing_accounts_exist_in_killbill
+      category: data_integrity
+      weight: 5
+
+- id: shopper_searches_by_colour
+  purpose: "A shopper searches a colour from the overlay, finds colourway matches ranked after titles, and keeps recent searches in the browser"
+  substeps:
+    - kind: browser
+      do: "Choose SEARCH in the rail and find a full-page overlay opens rather than a new page; type olive and submit the search overlay; land on the search results page at /search?q=olive with the query in the address, reading 8 results for \"olive\""
+      cov: "C-UF-05, C-UF-36, C-FE-34"
+    - kind: browser
+      do: "On /search?q=olive, read the search page header, which reads the count then results for the quoted query; find SORT BY offered in the rail and FILTER BY absent from the search page"
+      cov: "C-FE-176, C-FE-177"
+    - kind: browser
+      do: "After searching olive, choose SEARCH again: the overlay shows Recent Searches listing olive with a Clear control, above Recently Viewed Products; choose the single Clear control and find the recent searches list emptied"
+      cov: "C-CF-350, C-UF-37, C-FE-37"
+    - kind: browser
+      do: "Choose SEARCH, type zzqx and submit; the empty search page quotes the query zzqx back, shows Nothing matched that. over Try a colour, a size, or one of these., and offers the best-sellers, on-sale and luggage collections as Best Sellers, On Sale and Luggage chips"
+      cov: "C-CF-346, C-CF-347, C-UF-46"
+    - kind: browser
+      do: "Focus SEARCH in the rail with the keyboard and press Enter to open the overlay, then press Escape: Escape closes the overlay, returning focus to the SEARCH row"
+      cov: "C-UX-65, C-FE-38"
+    - kind: pytest
+      test: test_output.py::test_search_matches_colourway_names
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_ranks_titles_before_colourways
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_accepts_sort_without_filters
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_search_without_a_match_is_empty
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_recent_searches_stay_in_the_browser
+      category: security
+      weight: 5
+
+- id: visitor_finds_a_store_and_checks_a_gift_card
+  purpose: "A visitor filters the store directory, checks a gift card balance, subscribes and reads the footer pages"
+  substeps:
+    - kind: browser
+      do: "Open /pages/stores: the store filter placeholder reads Find a store by city or name and the store count reads 14 stores; type port into the store filter and find the count reads 2 stores; type pike and find the count reads 1 store"
+      cov: "C-UF-34, C-FE-171, C-FE-172"
+    - kind: browser
+      do: "With the store filter at port, open the Pearl District store row: the opened store shows Opening hours with the hours, Call the store with its phone number link, and Directions with the map pin as a directions link; then type zzqx into the store filter and read No store matches that yet."
+      cov: "C-UF-35, C-FE-174, C-FE-175"
+    - kind: browser
+      do: "Open /pages/gift-cards: the gift card page shows Check Gift Card Balance, a Gift card code field and CHECK BALANCE; check VSGC-2026-AMBER and read Balance: $50, then check VSGC-2025-LAPSED and read That code is not recognised."
+      cov: "C-UF-40, C-UF-41, C-FE-179"
+    - kind: browser
+      do: "At the foot of /, read the newsletter block heading Warm Hugs, valisette. above two lines of body, type a fresh address into the newsletter field with the placeholder Enter Email Address and submit; the newsletter success replaces the field with Thank you for subscribing! on the same page and never navigates away"
+      cov: "C-UF-42, C-FE-39, C-FE-40, C-FE-42"
+    - kind: browser
+      do: "On /, read the footer link columns: the first link column lists FAQ, Claim My Warranty, Terms & Conditions, Airline Damage Policy and Blogs, the second link column lists Claim 30 Day Trial, Return & Refund Policy, Privacy Policy, the Join our team! careers link and Check Gift Card Balance; choose Claim My Warranty and Privacy Policy and find each footer link leads to its page from the page table"
+      cov: "C-CF-373, C-FE-47, C-FE-48"
+    - kind: browser
+      do: "On /, read the footer columns: the wordmark, the contact block headed Need assistance? whose support address care@valisette.example.com and phone +1 503 555 0142 are links, the gifting block For Gifting & Corporate orders with its number +1 503 555 0199 plus address gifting@valisette.example.com, two link columns, and the brand essay headed #KeepMoving"
+      cov: "C-FE-44, C-FE-45, C-FE-46, C-FE-49"
+    - kind: pytest
+      test: test_output.py::test_stores_are_listed_by_city_then_name
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_store_filter_matches_city_or_name
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_stores_match_the_table
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_newsletter_subscription_is_stored_once
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_invalid_newsletter_address_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_gift_card_balance_answers_for_the_active_card
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_unknown_or_lapsed_gift_cards_look_the_same
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_gift_card_rows_are_seeded
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_standing_pages_are_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_privacy_page_states_what_is_kept
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_every_footer_links_the_privacy_page
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_seed_rows_are_not_duplicated
+      category: data_integrity
+      weight: 5
+
+- id: account_holder_signs_in_and_resets_a_password
+  purpose: "An account holder signs in, keeps addresses with one default, and replaces a forgotten password through the emailed link"
+  substeps:
+    - kind: browser
+      do: "Open /account/login: sign in shows Login, Email with Enter your email, Password with Enter your password, and Remember me with Forgot password? on one line above LOGIN, with a link to create an account below the LOGIN button; sign in as customer@example.com with a wrong password and find the failed sign-in shows the mismatch message That email and password do not match. above the button"
+      cov: "C-FE-181, C-FE-182, C-FE-183, C-FE-238"
+    - kind: browser
+      do: "Open /account/recover: the recover page shows Reset your password with SEND RESET LINK; submit customer@example.com and find the recover page answers in place with the recovery message If we know that address, a reset link is on its way."
+      cov: "C-UF-43, C-FE-186"
+    - kind: browser
+      do: "Signed in as the new account, open /account/addresses: an account with no addresses shows No saved addresses yet.; save two delivery addresses and find the addresses page marks the first Default; edit the second address and find the edited address saved; make the second address default and find the Default marker moves; choose remove on an address and find removing asks once before acting, in place, before the address leaves"
+      cov: "C-UF-49, C-UX-66, C-FE-191, C-FE-222, C-FE-223"
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_sign_in_with_the_corpus_password
+      critical: true
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_seeded_accounts_are_stored_with_their_roles
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_login_returns_token_role_with_expiry
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_remember_me_extends_the_session_to_thirty_days
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_failed_login_hides_which_part_was_wrong
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_logout_ends_the_token
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_recover_answers_the_same_for_every_address
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reset_email_goes_to_known_addresses_only
+      category: notification
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_password_reset_works_once
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_reset_page_sets_a_new_password
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_me_returns_the_signed_in_account
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_passwords_are_stored_hashed_never_returned
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_emails_are_unique_ignoring_case
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_short_signup_password_is_rejected
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_addresses_are_saved_with_one_default
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_default_address_moves_on_change
+      category: data_integrity
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_deleting_the_default_promotes_the_oldest
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_seeded_addresses_are_persisted
+      category: data_integrity
+      weight: 5
+
+- id: storefront_is_served_from_a_production_build
+  purpose: "The storefront answers at its public address from a production build, draws every picture itself and keeps its chrome, home page and keyboard paths whole"
+  substeps:
+    - kind: browser
+      do: "Open /account/login and sign in as customer@example.com with the password deku-demo-pw-2026, the seeded login the app writes into /app/USER_README.md; land on /account served by the Express back end at the public address, which proves the environment started the app with no manual steps"
+      cov: "C-TR-05, C-TR-19, C-TR-20, C-DM-01, C-DC-02, C-DC-03, C-DC-06, C-DC-07, C-DC-08, C-DC-12, C-DC-13, C-DC-14, C-TR-29 (earned: the credentials file, the reserved directories, the start command, the port mapping and the compose shape and the dependency manifest live on the agent container, which a separate-mode grader cannot read; this step proves the seeded login those files carry works, and the files themselves are observed by hand at the oracle run)"
+    - kind: browser
+      do: "On a fresh load of / press Tab once: the first control on every page is a Skip to content link, hidden until focused; keep pressing Tab and find keyboard navigation reaches every rail control, the grid and the footer"
+      cov: "C-UX-73, C-FE-01"
+    - kind: browser
+      do: "Tab to the Luggage rail entry and press Enter: the rail entry toggles its panel from the keyboard, moving focus into the panel; press Escape and find Escape closes the panel, returning focus to the rail entry, so every panel works by keyboard alone"
+      cov: "C-UX-74, C-FE-32, C-FE-33"
+    - kind: browser
+      do: "On /, read the hero carousel: three drawn slides leading to /collections/passage, /collections/meridian and /collections/on-sale; press a hero indicator and the arrow keys and find each changes the hero slide, and wait on the page to see no timer change the slide"
+      cov: "C-FE-82, C-FE-84"
+    - kind: browser
+      do: "Scroll / to the strips: the collections strip reads Luggage Collections with Passage Collection, Coastal Collection and Meridian Collection; the categories strip reads Categories with Luggage, Bags & Backpacks, Totes & Handbags, Travel Accessories and Wallets; choose Coastal Collection and Wallets tiles and find the home collection tiles and category tiles lead to their collections; then choose the ELEVATE editorial tile and the tuxedo editorial tile in the home grid and find the editorial tiles lead to collections, /collections/backpacks-and-briefcases and /collections/wallets, never to a product"
+      cov: "C-FE-86, C-FE-87, C-FE-88, C-FE-94"
+    - kind: browser
+      do: "Scroll / to the grid: the heading Bestsellers sits beside View All leading to /collections/best-sellers; the home bestseller grid is not paged and shows no Load more; the home page closes with the video tile, the newsletter block and the footer"
+      cov: "C-FE-91, C-FE-95, C-FE-96"
+    - kind: pytest
+      test: test_output.py::test_health_answers_ok
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_app_answers_at_its_public_url
+      critical: true
+      category: core_outcome
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_production_build_is_served
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_page_scripts_stay_within_the_budget
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_public_routes_are_served
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_not_found_page_renders_inside_the_chrome
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_unknown_api_address_answers_json
+      category: validation
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_internal_links_resolve
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_documents_declare_a_favicon_that_resolves
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_pages_carry_one_of_each_landmark
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_pages_fetch_no_image_font_or_video_files
+      category: business_rule
+      weight: 3
+    - kind: pytest
+      test: test_output.py::test_pages_load_nothing_from_other_origins
+      category: security
+      weight: 5
+    - kind: pytest
+      test: test_output.py::test_timestamps_are_utc_strings
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_list_endpoints_return_arrays
+      category: presentation
+      weight: 1
+    - kind: pytest
+      test: test_output.py::test_derived_figures_are_not_stored_columns
+      category: data_integrity
+      weight: 5
