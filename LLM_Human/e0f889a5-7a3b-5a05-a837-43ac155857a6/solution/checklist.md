@@ -115,8 +115,8 @@ Unpinned values flagged: 3
 - [ ] `C-CF-63` `literal` The app reads the billing platform at `PAYMENTS_API_URL`. `src: Core features, billing paragraph`
 - [ ] `C-CF-64` `literal` The app authenticates to the billing platform with `PAYMENTS_API_KEY`. `src: Core features, billing paragraph`
 - [ ] `C-CF-65` `literal` The app authenticates to the billing platform with `PAYMENTS_API_SECRET`. `src: Core features, billing paragraph`
-- [ ] `C-CF-66` `literal` The app authenticates to the billing platform with `PAYMENTS_APP_USER`. `src: Core features, billing paragraph`
-- [ ] `C-CF-67` `literal` The app authenticates to the billing platform with `PAYMENTS_APP_PASSWORD`. `src: Core features, billing paragraph`
+- [ ] `C-CF-66` `literal` The app authenticates to the billing platform with `PAYMENTS_ADMIN_USER`. `src: Core features, billing paragraph`
+- [ ] `C-CF-67` `literal` The app authenticates to the billing platform with `PAYMENTS_ADMIN_PASSWORD`. `src: Core features, billing paragraph`
 - [ ] `C-CF-68` `constraint` The app models no card at the billing platform. `src: Core features, billing paragraph`
 - [ ] `C-CF-69` `constraint` The app models no decline at the billing platform. `src: Core features, billing paragraph`
 
@@ -494,8 +494,8 @@ Unpinned values flagged: 3
 | `PAYMENTS_API_URL` | billing platform base address | C-CF-63 | Core features, billing paragraph |
 | `PAYMENTS_API_KEY` | billing platform api key | C-CF-64 | Core features, billing paragraph |
 | `PAYMENTS_API_SECRET` | billing platform api secret | C-CF-65 | Core features, billing paragraph |
-| `PAYMENTS_APP_USER` | billing platform application user | C-CF-66 | Core features, billing paragraph |
-| `PAYMENTS_APP_PASSWORD` | billing platform application password | C-CF-67 | Core features, billing paragraph |
+| `PAYMENTS_ADMIN_USER` | billing platform admin user | C-CF-66 | Core features, billing paragraph |
+| `PAYMENTS_ADMIN_PASSWORD` | billing platform admin password | C-CF-67 | Core features, billing paragraph |
 | `/` | letter route | C-UF-01 | User flow route table |
 | `/shop` | catalogue route | C-UF-02 | User flow route table |
 | `/shop/<handle>` | product route | C-UF-03 | User flow route table |

@@ -29,61 +29,14 @@
       "unresolved": 2,
       "coverage": 0.9285714285714286,
       "weighted_coverage": 0.9591836734693878,
-      "machine_outcomes": {
-        "PASS": 13,
-        "FAIL": 13,
-        "INSUFFICIENT_EVIDENCE": 2,
-        "EVALUATOR_ERROR": 0
-      },
-      "resolution_methods": {
-        "active_acquisition": 26,
-        "machine_unresolved": 2
-      },
-      "needs_human_eval": 0,
-      "council": null,
       "score_discounted": 0.424772
     }
   },
   "reward": 0.2308,
   "invalid": [],
   "degraded": [],
-  "needs_human_review": 0,
-  "machine_unresolved": [
-    {
-      "criterion": "R3",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "The implementation directly establishes that every generated studio palette record row names its own state with the words \u201clive\u201d or \u201cunlisted\u201d beside the title within the same row button. However, the authenticated page could not be rendered because the app's login endpoint errors during token generation, so the actual visual layout and computed geometry of those rows could not be verified. This supports the requirement for the observed implementation while warranting a partial rather than fully resolved visual report.",
-      "evidence": [
-        "style criterion has no objective selector",
-        "Delivered template `cirrus/templates/studio.html` renders every item through one `{% for it in items %}` loop. Inside each palette row, the title is `<span class=\"t\">{{ it.title }}</span>` and the same button's adjacent `.meta` contains the explicit word `{{ 'live' if it.published else 'unlisted' }}`. Thus the state is textual for both boolean outcomes, not conveyed by colour, icon, or position alone.",
-        "The template also repeats the same explicit `live`/`unlisted` wording in the all-records cards, reinforcing that both record states are named in words.",
-        "Seed source contains both published records and two held-back fixtures (`The Quiet Room` and `Noor Vasquez`, seeded with `published=False`), so both branches of the wording are applicable to actual studio records.",
-        "A direct visit to `/studio` redirected to `/studio/login`. Submitting the supplied producer credentials visibly produced `SOMETHING WENT WRONG`, preventing a screenshot and computed-style measurement of the authenticated palette.",
-        "The delivered authentication source explains the runtime blocker: `cirrus/auth.py` calls `secrets.token_hex(16)` in `new_token()` but contains no `import secrets`, so successful credential verification fails while generating the session token."
-      ],
-      "steps_used": 35,
-      "budget_exhausted": false
-    },
-    {
-      "criterion": "R6",
-      "status": "INSUFFICIENT_EVIDENCE",
-      "rationale": "The directly observed Studio surface plus delivered template/CSS source strongly support that the create route belongs to the same visual house as the public site: it literally inherits the same base frame and stylesheet and uses the same custom form primitives, typography, palette, and restraint. However, the required authenticated create flow, validation timing, and confirmation could not be observed because authentication fails server-side for both trusted producer accounts, so the result is partial rather than resolved.",
-      "evidence": [
-        "no deterministic probe for form_flow; browser specialist required",
-        "Direct browser evidence on `/studio/login` shows the Studio already uses the visitor-facing Cirrus frame: the same `cirrus` wordmark, WORKS/CONTACT/TALENTS/ABOUT navigation, SITE BY AUBE corner credit, warm light ground, and restrained centered composition rather than generic admin chrome.",
-        "Computed styles on the live Studio login show the house typography and palette: the wordmark uses `Cirrus Display` at 20px/300; form inputs use `Cirrus Text` at 12px/500 with uppercase text, transparent background, and only a 1px dark bottom rule; the button uses the same Cirrus Text and the site's two color tokens (`rgb(6,4,3)` and `rgb(233,234,228)`).",
-        "Delivered source directly establishes that `studio_form.html` is the create/edit form and `{% extends \"base.html\" %}`. `base.html` owns the same public frame, navigation, wordmark, custom cursor, counter, footer, font preloads, and single `/static/site.css` stylesheet used by visitor routes.",
-        "The create form source is deliberately restrained: one `.route--studio` section, a `.studio-head`, a `.palette`, house-styled `.field` title and discipline/variant controls, one `.form-error`, and one `.btn`; it does not introduce an unrelated admin shell or default standalone form page.",
-        "`site.css` defines shared global `Cirrus Text`/`Cirrus Display` typography, two warm color tokens, uppercase interface treatment, and house-specific `.route--studio`, `.palette`, `.field`, `.btn`, `.form-error`, and `.studio-head` rules. The live Studio login demonstrates those shared form primitives render as authored rather than browser defaults.",
-        "Both supplied producer credentials were attempted at the now-discovered `/studio/login`, but each submission produced `SOMETHING WENT WRONG`; unauthenticated `/studio/talents/new` redirects back to login. Thus no successful create confirmation could be exercised."
-      ],
-      "steps_used": 45,
-      "budget_exhausted": false
-    }
-  ],
   "rubric_coverage": 0.9285714285714286,
-  "evidence_bundle": "evidence_bundle.json",
-  "note": "combined_score is a report, not a training signal; reward.json is unchanged and remains the workflow pass rate (PLAN.md 1.4)",
+  "note": "Combined score is a weighted geometric mean of the workflow pass rate, the pytest pass rate and the rubric result discounted by criteria coverage (weights 0.50 / 0.25 / 0.25). reward.json holds the workflow pass rate.",
   "scoring": {
     "kind": "weighted_geometric_mean",
     "formula": "workflow**0.50 * pytest**0.25 * (rubric * rubric_coverage)**0.25",
