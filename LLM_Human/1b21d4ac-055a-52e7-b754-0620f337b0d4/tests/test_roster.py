@@ -131,10 +131,6 @@ def _seeded_count(actual: int, seeded: int, created: int, what: str, extra: str 
     the snapshot counts rows rather than published-and-in-the-served-house rows.
     """
     if created is None:
-        # Not a pass and not a failure: the harness never took the baseline, so
-        # this count cannot be judged either way. Skipping records that honestly;
-        # asserting exact equality would punish an app for creations we simply
-        # failed to measure.
         pytest.skip(
             f"no pre-browser baseline, so {what} cannot be compared against the "
             f"seed of {seeded} (the browser pass may have created rows)")
@@ -329,8 +325,6 @@ def test_unlisted_talent_absent_from_the_roster(anon_client, roster, pre_browser
     rows = items(response.json())
     _seeded_count(len(rows), PUBLISHED_TALENTS, _browser_created(pre_browser, roster),
                   f"GET {API_TALENTS}")
-    # The load-bearing half, and the half that is immune to creations: whatever
-    # the count, the UNLISTED talent must not be on the public roster.
     assert TALENT_NOOR_VASQUEZ not in _slugs(response.json()), (
         f"the unlisted talent {TALENT_NOOR_VASQUEZ!r} appears on the public roster")
     assert NAME_NOOR_VASQUEZ not in response.text, (

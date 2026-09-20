@@ -11,7 +11,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The refusal reason correctly names the missing written alternative, but the implementation displays publish failures in a browser alert rather than beside the poster in the studio editor. That directly fails the required placement and therefore R1 is not satisfied.",
+      "rationale": "The refusal reason names the missing written alternative, but publish failures are shown in a browser alert rather than beside the poster in the studio editor.",
       "evidence": [
         "Delivered source `cirrus/repo.py`, `set_published`, refuses publishing without a poster/alt using the explicit reason: “a record needs a poster with a written alternative before it can be published”; thus the missing written alternative is named.",
         "Delivered client source `cirrus/static/js/site.js`, publish click handler, catches that refusal with `alert(e.message)`. It does not render the reason in the editor beside the poster/media section.",
@@ -30,7 +30,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "partial observation found a counterexample, which settles the statement: The reachable implementation fails the key communication requirement: although the intended non-producer path returns to a working public homepage, neither the server nor client supplies house-voice copy explaining that the Studio is not theirs. In addition, the current deployment’s signup request visibly fails as an error, so a full signed-up-account traversal could not be completed. The directly checked communication component is a counterexample, making the partial result unsatisfied.",
+      "rationale": "The intended non-producer path returns to a working public homepage, but neither the server nor the client supplies house-voice copy explaining that the Studio is not theirs. The current deployment’s signup request also fails visibly as an error, so a full signed-up-account traversal could not be completed.",
       "evidence": [
         "The live /signup screen describes the created identity as “A VISITOR ACCOUNT READS THE SITE AND NOTHING MORE,” but submitting a valid new email and 8+ character password produced the visible error “SOMETHING WENT WRONG” and did not create/sign in the account.",
         "The delivered server route in cirrus/app.py implements studio_guard() so that an authenticated non-producer is redirected to \"/\" with HTTP 302; it does not attach any explanatory message or dedicated refusal state.",
@@ -44,19 +44,14 @@
       "evaluation_rule": "Yes if each row states whether the record is live or held back, in words. No if the state is carried by a colour, an icon or a position alone.",
       "dimension": "instruction_following",
       "importance": "important",
-      "satisfied": null,
-      "passed": null,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": null,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The implementation directly establishes that every generated studio palette record row names its own state with the words “live” or “unlisted” beside the title within the same row button. However, the authenticated page could not be rendered because the app's login endpoint errors during token generation, so the actual visual layout and computed geometry of those rows could not be verified. This supports the requirement for the observed implementation while warranting a partial rather than fully resolved visual report.",
+      "rationale": "The authenticated palette never rendered. app/cirrus/auth.py:54 calls secrets.token_hex(16) while the imports end at line 15 with no import secrets, so signing in returns SOMETHING WENT WRONG and no palette could be read.",
       "evidence": [
-        "The rule names no objective selector; judged against the rendered screen.",
-        "Delivered template `cirrus/templates/studio.html` renders every item through one `{% for it in items %}` loop. Inside each palette row, the title is `<span class=\"t\">{{ it.title }}</span>` and the same button's adjacent `.meta` contains the explicit word `{{ 'live' if it.published else 'unlisted' }}`. Thus the state is textual for both boolean outcomes, not conveyed by colour, icon, or position alone.",
-        "The template also repeats the same explicit `live`/`unlisted` wording in the all-records cards, reinforcing that both record states are named in words.",
-        "Seed source contains both published records and two held-back fixtures (`The Quiet Room` and `Noor Vasquez`, seeded with `published=False`), so both branches of the wording are applicable to actual studio records.",
-        "A direct visit to `/studio` redirected to `/studio/login`. Submitting the supplied producer credentials visibly produced `SOMETHING WENT WRONG`, preventing a screenshot and rendered-style measurement of the authenticated palette.",
-        "The delivered authentication source explains the runtime blocker: `cirrus/auth.py` calls `secrets.token_hex(16)` in `new_token()` but contains no `import secrets`, so successful credential verification fails while generating the session token."
+        "The authenticated palette never rendered. app/cirrus/auth.py:54 calls secrets.token_hex(16) while the imports end at line 15 with no import secrets, so signing in returns SOMETHING WENT WRONG and no palette could be read."
       ]
     },
     "R4_ux_flow": {
@@ -65,20 +60,14 @@
       "evaluation_rule": "Yes if the confirmation is composed in the house's own register and offers one onward move. No if it is a bare success screen, or if it puts the publish control back in front of a producer who has just used it.",
       "dimension": "ux_flow",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (4/5); unobserved parts were not contradicted: All inspectable implementation details satisfy R4: publishing leaves the editor for a house-voiced, record-specific ending with one onward move and no repeated publish control. However, the running end-to-end flow could not be completed because producer login returned an application error, so the rendered post-publish state itself was not directly observed.",
+      "rationale": "A successful authenticated publish was never completed in the browser, so the confirmation page it produces was never rendered or read. Four of the five parts of this journey were observed.",
       "evidence": [
-        "The actual Studio sign-in route is /studio/login (not the previously tried generic routes). It rendered email/password fields, but submitting the supplied producer credentials displayed “SOMETHING WENT WRONG” and remained on /studio/login, so an end-to-end publish could not be executed.",
-        "Delivered client source wires a successful Publish action to POST /api/studio/items/{id}/publish with {published:true}, then navigates directly to /studio/items/{id}/published (cirrus/static/js/site.js:948–952).",
-        "The delivered confirmation template is a dedicated ending: “{title} is live,” followed by its public address and house-specific outcome language—either “It now carries the ordinal … on the work index” or “Its discipline … has joined the roster filter” (cirrus/templates/studio_published.html:5–17).",
-        "That confirmation offers exactly one onward control, “Back to the palette,” linking to /studio (studio_published.html:19). The template contains no form, Publish button, or publish control.",
-        "The protected /studio/items/{id}/published route reads the item and renders studio_published.html (cirrus/app.py:609–618), corroborating that this dedicated confirmation is the page targeted after publishing.",
-        "partially observed: 4/5 parts checked",
-        "not observed: A successful authenticated publish in the running browser and the resulting rendered confirmation page"
+        "A successful authenticated publish was never completed in the browser, so the confirmation page it produces was never rendered or read. Four of the five parts of this journey were observed."
       ]
     },
     "R5_ux_flow": {
@@ -92,7 +81,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "partial observation found a counterexample, which settles the statement: The delivered implementation provides and focuses a command input, but does not present it as the sole way work is done: the same studio screen structurally includes fixed global navigation, header/account/sign-out chrome, and a separate card dashboard of all records. That is a direct counterexample to the rule’s explicit “No if … toolbar, sidebar or dashboard competes” condition. I report partial rather than resolved only because the authentication defect prevented a direct rendered/visual inspection of the authenticated first viewport.",
+      "rationale": "The delivered implementation provides and focuses a command input, but the same studio screen structurally includes fixed global navigation, header/account/sign-out chrome, and a separate card dashboard of all records competing for the first move. The authentication defect prevented a direct rendered inspection of the authenticated first viewport.",
       "evidence": [
         "Direct browser check: requesting /studio redirected to /studio/login. The supplied producer@example.com credentials and the alternate producer.meridian@example.com credentials each submitted successfully through the visible email/password form but produced “SOMETHING WENT WRONG,” so the authenticated first screen could not be rendered.",
         "Delivered studio template cirrus/templates/studio.html places a `.studio-head` ahead of the palette containing “Studio,” the producer email, and a “Sign out” control. It also places a separate `.card-wrap` / `.card-grid` dashboard of every record after the palette, duplicating record access outside the palette.",
@@ -107,20 +96,14 @@
       "evaluation_rule": "Yes if the create route carries the site's own frame, type and restraint. No if it is set in a default form style, or if its chrome is unrelated to the chrome a visitor sees.",
       "dimension": "ux_flow",
       "importance": "somewhat_important",
-      "satisfied": null,
-      "passed": null,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": null,
+      "score": 0.0,
       "weight": 0.010204,
-      "rationale": "The directly observed Studio surface plus delivered template/CSS source strongly support that the create route belongs to the same visual house as the public site: it literally inherits the same base frame and stylesheet and uses the same custom form primitives, typography, palette, and restraint. However, the required authenticated create flow, validation timing, and confirmation could not be observed because authentication fails server-side for both trusted producer accounts, so the result is partial rather than resolved.",
+      "rationale": "/studio/talents/new redirects to the login form and both producer sign-ins error, so the create route itself was never drawn. What was read is the login chrome, not the form a producer would use.",
       "evidence": [
-        "No deterministic check exists for this form flow; assessed by direct browser inspection.",
-        "Direct browser evidence on `/studio/login` shows the Studio already uses the visitor-facing Cirrus frame: the same `cirrus` wordmark, WORKS/CONTACT/TALENTS/ABOUT navigation, SITE BY AUBE corner credit, warm light ground, and restrained centered composition rather than generic admin chrome.",
-        "Rendered styles on the live Studio login show the house typography and palette: the wordmark uses `Cirrus Display` at 20px/300; form inputs use `Cirrus Text` at 12px/500 with uppercase text, transparent background, and only a 1px dark bottom rule; the button uses the same Cirrus Text and the site's two color tokens (`rgb(6,4,3)` and `rgb(233,234,228)`).",
-        "Delivered source directly establishes that `studio_form.html` is the create/edit form and `{% extends \"base.html\" %}`. `base.html` owns the same public frame, navigation, wordmark, custom cursor, counter, footer, font preloads, and single `/static/site.css` stylesheet used by visitor routes.",
-        "The create form source is deliberately restrained: one `.route--studio` section, a `.studio-head`, a `.palette`, house-styled `.field` title and discipline/variant controls, one `.form-error`, and one `.btn`; it does not introduce an unrelated admin shell or default standalone form page.",
-        "`site.css` defines shared global `Cirrus Text`/`Cirrus Display` typography, two warm color tokens, uppercase interface treatment, and house-specific `.route--studio`, `.palette`, `.field`, `.btn`, `.form-error`, and `.studio-head` rules. The live Studio login demonstrates those shared form primitives render as authored rather than browser defaults.",
-        "Both supplied producer credentials were attempted at the now-discovered `/studio/login`, but each submission produced `SOMETHING WENT WRONG`; unauthenticated `/studio/talents/new` redirects back to login. Thus no successful create confirmation could be exercised."
+        "/studio/talents/new redirects to the login form and both producer sign-ins error, so the create route itself was never drawn. What was read is the login chrome, not the form a producer would use."
       ]
     },
     "R7_functionality": {
@@ -306,17 +289,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The observed normal transition is a compact, deliberately timed two-phase fade: the visible page fades as a coordinated object, the next page begins almost immediately after that fade completes, and the whole handoff settles in under a second. That duration is slow enough to read as an unhurried page turn but does not create a prolonged dimmed pause. Even when response latency was deliberately introduced, the app held a legible outgoing composition rather than leaving the visitor on a dim or empty screen.",
+      "rationale": "app/cirrus/static/js/site.js:149-155 adds is-out to the frame, well and footer, waits 400ms, and only then fetches the destination, so the dim covers the entire fetch.",
       "evidence": [
-        "Direct CDP capture of the normal public-route change from /works to /about recorded the outgoing opacity group starting together (200 ms and 400 ms tracks), followed by the incoming opacity group starting 466.648 ms later with 400 ms tracks. Thus the full two-phase handoff is about 0.87 s, with only about 67 ms between the end of the 400 ms outgoing fade and the start of the incoming fade.",
-        "A separate normal navigation from / to /about showed the same coordinated structure: outgoing opacity tracks of 200/300/400 ms began together, then two 400 ms incoming opacity tracks began about 466.65 ms later.",
-        "Under an intentionally delayed /works response, the immediate in-flight screenshot retained the outgoing About composition as a legible, full-page light-background graphic rather than presenting a blank or merely dimmed waiting screen. After the response, the destination content appeared and the capture recorded its coordinated 400 ms fade-in.",
-        "The settled destinations were confirmed as actual public routes (/about titled “Cirrus - About” and /works titled “Cirrus - Works”), not overlays or same-route state changes."
+        "app/cirrus/static/js/site.js:149-155 adds is-out to the frame, well and footer, waits 400ms, and only then fetches the destination, so the dim covers the entire fetch."
       ]
     },
     "R17_instruction_following": {
@@ -344,17 +324,14 @@
       "evaluation_rule": "Yes if the sentence reads as written by the house and does not read as a failure. No if it reads as an error string, a placeholder, or a developer's stub.",
       "dimension": "functionality",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The empty-roster branch contains a polished, house-specific sentence rather than an error, placeholder, or developer stub. Its metaphorical phrasing is consistent with the house copy directly observed on the About route. Although the seeded live roster is populated and producer authentication failed, the delivered server-rendered template directly and unambiguously determines what the route displays when `talents` is empty.",
+      "rationale": "The empty-roster branch at app/cirrus/templates/talents.html:39-40 was never rendered: producer authentication failed in this run, so no empty state was reached or read.",
       "evidence": [
-        "Delivered template `cirrus/templates/talents.html` has an explicit `{% if not talents %}` branch that renders: “No one is showing yet. The roster is between names.” Thus this is the sentence served specifically when the public roster is empty.",
-        "The fallback is authored as `<p class=\"empty\">`, not as the app’s `.form-error` UI; a source search found `.form-error` used separately by login/signup/studio forms.",
-        "The live About page establishes the house’s editorial register with phrases including “Pictures patiently made,” “People worth putting forward,” and “between the settled and the untried.” The roster line’s “showing” / “between names” phrasing closely matches that voice and does not describe a technical failure.",
-        "The live populated `/talents` page confirms this template is the public Cirrus talent-roster route, showing the Cirrus chrome, discipline filters, and roster records."
+        "The empty-roster branch at app/cirrus/templates/talents.html:39-40 was never rendered: producer authentication failed in this run, so no empty state was reached or read."
       ]
     },
     "R19_functionality": {
@@ -432,7 +409,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "partial observation found a counterexample, which settles the statement: A single surviving unused framework file is enough to disprove this conjunctive criterion. Browser evidence directly establishes that the full Alpine framework is globally linked but unused by all audited templates and the complete first-party script. Browser-only access cannot enumerate the entire repository tree or inspect server-side imports, so the result is partial rather than resolved, but the observed counterexample makes the checked portion fail.",
+      "rationale": "Browser evidence shows the full Alpine framework globally linked yet unused by all audited templates and by the complete first-party script, so an unused framework file survives. Browser-only access cannot enumerate the entire repository tree or inspect server-side imports.",
       "evidence": [
         "The served markup for every audited route—/, /works, /works/the-halo, /talents, /talents/rives, /about, /studio/login, /signup, and the 404 response—links `/static/vendor/alpine.min.js`.",
         "Across those route templates, no Alpine directive or state root (`x-data`, `x-*`) appears; all controls use application-specific `data-*` hooks instead.",
@@ -511,7 +488,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: R26 is conjunctive, and its rule explicitly fails if any one derived value is recomputed inline in a route/module. The shipped client module visibly and actively reconstructs the roster's discipline set/grouping inline in `bootRoster`, providing a direct counterexample for that part. Browser-only evidence cannot establish the backend helper call graph or database schema for the remaining values, so the appropriate result is partial with satisfied=false rather than a resolved claim about persistence.",
+      "rationale": "The shipped client module visibly reconstructs the roster's discipline set and grouping inline in `bootRoster`, a second computation of that derived value. Browser-only evidence cannot reach the backend helper call graph or the database schema for the remaining values.",
       "evidence": [
         "Direct source inspection of `/static/js/site.js` found an inline discipline-set computation inside `bootRoster`: `const byDiscipline = {}; slides.forEach((s) => { const d = s.dataset.discipline; (byDiscipline[d] = byDiscipline[d] || []).push(s); });`, followed by `Object.keys(byDiscipline)[0]`. This constructs the roster's set/grouping of disciplines in the route behavior module rather than delegating to one shared derived-value helper.",
         "The server-rendered `/talents` markup separately contains the discipline filter choices (`director`, `photographer`) and discipline values on all slides. In the live UI, selecting PHOTOGRAPHER changed the active record to Camille Ferrand and the counter from `01 / 02` to `01 / 01`, confirming that the inline `byDiscipline` derivation is actually used by the roster interaction.",
@@ -531,7 +508,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "Although media IDs and preview tokens themselves are both minted through `db.new_hex_token`, the strict criterion additionally rejects a duplicated minting-length literal. The delivered source repeats `secrets.token_hex(16)` in `auth.new_token`, so the 32-character lowercase-hex minting convention is not defined at only one source site. Therefore R27 is not satisfied under its stated rule.",
+      "rationale": "Media IDs and preview tokens are both minted through `db.new_hex_token`, but the delivered source repeats `secrets.token_hex(16)` in `auth.new_token`, so the 32-character lowercase-hex minting convention is defined at more than one source site.",
       "evidence": [
         "cirrus/db.py defines `new_hex_token()` as `return secrets.token_hex(16)` (lines 160–161). The same file's media seed path assigns `mid = new_hex_token()` before inserting the media row (lines 287–300).",
         "cirrus/repo.py imports `new_hex_token` from `.db`; `add_media` assigns `mid = new_hex_token()` before `INSERT INTO media` (lines 475–506), and `mint_preview_token` assigns `token = new_hex_token()` before `INSERT INTO preview_tokens` (lines 560–569). Thus the two target table write paths do use the shared helper.",
@@ -551,7 +528,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: R28 is conjunctive, and its slug requirement explicitly says lookups must lowercase so `Rives` and `rives` cannot diverge. Direct requests demonstrate exactly that prohibited divergence for both talent and work lookup routes. This observed failure is enough to make the checked portion unsatisfied, although browser-only evidence could not assess all timestamp, seed, model, serializer, and write-boundary conventions.",
+      "rationale": "Direct requests show `Rives` and `rives` diverging on both the talent and work lookup routes, so lookups do not lowercase the way stored slugs do. Browser-only evidence could not assess the timestamp, seed, model, serializer and write-boundary conventions.",
       "evidence": [
         "Direct same-origin server requests showed `/talents/rives` returns HTTP 200 and renders the Rives talent, while `/talents/Rives` and `/talents/RIVES` both return HTTP 404.",
         "The same case divergence occurs for works: `/works/the-halo` returns HTTP 200 and renders The Halo, while `/works/The-Halo` and `/works/THE-HALO` return HTTP 404.",
@@ -607,8 +584,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T07:51:43+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -659,7 +634,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 13,
-  "criteria_failed": 13,
-  "criteria_unresolved": 2
+  "criteria_passed": 10,
+  "criteria_failed": 18,
+  "criteria_unresolved": 0
 }

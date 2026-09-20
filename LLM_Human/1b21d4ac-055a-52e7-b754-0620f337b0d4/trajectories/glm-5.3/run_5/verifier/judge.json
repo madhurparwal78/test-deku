@@ -11,7 +11,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The refusal reason is correctly worded and names the missing written alternative, but it is displayed as a general record-form alert rather than next to the poster in question. The rule explicitly rejects a message that is only page/form-level, so the criterion is not satisfied.",
+      "rationale": "The refusal reason is worded correctly and names the missing written alternative, but it is displayed as a general record-form alert rather than next to the poster in question.",
       "evidence": [
         "Constructed a fresh unlisted work, “Refusal Geometry Check,” with no poster, then pressed PUBLISH. The publish was refused and the record remained UNLISTED.",
         "The resulting alert explicitly says: “A published record needs a poster with a written alternative.” Thus the reason names both the poster and the missing written alternative.",
@@ -31,7 +31,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The requirement is not met. A genuinely signed-up viewer was redirected to a functioning page, but that page was the studio sign-in form and invited them to sign in or create the viewer account they already had. Because it neither returns the reader to the public entry surface nor says that the studio is not theirs, the refusal reads as a confusing authentication state/half-drawn studio door rather than a deliberate editorial decision.",
+      "rationale": "A genuinely signed-up viewer was redirected to a functioning page, but that page was the studio sign-in form, inviting them to sign in or create the viewer account they already had. It neither returns the reader to the public entry surface nor says the studio is not theirs, so the refusal reads as a confusing authentication state rather than a deliberate editorial decision.",
       "evidence": [
         "Created a fresh account through the visible /signup form; the app returned to the public home page after submission.",
         "Directly verified the resulting session at /api/auth/me: the signed-in account was role \"viewer\" with house_id null.",
@@ -302,17 +302,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The directly captured transition is a coordinated, zero-delay 400 ms opacity change, with navigation committed after a brief 240 ms cue. That timing is long enough to read as intentional and unhurried but short enough not to feel like waiting, and the shared timing across the page regions makes it read as one composed page turning over to another. The tested public route changes did not leave the reader on a lingering dimmed screen in normal operation.",
+      "rationale": "app/static/site.js:371-372 adds is-transitioning and hands off to location.href after 240ms, leaving the reader on a faded page for the length of the response.",
       "evidence": [
-        "Directly exercised the public About → Works and Works/Home → About route changes with CDP animation capture started immediately before the click. The captures recorded the route-change opacity animations at 400 ms with zero delay; the destination then appeared with its own content motion rather than exposing a loading screen.",
-        "The delivered interaction code adds `is-transitioning` on an internal navigation click and changes `window.location.href` after 240 ms. The corresponding CSS fades `.frame`, `.well`, `.footer`, and `.counterwell` together using the same `opacity 0.4s`, so the outgoing composition acts as one object instead of dissolving in staggered fragments.",
-        "On the normal About navigation, the destination About composition was visible and settled immediately after the short transition; no blank or lingering dimmed state was observed. On Works, the destination chrome, central route mark, opening copy, and bottom credit were already presented as one coherent new page.",
-        "A deliberately delayed `/works` response was also exercised. Once the destination rendered, the frame and Works route marker were visibly established with destination content entering; there was no separate spinner or ambiguous application-level loading treatment extending the fade."
+        "app/static/site.js:371-372 adds is-transitioning and hands off to location.href after 240ms, leaving the reader on a faded page for the length of the response."
       ]
     },
     "R17_instruction_following": {
@@ -428,7 +425,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "partial observation found a counterexample, which settles the statement: R22 is conjunctive, and direct source evidence found at least two unequivocally unreferenced surviving files (`templates/_macros.html` and root `alpine.js`), plus apparently unused duplicate font artifacts. Therefore the positive requirement is not met. Per the reporting rule, a directly observed failing part of a multi-part criterion is reported as partial with satisfied=false even though that counterexample is sufficient to settle the criterion's polarity.",
+      "rationale": "Direct source evidence found at least two unequivocally unreferenced surviving files, `templates/_macros.html` and root `alpine.js`, plus apparently unused duplicate font artifacts. Reachability of every other file in the tree was not traced.",
       "evidence": [
         "The delivered source inventory contains 39 files, including `templates/_macros.html`, root-level `alpine.js`, `static/alpine.min.js`, and duplicate font files under both `assets/fonts/` and `static/`.",
         "A tree-wide source search for `_macros` or Jinja import/include forms returned no matches. All seven templates that use inheritance directly extend `base.html`; no route or reached template imports, includes, or otherwise references `templates/_macros.html`. Thus `_macros.html` is an unreferenced surviving template helper.",
@@ -509,7 +506,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "R26 is not satisfied because the roster's discipline set has two implementations: the `records.disciplines()` read-model helper and a separate inline deduplication in `static/site.js`. The rule explicitly makes any second inline recomputation a failure, even though the schema does not persist the four derived values and the other three derivations appear centralized.",
+      "rationale": "The roster's discipline set has two implementations: the `records.disciplines()` read-model helper and a separate inline deduplication in `static/site.js`. The schema does not persist the four derived values, and the other three derivations appear centralized.",
       "evidence": [
         "Delivered source `records.py` defines the server-side roster discipline-set helper `disciplines()`, which iterates `published_items(..., \"talent\")` and deduplicates disciplines with `seen`/`out`; `app.py` calls this helper for `/api/disciplines` and the `/talents` page.",
         "Delivered source `static/site.js` independently recomputes that same roster discipline set inside `Alpine.data(\"roster\", ...)`: it initializes `var disciplines = []`, iterates every supplied talent, tests `disciplines.indexOf(talent.discipline) === -1`, and pushes unique disciplines. This is an inline second implementation in a different module, directly violating the exactly-one-helper/every-caller rule.",
@@ -524,18 +521,14 @@
       "evaluation_rule": "The identifier is the thirty-two character lowercase hexadecimal token carried by the media row's id and by the preview token's token column. Yes if one helper mints it and both models call that helper, so the length, the case and the alphabet have one definition in source. No if each model builds its own token with its own uuid4 hex, token_hex or urandom expression, if the minting length literal appears at more than one site, or if the two tables mint by different routines.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The runtime creation paths for media IDs and preview-token values both call the same imported `db.hex32` helper. The 32-character lowercase-hex convention is defined once via `secrets.token_hex(16)`, and the relevant table-specific insertion paths contain no independent UUID, token_hex, urandom, or duplicate sizing expression.",
+      "rationale": "Two routines mint the media row identifier: hex32() at app/db.py:147-148, used from app/app.py:501, and a second form at app/db.py:236 that builds media_ plus a 32-character hash slice, carrying its own length literal.",
       "evidence": [
-        "Delivered source `db.py:147-148` defines the shared `hex32()` helper exactly once as `return secrets.token_hex(16)`. Python's `token_hex(16)` yields 16 random bytes encoded as 32 lowercase hexadecimal characters, so length, case, and alphabet are established at this one definition.",
-        "Delivered source `app.py:501` assigns the media row identifier with `media_id = hex32()` immediately before the `INSERT INTO media` at lines 503-505.",
-        "Delivered source `app.py:599` assigns the preview token with `token = hex32()` immediately before the `INSERT INTO preview_tokens` at lines 602-604.",
-        "The schema in `db.py` stores these values in the required columns: `media.id TEXT PRIMARY KEY` (lines 58-60) and `preview_tokens.token TEXT NOT NULL UNIQUE` (lines 82-85).",
-        "A source-wide search for `hex32()` found the shared definition plus the two relevant call sites (`app.py:501` and `app.py:599`; `db.py:152` is the generic prefixed `ident()` wrapper). A source-wide search for `secrets.token_hex(16)` found exactly one occurrence, in the helper definition. Thus neither media creation nor preview-token creation repeats the random-token expression or its 16-byte sizing literal."
+        "Two routines mint the media row identifier: hex32() at app/db.py:147-148, used from app/app.py:501, and a second form at app/db.py:236 that builds media_ plus a 32-character hash slice, carrying its own length literal."
       ]
     },
     "R28_internal_consistency": {
@@ -606,11 +599,10 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T11:54:26+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
+    "rubric_resume": null,
     "finished_at": "2026-09-18T13:22:07+00:00",
     "routes_visited": [
       "/",
@@ -651,7 +643,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 18,
-  "criteria_failed": 10,
+  "criteria_passed": 16,
+  "criteria_failed": 12,
   "criteria_unresolved": 0
 }

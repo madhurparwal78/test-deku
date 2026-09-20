@@ -49,7 +49,7 @@
       "is_positive": true,
       "score": 1.0,
       "weight": 0.030612,
-      "rationale": "The Studio palette explicitly writes each record’s publication state in the same card as its title. “LIVE” identifies published records and “UNLISTED” identifies held-back records. The full served record grid, accessibility snapshot, DOM inspection, screenshots, and computed visibility/styles all agree, so the requirement is met.",
+      "rationale": "The Studio palette writes each record’s publication state in the same card as its title, LIVE for published records and UNLISTED for held-back ones. The full served record grid, accessibility snapshot, DOM inspection, screenshots and computed visibility/styles all agree.",
       "evidence": [
         "Authenticated at /studio as producer@example.com and inspected the complete Studio palette. The accessibility snapshot listed every record link with a textual terminal state; the records shown used the words “LIVE” or “UNLISTED,” including both talents and works.",
         "The raw authenticated /studio response contains every record as an article with one .record-title and one sibling .record-state inside the same .record-link. All inspected entries in the complete server-rendered record grid had a .record-state whose text was either “LIVE” or “UNLISTED”; no record lacked a written state.",
@@ -298,17 +298,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The observed public-route handoff is a deliberate, unified 0.2–0.4 s fade with the new page beginning its reveal essentially immediately, not a prolonged dimmed state. Repetition in both directions and the bounded timings support the reading of one object turning a page rather than an indistinguishable slow response.",
+      "rationale": "The transition fades the current document before triggering a hard navigation, so the dimmed interval is response-dependent rather than one continuous page turn.",
       "evidence": [
-        "Directly navigated between the public Works and Talents routes in both directions; each destination's substantive content was present on the first settled snapshot (Talents showed its discipline controls and roster; Works showed its project list and footer), with no intervening dimmed waiting screen observed.",
-        "CDP motion capture started immediately before the Works→Talents action recorded the route fade as five opacity animations sharing the exact same startTime, with bounded durations of 200, 300, and 400 ms; destination motion began immediately afterward (within roughly 17–67 ms) rather than after a long blank/dim hold.",
-        "A second immediate-before-action CDP capture for Talents→Works reproduced the same compact timing: four synchronized opacity animations of 200–400 ms, followed by destination animation with a 400 ms opacity and 450 ms content transforms. The longest listed destination stagger was 270 ms, keeping the whole visible handoff well under one second.",
-        "As a stress check, a 2-second response delay was installed for /talents. The eventual destination still used the same 200–400 ms synchronized fade timing; the artificial network delay did not elongate the fade animation itself. The interceptor was cleared afterward."
+        "The public-link handler applies the outgoing fade first and only then assigns the destination URL, leaving the old page dimmed while hard navigation begins."
       ]
     },
     "R17_instruction_following": {
@@ -443,7 +440,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: R23 is not satisfied because at least two prohibited binary typeface files are shipped and directly served, and a standalone SVG share asset is also served. Since this conjunctive requirement is already decisively false but browser-only inspection cannot enumerate the entire source tree or inspect backend generator source/database relationships, the most accurate status is partial with satisfied=false.",
+      "rationale": "At least two prohibited binary typeface files are shipped and served directly, and a standalone SVG share asset is served as well. Browser-only inspection cannot enumerate the entire source tree or reach the backend generator source and database relationships.",
       "evidence": [
         "Raw server HTML for `/` and `/works/the-halo` preloads `/static/fonts/cirrus-display.woff2` and `/static/fonts/cirrus-text.woff2`; direct same-origin fetches returned HTTP 200, `application/octet-stream`, non-text binary bodies of 24,452 and 29,072 bytes.",
         "The served `/static/cirrus.css` defines two `@font-face` rules whose `src` values are those `.woff2` files. These are shipped typeface files and are expressly forbidden by the criterion.",
@@ -482,7 +479,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The requirement is not met. While `studio_item` correctly makes a foreign single-record ID indistinguishable from a missing one, it is not the sole reusable scoping unit. Collection reads, reorder writes, related-talent validation, and preview resolution restate house scoping independently. This directly triggers the rule's stated No conditions: read paths use different mechanisms, and at least one write path loads records without passing through the single-record helper.",
+      "rationale": "`studio_item` makes a foreign single-record ID indistinguishable from a missing one, but it is not the sole reusable scoping unit. Collection reads, reorder writes, related-talent validation and preview resolution each restate house scoping independently, so read paths use different mechanisms and at least one write path loads records without passing through the single-record helper.",
       "evidence": [
         "The deployed server is the `cirrus` package: `/app/wsgi.py` imports `cirrus.app`, and `/app/Dockerfile` copies `cirrus` into the image and runs that WSGI entry point.",
         "`cirrus/api.py` inventories 10 API studio endpoints. Although all use `@auth.producer_required` to derive `g.house_id`, record access is delegated to several model functions (`studio_item`, `studio_items`, `create_item`, `update_item`, `set_published`, `add_media`, `add_credit`, `change_slug`, `reorder_works`, and `mint_preview_token`). The decorator establishes the caller's account house but does not itself scope record queries.",
@@ -544,7 +541,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "R28 requires both UTC instants through one identical convention and slug lowercasing at one boundary across every model, seed routine, lookup, and serializer. The active delivered source has several distinct timestamp-production/serialization paths and performs slug lowercasing independently in the normalizer, public lookup, comparisons, and seed SQL. Because these are direct counterexamples to both conjuncts, the criterion is not satisfied.",
+      "rationale": "The active delivered source has several distinct timestamp-production and serialization paths, and it lowercases slugs independently in the normalizer, the public lookup, the comparisons and the seed SQL rather than at one boundary across every model, seed routine, lookup and serializer.",
       "evidence": [
         "The deployed package is `cirrus`, not the parallel `app` tree: `Dockerfile` copies `cirrus` and `wsgi.py`, and `wsgi.py` imports `cirrus.app`.",
         "Timestamp handling is not one identical convention. `cirrus/schema.sql` defines every `created_at` as `TIMESTAMPTZ ... DEFAULT (now() AT TIME ZONE 'utc')`; `cirrus/seed.py::_upsert_item` separately uses Python `datetime.now(timezone.utc)` for `published_at`; `cirrus/models.py::set_published` and `mint_preview_token` use a separate `now_utc()` helper; and `cirrus/models.py::item_json` / `mint_preview_token` serialize using direct `.isoformat()` without explicitly converting to UTC.",
@@ -603,8 +600,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T10:22:15+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -663,7 +658,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 18,
-  "criteria_failed": 10,
+  "criteria_passed": 17,
+  "criteria_failed": 11,
   "criteria_unresolved": 0
 }

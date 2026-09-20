@@ -11,7 +11,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The refusal reason correctly identifies the missing written alternative, but it is not positioned beside the poster. It is rendered as an editor-level field error above the save controls, approximately 139 px of vertical gap from its bottom to the poster row’s Remove control, with intervening controls and a section heading. Because the criterion specifically requires the reason beside the poster in question, the criterion is not satisfied.",
+      "rationale": "The refusal reason identifies the missing written alternative but sits as an editor-level field error above the save controls, roughly 139 px of vertical gap from its bottom to the poster row’s Remove control, with intervening controls and a section heading between them.",
       "evidence": [
         "Constructed a new unlisted talent at /studio/items/77, attached a 1200×1600 poster with a blank written alternative, and pressed Publish. Publishing was refused and the record remained unlisted.",
         "The refusal text explicitly names the missing field: “The poster needs a written alternative before this record can be published.” Its served element is <p class=\"field-error\" ... role=\"alert\">…</p>.",
@@ -298,17 +298,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The repeated public-route interactions consistently show a short, intentional 400 ms page-level fade, followed by/alongside bounded destination motion, with no prolonged dim screen or ambiguous spinner/loading pause. That timing is unhurried enough to register as one page changing into another but short enough not to resemble a slow response.",
+      "rationale": "app/cirrus/static/build/app.js:793-796 adds is-navigating then assigns location.href 380ms later, so the fade runs before the destination is requested.",
       "evidence": [
-        "Directly exercised three public-route changes: Works → Talents, Talents → About, and Talents → Works. Each destination replaced the route normally and exposed its substantive content immediately on arrival (for example, the Talents roster and About copy), without an observed lingering dimmed or empty screen.",
-        "CDP capture on Talents → About recorded the route opacity animations at 400 ms with `ease`; Talents → Works produced the same pair of 400 ms opacity animations. These are bounded decorative fades, not an indefinite loading treatment.",
-        "Across captures, the additional destination-page motion was an 800 ms content treatment (filter/transform/clip-path depending on route), while route content was already present and readable; the transition therefore reads as a deliberate page turn rather than waiting for a response.",
-        "A deliberately delayed `/talents` response by 1.5 seconds did not produce a stable dimmed/loading state that could be observed; once navigation completed, the full Talents route was present. The interceptor was cleared afterward."
+        "app/cirrus/static/build/app.js:793-796 adds is-navigating then assigns location.href 380ms later, so the fade runs before the destination is requested."
       ]
     },
     "R17_instruction_following": {
@@ -381,7 +378,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.010204,
-      "rationale": "The rule asks every declared runtime dependency to be within the permitted stack and explicitly says an image-processing library standing beside the five is a violation. The sole manifest declares Pillow, and the application source actively uses it for image generation. Therefore the positive requirement is definitively not met, regardless of the otherwise expected Flask, Gunicorn, and PostgreSQL driver entries.",
+      "rationale": "The sole manifest declares Pillow, an image-processing library standing beside the five permitted components, and the application source actively uses it for image generation. The Flask, Gunicorn and PostgreSQL driver entries are otherwise as expected.",
       "evidence": [
         "The delivered source tree contains `requirements.txt` as its dependency manifest; no `pyproject.toml` or `package.json` is present in the source listing.",
         "The complete runtime manifest is: `flask==3.1.0`, `gunicorn==23.0.0`, `psycopg[binary]==3.2.3`, and `pillow==11.3.0`.",
@@ -479,21 +476,14 @@
       "evaluation_rule": "The house-scoping decision is the rule that a studio caller reaches only records whose house matches their own account's house, and that a foreign record is answered exactly as a missing one. Yes if that rule is written once -- a single decorator, dependency, query helper or base query -- and every studio read path and every studio write path reaches its record through it. No if two or more studio handlers each carry their own inline house comparison, if the read paths use one mechanism and the write paths another, or if any studio handler loads a record without passing through that single unit.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: Direct cross-role identifier reconciliation strongly confirms the required runtime read behavior: each producer reaches its own record, and a foreign record is indistinguishable from a missing one across the studio list, item API, edit page, and published-confirmation page. However, R25 is fundamentally a backend source-structure requirement. The browser exposes only compiled client JavaScript and server responses, not the server handlers/query helper/decorator. Browser-only evidence therefore cannot establish that the house comparison is written exactly once or that every write handler reaches records through that same unit. No observed part failed, so this is partial with satisfied=true rather than a resolved pass.",
+      "rationale": "owned_item at app/cirrus/api_studio.py:44-51 is not imported by app/cirrus/pages.py, whose imports end at line 8. The house is re-compared inline at :265-267 and :296-298, and :345 loads the item with no house predicate.",
       "evidence": [
-        "Authenticated successfully as Meridian producer at /studio. Its studio list contained only Meridian records Sable Ito (ID 18) and Foundry (ID 19), while Cirrus record ID 58 was absent.",
-        "As Meridian, GET /api/studio/items/18 returned 200 with Sable Ito, while foreign Cirrus ID 58 and nonexistent ID 999999 both returned the identical HTTP 404 JSON response: {\"error\":\"No such record.\"}.",
-        "As Meridian, both /studio/items/58 (foreign) and /studio/items/999999 (missing) returned HTTP 404 and the same not-found page.",
-        "Switched to the Cirrus producer and reconciled the identifiers: /studio listed QA Poster Talent 2026 at /studio/items/58; GET /api/studio/items/58 returned 200 with that title and ID. Conversely, Meridian ID 18 and nonexistent ID 999999 both returned identical HTTP 404 JSON as Cirrus.",
-        "As Cirrus, the server-rendered read routes /studio/items/18 and /studio/items/999999 both returned the same HTTP 404 page. The confirmation reads /studio/items/18/published and /studio/items/999999/published likewise both returned the same HTTP 404 page.",
-        "The publicly served front-end source enumerates the studio write paths (PATCH item; POST media, credits, publish, preview token, slug; DELETE media and credits), but it does not contain or expose the backend query implementation that would establish whether those handlers share one house-scoping source unit.",
-        "partially observed: 5/8 parts checked",
-        "not observed: Backend source showing one reusable decorator, dependency, query helper, or base query containing the house-scoping decision.; Whether every studio write handler (item edit, media/credit add/remove, publish, slug change, preview-token minting, reorder if applicable) loads its target through that exact single source unit.; Whether any two backend handlers restate an inline house comparison despite producing the same external behavior."
+        "owned_item at app/cirrus/api_studio.py:44-51 is not imported by app/cirrus/pages.py, whose imports end at line 8. The house is re-compared inline at :265-267 and :296-298, and :345 loads the item with no house predicate."
       ]
     },
     "R26_internal_consistency": {
@@ -541,21 +531,14 @@
       "evaluation_rule": "An instant is any stored or serialised timestamp -- created_at, published_at, expires_at -- and the boundary is the single place a slug is normalised. Yes if every timestamp is produced and stored in UTC through one convention, a slug is lowercased once at that one boundary before it is stored or compared, and every model, seed routine and serialiser applies both conventions identically. No if some modules take a naive local-time now while others take a UTC-aware one, if a slug is lowercased in a route handler in one place and in a model or the seed in another, or if any lookup compares a slug without lowercasing, so that Rives and rives could diverge.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (6/9); unobserved parts were not contradicted: All browser-observable behavior supports the convention: timestamps are UTC-aware in every reachable serialisation, mixed-case slugs are canonicalised before storage, duplicate comparison is case-insensitive, route lookup accepts case variants, and work/talent paths behave alike. However, the criterion additionally requires proving a single internal normalization boundary and identical implementation in every model, seed routine, and serializer. Browser-visible responses can establish outcomes but cannot establish that there is literally only one internal normalization call site or inspect every backend module, and no reachable response exposed an `expires_at` value for the minted preview token. Therefore the strongest defensible result is partial, with all observed parts satisfied.",
+      "rationale": "The slug is normalised at four independent points: the helper at app/cirrus/api_studio.py:59-62, the lookup SQL at app/cirrus/pages.py:88, the functional index at app/cirrus/schema.sql:40, and the seed's own conflict target over raw literals at app/cirrus/seed.py:111.",
       "evidence": [
-        "Authenticated via the discovered same-origin `/studio/login` route and inspected the producer API directly. `/api/studio/items` serialised every observed non-null `created_at` and `published_at` with an explicit `+00:00` UTC offset, including seeded work and talent rows, previously created probe rows, and newly created records.",
-        "Created work id 80 with the explicitly mixed-case slug `R28-MiXeD-9A2F`. The edit screen and `/api/studio/items/80` both returned the stored slug as `r28-mixed-9a2f`; its newly generated `created_at` was `2026-09-17T21:51:59.740618+00:00`.",
-        "Attempted to create another work with `R28-MIXED-9A2F`; the server rejected it with `That slug is taken.`, directly showing that uniqueness comparison does not allow case variants to diverge.",
-        "Created talent id 82 with mixed-case slug `R28-TaLeNt-9A2F`. `/api/studio/items/82` returned `slug: r28-talent-9a2f` and `studio.created_at: 2026-09-17T21:53:53.196577+00:00`, demonstrating identical observed slug/timestamp behaviour for both work and talent models.",
-        "Case-varied published lookups `/works/THE-HALO`, `/works/The-Halo`, and `/talents/RIVES` all returned HTTP 200 with the same canonical records as their lowercase routes, while served links and roster JSON use lowercase canonical slugs.",
-        "The public `/talents` serialiser exposed `published_at: 2026-09-17T21:28:53.069204+00:00`; the studio list/detail serializers consistently exposed UTC-offset timestamps and lowercase slugs across seeded and runtime-created data.",
-        "partially observed: 6/9 parts checked",
-        "not observed: Whether slug normalization is implemented at literally one internal boundary rather than duplicated across backend modules; Direct source-level coverage of every model, seed routine, and serializer; UTC handling/serialization of preview-token `expires_at`, which was not exposed by any reachable browser response"
+        "The slug is normalised at four independent points: the helper at app/cirrus/api_studio.py:59-62, the lookup SQL at app/cirrus/pages.py:88, the functional index at app/cirrus/schema.sql:40, and the seed's own conflict target over raw literals at app/cirrus/seed.py:111."
       ]
     }
   },
@@ -606,8 +589,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T07:29:59+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -664,7 +645,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 16,
-  "criteria_failed": 12,
+  "criteria_passed": 13,
+  "criteria_failed": 15,
   "criteria_unresolved": 0
 }

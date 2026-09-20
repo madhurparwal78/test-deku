@@ -91,7 +91,7 @@
       "is_positive": true,
       "score": 1.0,
       "weight": 0.030612,
-      "rationale": "The producer’s first studio screen clearly frames search/typing as the primary way to work. The buttons and record cards are integrated with that palette—its action choices and live-filtered results—rather than constituting a competing toolbar or dashboard. Although the input was not automatically focused after navigation, its explicit prompt and dominant placement make typing visibly the next move, which is what the rule asks.",
+      "rationale": "The producer’s first studio screen frames search and typing as the primary way to work. The buttons and record cards are integrated with that palette, as its action choices and live-filtered results, rather than forming a competing toolbar or dashboard. The input was not automatically focused after navigation, but its explicit prompt and dominant placement make typing visibly the next move.",
       "evidence": [
         "Authenticated directly at /studio as producer@example.com. The initial studio screen is dominated by a single 1020px-wide text input whose prompt reads “TYPE A NAME, OR CHOOSE AN ACTION,” immediately followed by the palette’s four actions (NEW TALENT, NEW WORK, REORDER INDEX, PREVIEW) and its record results.",
         "Typing “radiant” in that input immediately reduced the record surface to the single matching work “The Radiant,” confirming that the visible record grid is the palette’s live result surface rather than a separate dashboard competing for attention.",
@@ -190,7 +190,7 @@
       "is_positive": true,
       "score": 1.0,
       "weight": 0.030612,
-      "rationale": "The requirement is met because multiple links are legible as pressable at rest through conventional position, setting, grouping, explicit destination labels, and—in the external credit's case—an arrow symbol. Discoverability does not depend on hover or on a special link color; successful keyboard focus and activation corroborate the identified targets.",
+      "rationale": "Multiple links read as pressable at rest through conventional position, setting, grouping, explicit destination labels and, for the external credit, an arrow symbol. Discoverability does not depend on hover or on a special link color, and keyboard focus and activation succeeded on the identified targets.",
       "evidence": [
         "On the public home route at rest, with no hover sweep, the upper-right navigation visibly presents WORKS, TALENTS, CONTACT, and ABOUT as a compact, consistently styled horizontal group in the conventional page-header navigation position; the Cirrus home mark is separately positioned at upper left.",
         "DOM inspection confirmed these resting labels are actual anchors: WORKS links to /works, TALENTS to /talents, CONTACT to mailto:prod@example.com, ABOUT to /about, and the Cirrus mark to /. Their computed resting color is the same warm off-white used by the surrounding chrome, so color is not the identifying cue.",
@@ -422,22 +422,14 @@
       "evaluation_rule": "A file is reached when a route table, a model, a template, a settings module, the seed module, or something itself reached imports, renders, extends, includes or links it; entry points, configuration files, migrations, the seed, USER_README.md and deployment files are reached by definition. Yes if every remaining source file in the tree is reached that way, template partials, stylesheets and scripts included. No if the tree carries framework scaffolding the checklist never asked for -- an unused blueprint, an empty admin or moderation module, a generated boilerplate view -- or a helper, template, stylesheet or script that nothing imports, renders or links.",
       "dimension": "scope_discipline",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "A complete source-tree reachability map accounts for every delivered file. Routes cover every page template and application module; template inheritance/import/include edges cover base and all partials; base links every static asset; startup reaches seed and schema; and the remaining root files are explicit entry points or configuration/deployment/documentation. No unused blueprint, admin/moderation scaffold, generated boilerplate view, orphan template, stylesheet, script, or helper module was found.",
+      "rationale": "Standalone checks.py, design_checks.py and walk.py are unreachable from the production graph and are excluded by Dockerfile/.dockerignore.",
       "evidence": [
-        "The complete delivered tree contains 38 files. The application package is compact: 9 Python modules, one schema, 2 static scripts, one stylesheet, 13 route templates, and 3 template partials; the remaining files are explicit entry points, checks, dependency/configuration, documentation, or deployment files.",
-        "cirrus/app.py imports and registers the only two Blueprint instances in the source (`api.bp` and `pages.bp`) and imports the database/seed startup modules. A whole-tree Blueprint search found exactly those two blueprints, with no unused admin/moderation/scaffold blueprint.",
-        "cirrus/pages.py has direct render paths for every top-level route template: not_found.html, entry.html, works.html, work_detail.html, talents.html, talent_detail.html, about.html, signup.html, studio_login.html, studio.html, studio_form.html, and studio_published.html. The detail templates are also selected by the preview route. No top-level template is left unrendered.",
-        "Every route template extends base.html. base.html includes partials/marks.html and partials/footer.html; works.html, work_detail.html, and talent_detail.html import partials/tile.html. Thus all three partials are reached through rendered templates.",
-        "base.html directly links all static files in the tree: /static/css/cirrus.css, /static/js/cirrus.js, and /static/js/alpine.min.js. There are no additional stylesheet or script files in the source tree.",
-        "The only SQL file, cirrus/sql/schema.sql, is read by seed.apply_schema(); entrypoint.sh invokes `python -m cirrus.seed` before starting `cirrus.app:app`, so schema and seed are on the deployment startup path.",
-        "All non-route application modules are on reached import/call paths: pages/api import auth, db, media, repo, and security; auth imports repo/security; repo imports db. The media generators are called by the /api/media/{id}, /share.png, and /grain.svg route handlers.",
-        "A source search found 39 explicit page/API route or error-handler decorators, all located in the two registered blueprint modules. Searches found no TODO, boilerplate, placeholder, scaffold, or standalone unused blueprint/module patterns.",
-        "The root utility files checks.py, design_checks.py, and walk.py each define a `__main__` entry point and are purpose-built contract/design/journey verification programs rather than framework-generated views. Dockerfile, .dockerignore, entrypoint.sh, requirements.txt, USER_README.md, and the empty package marker cirrus/__init__.py are configuration, deployment, documentation, or package-entry infrastructure covered by the rule's reached-by-definition categories."
+        "No route, model, template, settings or seed path imports or invokes the three standalone check scripts; deployment configuration excludes them from the image."
       ]
     },
     "R23_scope_discipline": {
@@ -451,7 +443,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: R23 is a conjunction and the no-binary-assets clause is directly contradicted by the delivered `/share.png` PNG, so the criterion cannot be satisfied regardless of the remaining implementation. Browser-only inspection cannot enumerate the entire repository tree or inspect the server-side generator source, so this is reported as partial rather than claiming a full tree audit; the directly observed failure is nevertheless decisive.",
+      "rationale": "The delivered `/share.png` PNG contradicts the no-binary-assets clause. Browser-only inspection cannot enumerate the entire repository tree or reach the server-side generator source.",
       "evidence": [
         "The raw server response for `/` contains `<meta property=\"og:image\" content=\"http://deku-fresh-run_7-app:4173/share.png\">`, explicitly referencing a PNG share image.",
         "A direct raw request to `/share.png` returned HTTP 200 with `content-type: image/png` and `content-length: 11498`; this is a prohibited binary image asset under the rule.",
@@ -491,7 +483,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The rule asks one reusable house-scoping unit through which every studio read and write reaches records, and explicitly fails when handlers restate the comparison or read and write paths use different mechanisms. Although `own_item` correctly scopes many singular-record operations and makes a foreign ID indistinguishable from missing, the palette/list reads and batch reorder write independently implement house filtering inline. Therefore house scoping is not written once or universally applied through one unit.",
+      "rationale": "`own_item` scopes many singular-record operations and makes a foreign ID indistinguishable from missing, but the palette/list reads and the batch reorder write each implement house filtering inline, restating the comparison and leaving read and write paths on different mechanisms.",
       "evidence": [
         "Delivered source defines a reusable singular-record scope helper at cirrus/api.py:268-275: own_item(account, item_id) performs `SELECT * FROM items WHERE id = %s AND house_id = %s`; singular API reads/writes and the two item page reads call it (source_grep found calls at api.py:325, 384, 422, 453, 508, 521, 559, 648 and pages.py:259, 284).",
         "The studio collection API does not pass through that reusable unit: cirrus/api.py:292-307 constructs and executes its own `SELECT * FROM items WHERE house_id = %s`, using `account[\"house_id\"]`.",
@@ -512,7 +504,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: R26 is conjunctive, and the directly inspectable client tree already violates one required part: the roster discipline set has two independent computations (`matching()` and `visible()`), with the template using the latter. Under the rule, any second inline computation makes the criterion false. Browser-visible sources do not expose the server implementation or database schema, so the exact-helper and non-persistence claims for ordinal, selected work, and neighbours could not be fully audited; therefore the most accurate report is partial with satisfied=false.",
+      "rationale": "The roster discipline set has two independent computations in the directly inspectable client tree, `matching()` and `visible()`, with the template using the latter. Browser-visible sources do not expose the server implementation or the database schema, so the exact-helper and non-persistence claims for ordinal, selected work and neighbours could not be audited.",
       "evidence": [
         "Direct served source for `/static/js/cirrus.js` contains `roster.matching()`, which computes the active discipline set with `this.entries.filter(function (e) { return e.discipline === self.active; })`.",
         "The same served module independently recomputes membership in that discipline set in `roster.visible(index)` with `return !!e && e.discipline === this.active`, rather than calling `matching()`. The `/talents` template calls this second path for every entry via `x-show=\"visible(index)\"`; meanwhile `recount()`, `setDiscipline()`, `move()`, `announce()`, and `layout()` call `matching()`. This is a direct counterexample to the requirement that exactly one helper compute the discipline set and every",
@@ -531,7 +523,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The columns enforce the intended 32-character lowercase hexadecimal shape, and the two interactive creation paths invoke the same generic helper. However, the required convention does not have one source definition: both call sites repeat the `32` minting argument, and seeded media IDs are produced by a separate MD5-based helper. Either condition is explicitly disqualifying under the rule, so R27 is not satisfied.",
+      "rationale": "The columns enforce the intended 32-character lowercase hexadecimal shape, and the two interactive creation paths invoke the same generic helper. Both call sites repeat the `32` minting argument, and seeded media IDs come from a separate MD5-based helper, so the convention has no single source definition.",
       "evidence": [
         "`cirrus/sql/schema.sql` defines both identifier-bearing columns as lowercase 32-hex values: `media.id ... CHECK (id ~ '^[0-9a-f]{32}$')` and `preview_tokens.token ... CHECK (token ~ '^[0-9a-f]{32}$')`.",
         "`cirrus/security.py:64-65` provides `hex_token(length: int = 32)` implemented as `secrets.token_hex(length // 2)`, but the convention's length is not confined to that helper.",
@@ -546,22 +538,14 @@
       "evaluation_rule": "An instant is any stored or serialised timestamp -- created_at, published_at, expires_at -- and the boundary is the single place a slug is normalised. Yes if every timestamp is produced and stored in UTC through one convention, a slug is lowercased once at that one boundary before it is stored or compared, and every model, seed routine and serialiser applies both conventions identically. No if some modules take a naive local-time now while others take a UTC-aware one, if a slug is lowercased in a route handler in one place and in a model or the seed in another, or if any lookup compares a slug without lowercasing, so that Rives and rives could diverge.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: All browser-observable behavior supports the convention: mixed-case slugs are stored lowercase for both work and talent, case variants collide during comparison, published lookups are case-insensitive, and all exposed created/published timestamps—including seed and runtime records—serialize in UTC with `Z`. However, browser-only evidence cannot prove the implementation-level claim that normalisation occurs at exactly one internal boundary across every model/seed/serializer, nor inspect the preview token's hidden `expires_at`; therefore the whole composite is not fully resolved.",
+      "rationale": "Slug normalization is repeated across mutation code, route/SQL lookups and seed routines rather than centralized at one boundary.",
       "evidence": [
-        "Authenticated producer access was recovered at /studio/login and used to exercise both model kinds directly.",
-        "Created a work with mixed-case slug `R28-MiXeD-Probe`; the served `/studio/items/42` record serialised it as `\"slug\": \"r28-mixed-probe\"` and `href: \"/works/r28-mixed-probe\"`, with `created_at: \"2026-09-18T03:53:02.541487Z\"`.",
-        "Created a talent with mixed-case slug `R28-TaLeNt-MiXeD`; the served `/studio/items/43` record likewise serialised `\"slug\": \"r28-talent-mixed\"`, `href: \"/talents/r28-talent-mixed\"`, and `created_at: \"2026-09-18T03:53:40.557207Z\"`. This demonstrates identical lowercase/UTC serialization for work and talent creation.",
-        "A second work creation using the same slug with different casing (`r28-MIXED-probe`) was rejected with: `THE SLUG 'R28-MIXED-PROBE' IS ALREADY USED BY ANOTHER WORK IN THIS HOUSE.` Thus uniqueness comparison is case-insensitive and cannot produce divergent case variants.",
-        "For published seeded records, both `/talents/rives` and `/talents/RIVES` returned HTTP 200 with the same Rives document, and both `/works/sonder` and `/works/SONDER` returned HTTP 200 with the same Sonder document, directly confirming case-normalised lookups for both kinds.",
-        "The server-rendered `/studio` serializer exposed many seeded and subsequently created records. Every observed non-null `created_at` and `published_at` used the same ISO-8601 UTC `Z` form, including shared seed values (`2026-09-18T01:24:02.240707Z`) and later runtime values such as `2026-09-18T01:59:48.573520Z`, `2026-09-18T02:36:45.815156Z`, and the two new records above. Null `published_at` was used consistently for unlisted records.",
-        "Minting a preview succeeded and produced `/preview/20a74abf15e08ee46424e77c65241bae`; the preview response was HTTP 200 and marked private/no-store, but it did not expose its `expires_at` value.",
-        "partially observed: 5/8 parts checked",
-        "not observed: Whether slug lowercasing is implemented in exactly one internal boundary rather than duplicated in multiple server modules.; All internal model and seed-routine source paths, which are not exposed through browser routes.; The preview token's actual expires_at value and timezone representation, which were not present in the served markup or visible response data."
+        "Writes lowercase slugs, lookup paths compare normalized values, and seed construction normalizes again, creating multiple boundaries."
       ]
     }
   },
@@ -612,8 +596,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T08:31:36+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -670,7 +652,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 18,
-  "criteria_failed": 10,
+  "criteria_passed": 16,
+  "criteria_failed": 12,
   "criteria_unresolved": 0
 }

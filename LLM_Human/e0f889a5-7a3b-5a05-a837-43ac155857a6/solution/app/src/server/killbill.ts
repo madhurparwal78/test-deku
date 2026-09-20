@@ -29,7 +29,7 @@ function headers(): Headers {
   h.set("X-Killbill-CreatedBy", "vela-storefront");
   h.set("Content-Type", "application/json");
   h.set("Accept", "application/json");
-  const basic = Buffer.from(`${env.payments.adminUser}:${env.payments.adminPassword}`, "utf8").toString("base64");
+  const basic = Buffer.from(`${env.payments.appUser}:${env.payments.appPassword}`, "utf8").toString("base64");
   h.set("Authorization", `Basic ${basic}`);
   return h;
 }

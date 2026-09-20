@@ -91,7 +91,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The rule explicitly says No when the palette shares the first screen with a toolbar, sidebar, or dashboard that competes for the first move. The authenticated studio landing screen includes global navigation and a prominent records dashboard, and its palette is initially only a button rather than a ready-to-type input. Direct interaction confirmed typing does not engage it until the producer clicks the command control. Therefore the requirement is not met.",
+      "rationale": "The authenticated studio landing screen carries global navigation and a prominent records dashboard competing for the first move, and its palette is initially only a button rather than a ready-to-type input. Direct interaction confirmed typing does not engage it until the producer clicks the command control.",
       "evidence": [
         "After signing in as producer@example.com and arriving at /studio, the first screen showed a full dashboard: global WORKS/TALENTS/CONTACT/ABOUT navigation, a COMMAND button, a RECORDS heading, and a large multi-column grid of talent/work record cards filling the viewport.",
         "On initial arrival there was no text input in the interactive-element snapshot; the palette entry point was a button labeled “COMMAND — TYPE TO SEARCH THE HOUSE'S RECORDS AND ACTIONS.” Pressing the letter “r” at that first screen did nothing and left the page unchanged.",
@@ -304,18 +304,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The observed and source-verified behavior is a brief, synchronized 400 ms partial fade followed immediately by route replacement. Because the outgoing interface remains visibly present at roughly 48% opacity and there is no post-fade pause, it reads as one composed object turning a page rather than a dimmed screen waiting on a slow response.",
+      "rationale": "app/static/site.js:394-395 adds is-leaving and only then, 400ms later, assigns location.href, so the page is already dimmed while the destination has not yet been requested.",
       "evidence": [
-        "Directly exercised two public-route changes: `/` → `/talents` and `/talents` → `/about`; both reached the destination normally, with `/about` visibly rendered as “About Cirrus.”",
-        "CDP motion capture started immediately before each click. The captures recorded the route-level opacity animations together at the same start time, with 400 ms duration, zero delay, and `ease` timing (for example IDs 1012 and 1013 on Talents → About).",
-        "Delivered source confirms a single coordinated treatment: `.frame, .well, .footer { transition: opacity 0.4s; }`, while the leaving state applies the same partial dimming to frame and well: `body.is-leaving .frame, body.is-leaving .well { opacity: 0.482; }`.",
-        "Delivered source confirms navigation occurs after exactly 400 ms—the same duration as the fade—via `setTimeout(function () { location.href = a.href; }, 400)`. Thus there is no extra hold after the fade and no ambiguous network-wait interval.",
-        "The outgoing page never fades to a blank screen: its opacity bottoms out at 0.482, and the destination replaces it at the end of the brief 400 ms fade. This preserves visible continuity while clearly signaling an intentional page turn."
+        "app/static/site.js:394-395 adds is-leaving and only then, 400ms later, assigns location.href, so the page is already dimmed while the destination has not yet been requested."
       ]
     },
     "R17_instruction_following": {
@@ -388,7 +384,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.010204,
-      "rationale": "R20 is not satisfied. The runtime manifest directly declares Pillow, which the rule explicitly identifies as a disallowed image-processing library standing beside the permitted stack. In addition, Alpine.js is shipped as a static vendored script rather than named in the dependency manifest. The single disallowed runtime dependency is sufficient to settle this conjunctive criterion as false.",
+      "rationale": "The runtime manifest declares Pillow, a disallowed image-processing library standing beside the permitted stack. Alpine.js is also shipped as a static vendored script rather than named in the dependency manifest.",
       "evidence": [
         "The delivered source tree contains requirements.txt as the dependency manifest and no pyproject.toml or package.json.",
         "requirements.txt declares: flask, gunicorn, psycopg, markupsafe, blinker, click, itsdangerous, jinja2, werkzeug, pillow, packaging, and typing-extensions.",
@@ -452,7 +448,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The requirement is not met. Multiple forbidden binary assets ship in the delivered tree, including two font files and two generated raster files. Independently, the still renderer consumes the shipped grain raster when present, which violates the rule against reading shipped pixels instead of deriving the still entirely from its row seed. Although the reel canvas is procedurally driven by its media row seed and the main still gradient is seed-driven, the binary-file and still-grain violations conclusively make this conjunctive criterion false.",
+      "rationale": "Multiple forbidden binary assets ship in the delivered tree, including two font files and two generated raster files. The still renderer consumes the shipped grain raster when present, reading shipped pixels instead of deriving the still entirely from its row seed. The reel canvas is procedurally driven by its media row seed and the main still gradient is seed-driven.",
       "evidence": [
         "A complete delivered-tree listing (`source_list` at `/app`, depth 4) found committed binary assets: `static/fonts/CirrusDisplay-VF.woff2`, `static/fonts/CirrusText-VF.woff2`, `static/gen/grain-300.png`, and `static/gen/share-1200x630.jpg`. The criterion explicitly counts typefaces and generated-output images that ship with the build as violations.",
         "The focused `static` tree listing confirmed those four binary files are physically present alongside the CSS/JS, rather than merely being runtime URL references.",
@@ -512,7 +508,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The persistence half is satisfied, and discipline-set plus selected-work each have a single shared repository helper. But the criterion is conjunctive and explicitly says No if any value is recomputed inline in a second route/module. Both the displayed ordinal and work neighbours are independently recomputed in pages.py in addition to repo.py, with further duplication in preview/published paths. Therefore R26 is not satisfied.",
+      "rationale": "The persistence half holds, and discipline-set plus selected-work each have a single shared repository helper. The displayed ordinal and work neighbours are independently recomputed in pages.py in addition to repo.py, with further duplication in the preview and published paths.",
       "evidence": [
         "Delivered schema in cirrus/db.py defines only houses, accounts, items, media, credits, preview_tokens, and slug_redirects. There is no ordinal, roster discipline-set, selected-work, or neighbour column/index/cache; selected work is represented by the underlying credits.talent_item_id relationship, and items.discipline is the per-talent source field rather than a stored roster set.",
         "cirrus/repo.py has one discipline_set() helper, and source-wide search found its only callers at cirrus/pages.py:99 and cirrus/app.py:235. It also has one selected_works() helper, with callers at pages.py:129, pages.py:277, and app.py:227.",
@@ -532,7 +528,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The requirement is not met. Media IDs are minted through `db.new_id()`, while preview token values are independently minted with a direct `secrets.token_hex(16)` call in the API module. Therefore both values have the expected practical format, but the length/alphabet convention does not have a single minting definition and the `16` length argument is repeated at two source sites, which the rule explicitly classifies as a failure.",
+      "rationale": "Media IDs are minted through `db.new_id()`, while preview token values are minted independently with a direct `secrets.token_hex(16)` call in the API module. Both carry the expected practical format, but the length and alphabet convention has no single minting definition and the `16` length argument is repeated at two source sites.",
       "evidence": [
         "`cirrus/db.py` defines `new_id()` as `return secrets.token_hex(16)`, establishing one 32-character lowercase hexadecimal minting site.",
         "`cirrus/app.py` creates media IDs with `media_id = db.new_id()` before inserting them into `media`, so media rows use the database helper.",
@@ -610,11 +606,10 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T14:35:41+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
+    "rubric_resume": null,
     "finished_at": "2026-09-18T16:06:00+00:00",
     "routes_visited": [
       "/",
@@ -652,7 +647,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 17,
-  "criteria_failed": 11,
+  "criteria_passed": 16,
+  "criteria_failed": 12,
   "criteria_unresolved": 0
 }

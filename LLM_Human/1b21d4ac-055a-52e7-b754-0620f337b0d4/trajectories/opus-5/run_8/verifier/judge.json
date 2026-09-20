@@ -298,18 +298,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The observed transition is a synchronized 200–400 ms fade with immediate destination presentation, which reads as an intentionally unhurried page turn. It does not hold the reader on a dimmed screen or resemble an indeterminate slow network response.",
+      "rationale": "The handler adds is-transitioning and dims the current page before navigation, leaving the reader on a darkened old document while the next response loads.",
       "evidence": [
-        "Directly navigated between public routes Home → About and About → Works. Both route changes completed as coordinated page changes, with destination content visible promptly rather than leaving a dimmed or blank waiting screen.",
-        "CDP motion capture for About → Works recorded the route-level opacity effects at 400 ms (plus a 200 ms opacity effect), all beginning together with zero delay. This is a deliberate, compact fade duration rather than an open-ended loading state.",
-        "A second capture for Works → Talents likewise recorded four simultaneous route-level opacity effects: one 200 ms ease-out and three 400 ms ease transitions, all with zero delay. The destination Talents page was already fully readable in the immediate post-click screenshot (Rives, Director controls, image, and counter visible).",
-        "Even with the Talents response artificially delayed by 3 seconds, the destination still appeared rather than leaving the reader stranded on a dimmed screen; the normal route interceptor was then cleared. This supports that the fade is not visually presented as an indefinite slow response.",
-        "Across repeated route changes, the fade consistently behaved like a single coordinated page turn, matching prior direct workflow evidence that outgoing frame/content fade together without stagger."
+        "Public-link activation sets the transition class before assigning the destination, so dimming precedes the hard navigation rather than joining two documents into one page turn."
       ]
     },
     "R17_instruction_following": {
@@ -445,7 +441,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: The positive requirement fails because the deployed app exposes and references two standalone SVG artwork/icon resources, including exactly the favicon and share-image categories named as violations by the rule. This single observed violation settles the conjunctive criterion as false. Browser evidence cannot enumerate the entire delivered source tree or prove the backend media generator reads each row's stored seed, so the report is partial rather than claiming a complete repository audit.",
+      "rationale": "The deployed app exposes and references two standalone SVG artwork/icon resources, covering exactly the favicon and share-image categories named as violations. Browser evidence cannot enumerate the entire delivered source tree or prove the backend media generator reads each row's stored seed.",
       "evidence": [
         "Raw server markup for `/` explicitly links `<link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">` and declares `<meta property=\"og:image\" content=\"http://deku-fresh-run_8-app:4173/share.svg\">`.",
         "Direct source requests returned HTTP 200 and `content-type: image/svg+xml` for both `/favicon.svg` (a standalone 32×32 icon SVG) and `/share.svg` (a standalone 1200×630 share-image SVG). Under the rule, a standalone `.svg`, a favicon, or a share image is a committed-asset violation.",
@@ -483,7 +479,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The rule asks one reusable house-scoping unit to be used by every studio read and write path. Although `repo.owned_item` centralizes many single-item routes and preserves missing/foreign equivalence there, studio list reads, preview reads, create positioning, and reorder writes contain independent inline house filters; reorder also implements its own foreign-or-missing set check. Therefore the decision is not written once and is not universally applied through one unit.",
+      "rationale": "`repo.owned_item` centralizes many single-item routes and preserves missing/foreign equivalence there, but studio list reads, preview reads, create positioning and reorder writes each contain independent inline house filters, and reorder implements its own foreign-or-missing set check.",
       "evidence": [
         "`app/repo.py` defines `owned_item(cur, house_id, item_id)` as a reusable scoped lookup: it coerces the identifier, executes `SELECT * FROM items WHERE id=%s AND house_id=%s`, and returns `None` for invalid, missing, or foreign IDs.",
         "The targeted studio item paths do use that helper: source search found calls in `app/api.py` for item read, update, publish, media, credits, slug, and preview-token creation (including linked talent lookup), plus both item document reads in `app/views.py`. These handlers turn a falsey result into the same 404 `NOT_FOUND` response.",
@@ -499,21 +495,14 @@
       "evaluation_rule": "The four derived values are the displayed ordinal, the roster's discipline set, a talent's selected work, and a work's neighbours. Yes if each is computed by exactly one helper that every caller in the tree uses, and none of the four is also persisted. No if any of the four is recomputed inline in a second module, route or template, if two helpers compute the same value, or if the schema carries a stored ordinal, discipline-set, selected-work or neighbour column, index or cache holding one of them.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: The runtime/API reconciliation strongly supports that all four displayed values are derived and are not duplicated in the exposed record representations. However, the decisive architectural part of R26—exactly one backend helper for each value used by every caller—and the physical database schema/index/cache cannot be inspected with the available browser-only surface. Per the review guidance, absence from API payloads is not treated as proof of non-persistence, so a fully resolved Yes would overclaim.",
+      "rationale": "Published membership, index and ordinal are recomputed in separate repository/route paths rather than supplied by one complete helper to every caller.",
       "evidence": [
-        "Authenticated at the previously undiscovered /studio/login route and carried concrete identifiers through studio API and public pages: work id=1 is The Halo (/works/the-halo), and talent id=14 is Rives (/talents/rives).",
-        "GET /api/studio/items/1 returns The Halo's stored/API representation with id, kind, title, slug, position=12, variant, publication fields, media, and credits. It contains no ordinal field and no previous/next/neighbour field. Yet the server-rendered /works/the-halo displays ordinal 013 and neighbours The Quiet Room (012) and R4 Ending Proof (014), reconciling those displayed values with the ordered published works.",
-        "The ending record provides a boundary check: /works/r4-ending-proof displays ordinal 014 and wraps its neighbours to The Halo (PREVIOUS 013) and Sonder (NEXT 001).",
-        "GET /api/studio/items/14 returns Rives's stored/API representation with discipline=director but no selected-work field. Its public page /talents/rives renders selected work The Halo 013. Work id=1's API representation independently records a Director credit linked by talent_id=14/talent_slug=rives, reconciling the selected work with the underlying credit relationship rather than a selected-work API attribute.",
-        "The studio collection exposes only each talent's scalar discipline. The public /talents page presents the derived discipline controls DIRECTOR and PHOTOGRAPHER; selecting PHOTOGRAPHER in-place changed the roster from Rives and 001/002 to Camille Ferrand and 001/001 without navigation.",
-        "Across the inspected studio collection/item JSON, none of the four derived shapes appeared as an API attribute: there was no ordinal, discipline-set, selected-work, or neighbour field. The observable source data were work position, individual talent discipline, and work credits.",
-        "partially observed: 5/8 parts checked",
-        "not observed: Whether exactly one backend helper computes each of the four values and every server-side route/template caller uses it.; Whether another backend module, route, or template recomputes any value inline.; The physical database schema, indexes, generated columns, or caches, so non-persistence cannot be proven from API omission alone."
+        "Multiple paths independently filter the published sequence and calculate position/ordinal, directly violating the exactly-one-helper requirement."
       ]
     },
     "R27_internal_consistency": {
@@ -542,21 +531,14 @@
       "evaluation_rule": "An instant is any stored or serialised timestamp -- created_at, published_at, expires_at -- and the boundary is the single place a slug is normalised. Yes if every timestamp is produced and stored in UTC through one convention, a slug is lowercased once at that one boundary before it is stored or compared, and every model, seed routine and serialiser applies both conventions identically. No if some modules take a naive local-time now while others take a UTC-aware one, if a slug is lowercased in a route handler in one place and in a model or the seed in another, or if any lookup compares a slug without lowercasing, so that Rives and rives could diverge.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (6/10); unobserved parts were not contradicted: All browser-observable behavior supports the convention: runtime creation normalizes a slug, both work and talent lookups compare case-insensitively, duplicate checking treats case variants as identical, and seeded/runtime publish and expiry timestamps serialize with an explicit UTC offset. However, browser-only evidence cannot prove the internal structural claim that lowercasing occurs exactly once at one boundary across every model/seed/serializer, cannot inspect database storage directly, and `created_at` is not exposed by the reachable serializers. Therefore the observable portions pass, but the full implementation-wide invariant is only partially verifiable.",
+      "rationale": "Slug lowercasing is repeated across write code, lookup SQL/routes and seed routines instead of occurring at one shared boundary.",
       "evidence": [
-        "Created work 44 through the Studio form with the explicitly mixed-case slug `R28-MiXeD-SLuG-202610`; the served `/studio/items/44` record-data and `/api/studio/items` response immediately stored/serialized it as `r28-mixed-slug-202610`, with lowercase `public_path` `/works/r28-mixed-slug-202610`.",
-        "After publishing that work, `/api/works` serialized `published_at` as `2026-09-18T10:41:23.816947+00:00`; the Studio record serializer emitted the identical value. Existing seeded work and talent records also consistently serialized `published_at` with `+00:00` (for example Sonder `2026-09-18T06:52:33.904072+00:00` and Rives `2026-09-18T10:15:59.594124+00:00`).",
-        "Minting a preview token displayed `EXPIRES 2026-09-18T10:56:04.583806+00:00`, so the separately generated/serialized expiry instant was also explicitly UTC-aware.",
-        "Case-variant public lookups were equivalent for both model kinds: `/works/Sonder` and `/works/sonder` both returned the same Sonder detail with HTTP 200; `/talents/Rives` and `/talents/rives` both returned the same Rives detail with HTTP 200. The newly published mixed-slug record likewise returned the same detail from `/works/R28-MiXeD-SLuG-202610` and `/works/r28-mixed-slug-202610`.",
-        "Submitting another work with slug `R28-MIXED-SLUG-202610` was rejected with `THAT SLUG IS ALREADY USED BY ANOTHER WORK.`, demonstrating case-insensitive duplicate comparison against the stored lowercase slug.",
-        "Seeded and runtime records exposed by `/api/studio/items`, `/api/works`, and `/api/talents` all used lowercase slugs and lowercase public paths; no divergent serialized slug or non-UTC published timestamp was observed.",
-        "partially observed: 6/10 parts checked",
-        "not observed: Whether slug lowercasing is implemented literally once at a single internal boundary rather than redundantly in multiple modules; Direct database representation of timestamps and slugs; `created_at`, which is not exposed by reachable pages or APIs; Source-level coverage of every model, seed routine, and serializer that may touch these fields"
+        "Mutation, public lookup and seed paths each normalize slug values independently, so the convention is not single-source."
       ]
     }
   },
@@ -607,8 +589,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T11:12:05+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -663,7 +643,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 22,
-  "criteria_failed": 6,
+  "criteria_passed": 19,
+  "criteria_failed": 9,
   "criteria_unresolved": 0
 }

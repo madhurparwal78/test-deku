@@ -166,7 +166,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The name remains visually dominant and the label/portrait align beneath it, but the mark does not belong to that centered figure at the deterministic desktop viewport: it is offset roughly 240px left while the other three elements share x=960. Because one of the required four elements breaks the single composed arrangement, the positive criterion is not satisfied.",
+      "rationale": "The name remains visually dominant and the label and portrait align beneath it, but at the deterministic desktop viewport the mark sits roughly 240px left of the other three, which share x=960. One of the four required elements breaks the single composed arrangement.",
       "evidence": [
         "At the deterministic 1920×1200 viewport, the screenshot shows the Rives name, DIRECTOR label, and portrait on the viewport centerline (x=960), but the circular mark is visibly displaced far to the left at approximately x=720.",
         "Measured geometry at 1920×1200 confirms the name spans x=0–1920 with centered text and the portrait spans x=837–1083, giving both a center of x=960. The portrait is 246×328; the name is the dominant 125px display type.",
@@ -298,17 +298,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "Two directly captured public-route changes show the same deliberate cadence: a 400 ms outgoing fade followed essentially immediately by a 400 ms incoming fade, with only about a 17 ms overlap/turning point and no normal-response pause. This supports the intended impression of one page turning into another—unhurried, but not a dimmed screen waiting on the site.",
+      "rationale": "The page dims while navigation waits on Promise.all(fetch, 400 ms), making response latency visually indistinguishable from a slow site.",
       "evidence": [
-        "Direct CDP motion capture of the public Talents → Works route recorded the outgoing opacity group starting together at 60427.486 ms with 400 ms/ease durations; the incoming opacity group began at 60810.8 ms (about 383 ms later) with approximately 400 ms/ease durations. Thus the new page begins its fade at the end of the old page's fade, with no material idle gap.",
-        "A second normal public-route transition, Works → About, reproduced the same structure: outgoing 400 ms opacity animations began at 116308.584 ms and incoming approximately 400 ms opacity animations began at 116691.9 ms, about 383 ms later.",
-        "Both normal navigations settled on the destination route with its content visible. The consistent short, paired 400 ms phases read as a deliberate whole-page handoff rather than an indeterminate wait or slow response.",
-        "An intentionally injected 1.2 s response delay was separately tested and then cleared; it introduced a network-dependent gap, confirming that such waiting is not part of the normal captured route-transition timing."
+        "The route transition starts the outgoing fade, then awaits both the destination fetch and a 400 ms timer before navigation can continue."
       ]
     },
     "R17_instruction_following": {
@@ -495,21 +492,14 @@
       "evaluation_rule": "The four derived values are the displayed ordinal, the roster's discipline set, a talent's selected work, and a work's neighbours. Yes if each is computed by exactly one helper that every caller in the tree uses, and none of the four is also persisted. No if any of the four is recomputed inline in a second module, route or template, if two helpers compute the same value, or if the schema carries a stored ordinal, discipline-set, selected-work or neighbour column, index or cache holding one of them.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: All four displayed/behavioral values were directly reconciled on concrete records and are consistent with derivation from canonical published records and relationships. However, browser-visible HTML, JavaScript, and JSON do not expose the server source tree, helper definitions/call sites, migrations, database schema, indexes, or caches. Therefore I cannot prove the structural clauses that exactly one server helper computes each value, every caller uses it, and no corresponding column/index/cache exists. No observed behavioral counterexample was found, but resolving the full criterion positively would require source/schema inspection.",
+      "rationale": "Published membership, index and ordinal are recomputed in separate shaping paths instead of being produced by one complete helper for all callers.",
       "evidence": [
-        "Authenticated successfully at the actual producer route `/studio/login` and carried concrete identifiers through producer API and public pages: work id 1 = The Halo (`/works/the-halo`), talent id 14 = Rives (`/talents/rives`).",
-        "Read-time ordinal is behaviorally derived from the published-work sequence rather than the raw stored `position`: `/api/studio/items/1` reports The Halo at `position:12` and `ordinal:null`, while its public page displays `012`; the studio collection represents it as `012`. The unpublished work The Quiet Room occupies position 11, so ordinal is not simply position+1. Work id 35 is at raw position 17 but displays ordinal `013`, with intervening unpublished works omitted.",
-        "Work neighbours reconcile to that same published sequence: The Halo displays previous The Radiant `011` and next Probe Work `013`; the terminal Probe Work `013` wraps to previous The Halo `012` and next Sonder `001`. This skips unpublished records and matches `/works` ordering.",
-        "Talent selected work reconciles through the record IDs/relationship: `/api/studio/items/14` returns Rives' selected work as work id 1, The Halo `012`; `/talents/rives` displays exactly The Halo `012`; `/works/the-halo` carries a Director credit linked to talent id 14/Rives.",
-        "The roster's displayed discipline set is `DIRECTOR` and `PHOTOGRAPHER`. Selecting PHOTOGRAPHER in the UI changed the roster in place to Camille Ferrand, QA Aurora Talent, and R4 Ending Probe, all photographer records; the served roster data also contains only published talents and passes the two-value discipline list into the roster component.",
-        "The authenticated item-detail API returns `ordinal:null` for both work id 1 and talent id 14 even though public/read-list contexts show ordinals, supporting read-time derivation. Per the rubric, this serialization evidence is not treated as proof of database persistence or absence thereof.",
-        "partially observed: 5/8 parts checked",
-        "not observed: Whether each of the four values is implemented by exactly one server-side helper.; Whether every route/template/serializer caller in the complete source tree calls that one helper rather than recomputing inline.; Database schema, migrations, indexes, generated columns, materialized data, and caches needed to prove none of the four values is persisted."
+        "Multiple repository functions independently filter published works and derive sequence position/ordinal, which is the rule's explicit duplicate-computation failure."
       ]
     },
     "R27_internal_consistency": {
@@ -537,20 +527,14 @@
       "evaluation_rule": "An instant is any stored or serialised timestamp -- created_at, published_at, expires_at -- and the boundary is the single place a slug is normalised. Yes if every timestamp is produced and stored in UTC through one convention, a slug is lowercased once at that one boundary before it is stored or compared, and every model, seed routine and serialiser applies both conventions identically. No if some modules take a naive local-time now while others take a UTC-aware one, if a slug is lowercased in a route handler in one place and in a model or the seed in another, or if any lookup compares a slug without lowercasing, so that Rives and rives could diverge.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: Browser-visible behavior strongly supports identical UTC serialization and lowercase slug handling across seeded and newly created work/talent records, including case-insensitive lookup. However, the criterion additionally requires proving a single internal normalization boundary and auditing every model, seed routine, and serializer (including any created_at/expires_at paths). Browser-only evidence cannot inspect all implementation modules or establish that lowercasing occurs in exactly one code location, so the complete architectural conjunction is not fully resolved.",
+      "rationale": "Slug lowercasing is repeated across write handlers, lookup SQL/routes and seed setup rather than centralized at one boundary.",
       "evidence": [
-        "Authenticated at /studio and inspected the server-served palette serialization. Seeded work records (for example Sonder, BINARY, Common Ground) serialize published_at as ISO-8601 UTC with a trailing Z, e.g. 2026-09-17T20:14:11.399005Z; seeded talent records (Rives, Halcyon, Camille Ferrand, QA Aurora) likewise serialize trailing-Z UTC timestamps.",
-        "Constructed and published a new work after submitting mixed-case slug R28-UPPER-Probe-202603. The server-served item serialization stored and emitted slug \"r28-upper-probe-202603\", href \"/works/r28-upper-probe-202603\", and published_at \"2026-09-17T22:39:50.765552Z\". Thus the live-created instant uses the same UTC serialization convention as seeded work and talent records.",
-        "Constructed a new talent with mixed-case slug R28-TALENT-Probe-202603. Server-served /studio/items/44 emitted slug \"r28-talent-probe-202603\" and href \"/talents/r28-talent-probe-202603\", showing the same lowercase behavior for the other content model.",
-        "Case-varied lookups were directly exercised: /talents/RiVeS returned Rives (HTTP 200), /works/SoNdEr returned Sonder (HTTP 200), and both /works/R28-UPPER-PROBE-202603 and its lowercase equivalent returned the newly published work (HTTP 200). This rules out observed Rives/rives or work-slug divergence at public lookup.",
-        "Existing model serializations consistently emitted lowercase slug fields and lowercase hrefs even though the Studio palette visually uppercases slug labels via presentation styling. The creation forms label the boundary \"SLUG, LOWERCASE KEBAB, ASSIGNED ONCE\", and after creation the slug field is no longer editable.",
-        "partially observed: 5/8 parts checked",
-        "not observed: The implementation-level fact that slug normalization occurs in exactly one boundary rather than redundantly in multiple modules.; A complete audit of every model, seed routine, and serializer touching timestamps or slugs.; created_at and expires_at production/storage/serialization paths, which were not exposed in reachable browser responses."
+        "Creation/update code, case-insensitive route lookups and seeded-record construction each normalize slugs independently."
       ]
     }
   },
@@ -601,8 +585,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T08:31:37+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -658,7 +640,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 19,
-  "criteria_failed": 9,
+  "criteria_passed": 16,
+  "criteria_failed": 12,
   "criteria_unresolved": 0
 }

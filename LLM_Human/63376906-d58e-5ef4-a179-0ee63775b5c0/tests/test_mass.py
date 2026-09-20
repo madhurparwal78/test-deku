@@ -261,9 +261,10 @@ def test_seeded_runs_and_consumption_rows_carry_their_masses(plant):
     total = 0
     for seed in conftest.SEEDED_RUNS.values():
         total += sum(seed["consumes"].values())
-    assert total == 2110000, (
-        "the seeded consumption rows sum to %d grams; the brief's four hops sum to "
-        "2110000" % total)
+    assert total == 3430000, (
+        "SEEDED_RUNS consumes %d grams rather than the 3430000 the six seeded runs "
+        "carry; this guards the table above against an edit, and says nothing about "
+        "the app" % total)
 
 
 def test_seeded_outputs_losses_and_lots_reconcile(plant):
@@ -2179,7 +2180,7 @@ def test_stylesheet_carries_one_palette_only(anon):
     assert "deleted|variable" not in lowered, (
         "a token name carrying a deletion marker is still shipping")
     literals = set()
-    for match in re.findall(r"#[0-9a-f]{3,8}", lowered):
+    for match in re.findall(r"#[0-9a-f]{3,8}\b", lowered):
         digits = match[1:]
         if len(digits) == 3:
             digits = "".join(ch * 2 for ch in digits)

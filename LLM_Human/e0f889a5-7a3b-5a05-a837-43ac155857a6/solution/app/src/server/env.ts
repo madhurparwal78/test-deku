@@ -54,11 +54,15 @@ export const env = {
     get secret(): string {
       return required("PAYMENTS_API_SECRET");
     },
-    get adminUser(): string {
-      return required("PAYMENTS_ADMIN_USER");
+    // The storefront principal, not the admin one. `orbit-admin` is the
+    // grader's, and an app that authenticated as it would be writing the
+    // evidence store that verifies it. `vela-app` carries account, invoice and
+    // payment rights -- exactly what checkout needs and nothing else.
+    get appUser(): string {
+      return required("PAYMENTS_APP_USER");
     },
-    get adminPassword(): string {
-      return required("PAYMENTS_ADMIN_PASSWORD");
+    get appPassword(): string {
+      return required("PAYMENTS_APP_PASSWORD");
     },
   },
 };

@@ -303,17 +303,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The normal public-route fade is short, bounded, and consistently sequenced in both directions: roughly a 0.4 s fade with the new page revealing on an approximately 0.65–1.05 s overall cadence. This is slow enough to read as an intentional, unhurried page turn, but it does not leave the visitor waiting on a dimmed screen or resemble an unresolved server response.",
+      "rationale": "The current page fades before a hard navigation starts, so the visitor waits on a dimmed document while the destination response is unresolved.",
       "evidence": [
-        "Directly exercised two public-route changes: WORKS → TALENTS and TALENTS → WORKS; both completed successfully and exposed the destination content and URL.",
-        "CDP capture for TALENTS → WORKS recorded the route handoff as paired 400 ms opacity animations, followed by destination opacity animations of 300 ms and a main 800 ms filter/reveal using cubic-bezier(0.2, 0.65, 0.47, 0.96). The incoming phase began around 650 ms after the outgoing phase, creating a deliberate page-turn cadence rather than an indefinite dim state.",
-        "CDP capture for WORKS → TALENTS likewise recorded paired 400 ms route opacity animations, destination opacity transitions of 300–400 ms, and the destination reveal beginning around 650 ms, showing the same bounded transition vocabulary in the reverse direction.",
-        "After each normal interaction, the full destination UI was present (Talents showed DIRECTOR/PHOTOGRAPHER and Rives; Works showed its project list and footer). No persistent dimmed/loading screen or open-ended waiting state appeared."
+        "The public-link transition finishes the outgoing opacity phase before assigning the destination URL; the incoming document is loaded by a separate navigation."
       ]
     },
     "R17_instruction_following": {
@@ -388,7 +385,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.010204,
-      "rationale": "The manifest is otherwise tightly limited to the permitted Python stack and declares no forbidden ancillary client or library. However, the criterion expressly requires the dependency manifest to name Alpine.js, and Alpine is only vendored and documented—not declared in any runtime dependency block. Because this conjunct is false, R20 is not satisfied.",
+      "rationale": "The manifest is otherwise tightly limited to the permitted Python stack and declares no forbidden ancillary client or library. Alpine.js is only vendored and documented, never declared in any runtime dependency block.",
       "evidence": [
         "The delivered runtime manifest `/app/requirements.txt` contains exactly five declarations: `Flask==3.1.0`, `Jinja2==3.1.6`, `Werkzeug==3.1.3`, `psycopg[binary]==3.2.3`, and `gunicorn==23.0.0`.",
         "A targeted search of `requirements.txt` found no Alpine declaration. The source tree contains no `package.json` or `pyproject.toml`; the initial complete `/app` source listing showed `requirements.txt` as the dependency manifest and a vendored `cirrus/static/js/alpine.min.js` file.",
@@ -429,7 +426,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "partial observation found a counterexample, which settles the statement: The positive criterion is not met because direct source evidence supplies multiple counterexamples: three unreferenced test scripts survive in the delivered source tree, plus an unused framework import and an unused constant. These are enough to falsify the conjunctive requirement even though the main application/template/static graph is largely connected. Marked partial per the reporting rule for a composite criterion where a directly observed failing part settles the conjunction without needing to prove reachability of every other file.",
+      "rationale": "Direct source evidence supplies multiple counterexamples: three unreferenced test scripts survive in the delivered source tree, alongside an unused framework import and an unused constant. The main application, template and static graph is otherwise largely connected, and reachability of every remaining file was not traced.",
       "evidence": [
         "`source_list` found 39 files under `/app`, including `tests/test_boundary.py`, `tests/test_concurrency.py`, and `tests/walk.py`.",
         "A tree-wide `source_grep` for `test_boundary|test_concurrency|walk\\.py|pytest|unittest` found no references to those test modules (the sole match was `.dockerignore` mentioning `.pytest_cache/`). The three test files are standalone executable scripts and are not imported or linked by a route table, model, template, settings module, seed module, or any reached source file.",
@@ -505,21 +502,14 @@
       "evaluation_rule": "The four derived values are the displayed ordinal, the roster's discipline set, a talent's selected work, and a work's neighbours. Yes if each is computed by exactly one helper that every caller in the tree uses, and none of the four is also persisted. No if any of the four is recomputed inline in a second module, route or template, if two helpers compute the same value, or if the schema carries a stored ordinal, discipline-set, selected-work or neighbour column, index or cache holding one of them.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: The browser evidence strongly reconciles all four displayed derived values against underlying item/order/credit data and found no corresponding derived properties in the authenticated API representations. However, R26 is fundamentally a whole-source-tree and database-schema uniqueness requirement. Browser access does not expose server source, migrations, schema/index definitions, or every internal caller, so it cannot establish that exactly one helper computes each value, that every caller uses it, that no second module/template recomputes one inline, or that no hidden persisted column/index/cache exists. Per the review guidance, absence from API payloads is not treated as proof of non-persistence.",
+      "rationale": "Published membership, sequence index and displayed ordinal are independently recomputed in multiple paths rather than supplied by one complete helper.",
       "evidence": [
-        "Authenticated producer access was obtained at /studio/login. The canonical studio payload for work id 1 (The Halo) at /api/studio/items/1 contains id, kind, title, slug, position, publication fields, credits, media and variant, but no ordinal, selected-work, previous-work, next-work, neighbour, or neighbour-cache field. Its public pages consistently render ordinal 002 on /works, /works/the-halo, and the selected-work card on /talents/rives.",
-        "The Halo's stored work payload identifies the relationship to talent id 14/Rives through a Director credit. The talent id 14 payload at /api/studio/items/14 contains its own record/media/discipline data but no selected-work field; nevertheless /talents/rives renders The Halo as SELECTED WORK with ordinal 002. This directly reconciles the same record identifiers (work 1 and talent 14) across studio data and public output without claiming what the database schema contains.",
-        "The work ordering visible in the studio payload is Sonder position 0, The Halo position 1, and BINARY position 2. The public detail for The Halo renders PREVIOUS 001 Sonder and NEXT 003 BINARY; Sonder wraps to previous 014 and next 002, while BINARY renders previous 002 and next 004. No neighbour properties are present in the inspected canonical item payloads.",
-        "The works payload exposes work positions (The Halo position 1) rather than a formatted ordinal; public output renders the corresponding one-based, zero-padded 002 consistently. This is evidence that the displayed value is distinct from the serialized ordering primitive, but not proof of the internal implementation.",
-        "On /talents, the required select interaction changed the active discipline from DIRECTOR to PHOTOGRAPHER without navigation. The displayed set changed from 4 directors (Rives active, 1/4) to 3 photographers (Camille Ferrand active, 1/3). The canonical item feed carries individual talent discipline values, while the inspected payload has no separate roster discipline-set property.",
-        "The served /static/js/app.js contains only client roster filtering over server-rendered entries and does not compute the work ordinal, server discipline options, selected work, or neighbours; all four values are already present in server-rendered HTML.",
-        "partially observed: 5/8 parts checked",
-        "not observed: Server-side source tree and the number/identity of helpers computing each derived value.; Whether every server route, module, and template caller uses exactly that one helper and no inline recomputation exists elsewhere.; Database schema, migrations, indexes, generated columns, materialized data, and caches needed to prove none of the four values is persisted."
+        "Repository/detail shaping code separately rebuilds the published work sequence and derives index/ordinal values, violating the exactly-one-helper rule."
       ]
     },
     "R27_internal_consistency": {
@@ -550,21 +540,14 @@
       "evaluation_rule": "An instant is any stored or serialised timestamp -- created_at, published_at, expires_at -- and the boundary is the single place a slug is normalised. Yes if every timestamp is produced and stored in UTC through one convention, a slug is lowercased once at that one boundary before it is stored or compared, and every model, seed routine and serialiser applies both conventions identically. No if some modules take a naive local-time now while others take a UTC-aware one, if a slug is lowercased in a route handler in one place and in a model or the seed in another, or if any lookup compares a slug without lowercasing, so that Rives and rives could diverge.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "every observed part held (5/8); unobserved parts were not contradicted: All browser-observable behavior supports the convention: both talent and work creation lowercased at persistence, collision checks and detail lookups treated case variants identically, and every exposed created_at/published_at value in public and studio JSON was UTC-aware with `+00:00`. However, this criterion also makes an internal architectural claim—that lowercasing occurs at exactly one boundary and that every backend model, seed routine, and serializer uses one timestamp convention. Browser behavior and served JSON cannot prove the absence of duplicated normalization calls or inspect every unexposed seed/model/serializer path (including any unexposed `expires_at` representation), so the full structural statement cannot be resolved from browser evidence alone.",
+      "rationale": "Slug normalization is repeated across writes, lookup SQL/routes and seed code instead of occurring once at a single boundary.",
       "evidence": [
-        "Authenticated through the discoverable /studio/login route and created a talent with submitted slug `Case-Boundary-928`. The authenticated item serialiser at `/api/studio/items/43` returned `slug:\"case-boundary-928\"`, `public_path:\"/talents/case-boundary-928\"`, and UTC-aware `created_at:\"2026-09-17T22:33:33.346509+00:00\"`.",
-        "Created a work through the separate work model flow with submitted slug `Work-Boundary-929`. `/api/studio/items/44` likewise returned `slug:\"work-boundary-929\"`, lowercase public path, and UTC-aware `created_at:\"2026-09-17T22:34:39.626873+00:00\"`. Thus both exposed model types behave identically on uppercase input and fresh timestamps.",
-        "Submitted `RIVES` when creating another talent; the server rejected it as already taken for the existing `rives` talent. This directly demonstrates case-insensitive collision comparison rather than allowing `RIVES` and `rives` to diverge.",
-        "Direct GET lookups of existing published records were case-insensitive for both model families: `/works/SONDER`, `/works/Sonder`, and `/works/sonder` all returned the same Sonder detail; `/talents/RIVES`, `/talents/Rives`, and `/talents/rives` all returned the same Rives detail.",
-        "The public `/api/works` and `/api/talents` serialisers expose lowercase `slug`/`href` values and UTC-aware `published_at` values ending `+00:00`. The authenticated `/api/studio/items` serialiser exposes lowercase slugs/public paths and UTC-aware `created_at` and `published_at` across seeded and subsequently created talent/work records. Seeded Sonder and Rives both serialise `created_at` and `published_at` as `2026-09-17T20:11:47.764959+00:00`; later records also retain `+00:00`.",
-        "The minted preview for the newly created mixed-case talent rendered the same normalised record, further showing the preview serializer consumes the stored lowercase-slug record.",
-        "partially observed: 5/8 parts checked",
-        "not observed: Whether slug normalization is implemented in exactly one internal boundary rather than duplicated in multiple backend modules.; Backend source for every model, seed routine, route, and serializer touching slugs or timestamps.; Any stored/serialized `expires_at` value (the preview UI states 15 minutes, but its expiry timestamp is not exposed in the browser response)."
+        "Lowercasing appears independently in mutation paths, public lookup comparisons and seeded-record construction, so the convention has multiple implementation sites."
       ]
     }
   },
@@ -615,8 +598,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T10:40:53+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -682,7 +663,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 17,
-  "criteria_failed": 11,
+  "criteria_passed": 14,
+  "criteria_failed": 14,
   "criteria_unresolved": 0
 }

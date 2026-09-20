@@ -11,7 +11,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "The refusal reason correctly names the missing written alternative, but it appears as a top-level editor/form error under DISCIPLINE rather than next to the poster in question. The rule explicitly rejects a page-level message, so the criterion is not satisfied.",
+      "rationale": "The refusal reason names the missing written alternative, but it appears as a top-level editor/form error under DISCIPLINE rather than next to the poster in question.",
       "evidence": [
         "Authenticated as producer@example.com and opened the studio editor for unlisted record `/studio/items/43`. Clicking PUBLISH refused publication and left the user on the editor.",
         "The resulting alert explicitly reads: “ATTACH A POSTER WITH A WRITTEN ALTERNATIVE BEFORE PUBLISHING.” Thus the refusal names both the poster and the missing written alternative.",
@@ -208,7 +208,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The effect is reversible and its target depends continuously on scroll position, but it does not stop with the reader's hand: both scroll smoothing and an additional 800ms filter transition continue the sharpening/blur after wheel input ends. The rule explicitly rejects an effect that runs ahead of or continues beyond the scroll, so R11 is not satisfied.",
+      "rationale": "The effect is reversible and its target depends continuously on scroll position, but it does not stop with the reader's hand: scroll smoothing and an additional 800ms filter transition keep the sharpening and blur running after wheel input ends.",
       "evidence": [
         "On /about at 1440×900, the body copy was visibly sharp after stopping at one nearby scroll position, but after a further 100px scroll and a 1-second pause it remained strongly blurred; a 50px reverse scroll made the same copy sharp again.",
         "Direct Chrome animation capture around a 100px wheel scroll, followed by a 1.2-second pause with no further input, still found two running `filter` animations, each with an 800ms cubic-bezier duration. Thus the blur continued animating after the reader's wheel input had stopped.",
@@ -298,17 +298,14 @@
       "evaluation_rule": "Yes if the change reads as one object turning a page. No if the reader is left waiting on a dimmed screen, or if the fade is indistinguishable from a slow response.",
       "dimension": "motion",
       "importance": "important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.030612,
-      "rationale": "The directly captured route transitions are short, coordinated, and delay-free: the outgoing view fades over roughly 0.2–0.4 s and the incoming page begins its own reveal immediately, settling within 0.8 s. That creates a continuous object-to-object change rather than a prolonged dimmed hold or an animation indistinguishable from a slow response.",
+      "rationale": "The transition fades the current document before hard navigation, leaving a dimmed old page while the destination response is pending.",
       "evidence": [
-        "Directly navigated between the public Works route (/) and Talents (/talents); the destination appeared successfully with its route-specific DIRECTOR/PHOTOGRAPHER controls and Rives content.",
-        "CDP motion capture started immediately before the Works→Talents trigger and recorded a coordinated route change: outgoing opacity animations of 200 ms and 400 ms, followed by destination animations beginning together at the new document's start, including 200 ms opacity, 300 ms opacity, 450 ms transform, and 800 ms clip-path/transform effects. No animation delay was present.",
-        "A second public-route transition to About likewise recorded 200/400 ms opacity fades followed immediately by destination effects (up to 800 ms), all with zero animation delay.",
-        "Across the normal route changes, destination content became visible promptly and there was no observed interval where the user was left on a dimmed, unresolved screen. The captured timing reads as a deliberate, compact page-turn transition rather than network waiting."
+        "The route handler completes its outgoing fade before assigning the new location; the incoming document cannot participate in the same transition."
       ]
     },
     "R17_instruction_following": {
@@ -374,18 +371,14 @@
       "evaluation_rule": "A dependency is a package named in the manifest's runtime dependency block -- requirements.txt, the pyproject project dependencies, or the package.json dependencies -- not a transitive lock entry and not a development-only tool such as a linter, formatter or test runner. The permitted set is Flask, its Jinja template layer, Alpine.js, a PostgreSQL driver and a production WSGI server, together with the direct requirements of those five; a password hashing routine is a direct requirement of the authentication the brief mandates and is never a violation on its own. Yes if every runtime dependency falls inside that set. No if the manifest declares any package outside it -- a second datastore client such as a Redis, MongoDB, SQLite or MySQL driver, a cache client, a task queue, an object-store SDK, a search library, a mail-sending library, an identity-provider or OAuth SDK, or an image-processing, rasterisation, font-tooling, compression or array-computation library standing beside the five.",
       "dimension": "scope_discipline",
       "importance": "somewhat_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.010204,
-      "rationale": "Every package declared in the sole runtime dependency block falls within the rule's permitted set, and there is no second manifest or prohibited client/library declaration. Flask supplies its Jinja template layer as a direct framework requirement, while Alpine.js is shipped as a vendored browser asset rather than as an additional package-manager dependency.",
+      "rationale": "The sole runtime dependency manifest omits Alpine.js, so it does not name every stack component required by this conjunctive criterion.",
       "evidence": [
-        "The delivered source tree contains one dependency manifest, `/app/requirements.txt`; the source listing contains no `package.json`, `pyproject.toml`, Pipfile, setup.py, or setup.cfg.",
-        "`requirements.txt` is exactly three runtime declarations: `Flask==3.1.0`, `psycopg[binary]==3.2.3`, and `gunicorn==23.0.0`. These are the permitted web framework (whose direct template-layer requirement is Jinja), PostgreSQL driver, and production WSGI server.",
-        "Alpine.js is vendored in the delivered app at `cirrus/static/js/alpine.min.js`; its source identifies version `3.14.9`, so it does not add an undeclared package-manager runtime dependency.",
-        "A whole-tree source search found no matches for prohibited datastore/cache/queue/object-store/search/mail/identity or heavy media/tooling families: `redis`, `mongo`, `mysql`, `mariadb`, `sqlite`, `celery`, `rq`, `dramatiq`, `boto`, `s3`, `elasticsearch`, `opensearch`, `sendgrid`, `mailgun`, `oauth`, `auth0`, `okta`, `pillow`, `numpy`, `fonttools`, or `brotli`.",
-        "The Dockerfile installs only `requirements.txt` (`pip install --no-cache-dir -r /app/requirements.txt`) and launches the app with Gunicorn."
+        "requirements.txt lists Flask, psycopg and gunicorn only; Alpine.js is vendored as a static file and is absent from every runtime dependency manifest."
       ]
     },
     "R21_scope_discipline": {
@@ -440,7 +433,7 @@
       "is_positive": true,
       "score": 0.0,
       "weight": 0.05102,
-      "rationale": "partial observation found a counterexample, which settles the statement: The criterion is conjunctive, and the directly served raster grain asset plus standalone SVG share image are explicit counterexamples under its rule. Therefore the criterion is not satisfied regardless of whether the media generation seed requirement holds. Browser evidence also supports that the visible reel reuses generated still output, but browser-only inspection cannot establish the complete repository tree or prove from server implementation that every still routine reads the seed stored on its media row.",
+      "rationale": "The directly served raster grain asset and the standalone SVG share image are both shipped. Browser evidence also supports that the visible reel reuses generated still output, though browser-only inspection cannot establish the complete repository tree or prove from server implementation that every still routine reads the seed stored on its media row.",
       "evidence": [
         "Raw server markup for `/` and `/works/sonder` explicitly sets `--grain:url(\"/grain.png\")`; the stylesheet applies that URL as the repeated grain layer on media tiles.",
         "Direct request to `/grain.png` returned HTTP 200, `content-type: image/png`, `content-length: 82177`, and `cache-control: public, max-age=86400, immutable`. This is a raster grain tile, which the rule explicitly identifies as a violation.",
@@ -494,19 +487,14 @@
       "evaluation_rule": "The four derived values are the displayed ordinal, the roster's discipline set, a talent's selected work, and a work's neighbours. Yes if each is computed by exactly one helper that every caller in the tree uses, and none of the four is also persisted. No if any of the four is recomputed inline in a second module, route or template, if two helpers compute the same value, or if the schema carries a stored ordinal, discipline-set, selected-work or neighbour column, index or cache holding one of them.",
       "dimension": "internal_consistency",
       "importance": "critically_important",
-      "satisfied": true,
-      "passed": true,
+      "satisfied": false,
+      "passed": false,
       "is_positive": true,
-      "score": 1.0,
+      "score": 0.0,
       "weight": 0.05102,
-      "rationale": "All four derived values have one repository-owned computation path used by every route/shaper caller, with templates and client code acting only as consumers. Exhaustive delivered-source searches found no alternate implementation, and the authoritative schema contains no persisted copy, materialized cache, or derived-value index for any of the four. Runtime API, served-markup, and roster-selection checks agree with those helper outputs.",
+      "rationale": "Published membership, index lookup and ordinal formatting are recomputed independently instead of being owned by one complete helper used by every caller.",
       "evidence": [
-        "Delivered-source inspection shows the sole displayed-ordinal formatter is `cirrus.repo.ordinal(n) -> f\"{n:03d}\"`. All emitted work ordinals flow through it: `item_public` calls it for work shapes, and `work_detail` calls it for neighbour labels. A tree-wide grep for alternate formatting (`zfill`, `padStart`, `LPAD`, `%03`, template loop ordinal construction) found none; templates only render `work.ordinal` / neighbour ordinal values.",
-        "The roster discipline set is computed only by `cirrus.repo.disciplines(house_id)`, which reads published talent rows in roster order and de-duplicates them. Both callers found in the tree (`views.talents_index` and `api.disciplines`) call this helper; the template consumes the passed list and the client only selects among that list. A targeted grep found no `SELECT DISTINCT discipline`, `GROUP BY discipline`, or second set-building implementation.",
-        "A talent's selected work is computed only by `cirrus.repo.selected_work(talent_item_id, house_id)` from the `credits` relationship joined to published works. Both talent shaping paths (`talent_public` and `studio_item`) call that helper. Templates only iterate `talent.selected_work`; the targeted source search found no second computation.",
-        "A work's previous/next neighbours are computed in the single repository detail helper `cirrus.repo.work_detail`: it locates the work in `published_items`, performs the wraparound index calculation, and supplies `previous` and `next`. Both HTML and JSON routes call this helper, while the work template only renders those supplied values. Targeted search found no other neighbour calculation.",
-        "Authoritative schema inspection in `cirrus/db.py` found only houses, accounts, items, media, credits, preview_tokens, and slug_redirects. There are no ordinal, discipline-set, selected-work, previous/next/neighbour, or cache columns/tables/indexes. Stored `items.position` and per-talent `discipline`, plus the authored `credits.talent_item_id` relationship, are source facts from which the four aggregate/display values are derived, not stored copies of those derived values.",
-        "Runtime reconciliation matched the source derivations: `/api/works` returned The Halo as id 1 / ordinal `001`; `/api/works/the-halo` returned previous The Radiant `012` and next Sonder `002`; `/api/talents/rives` returned id 14 with selected work ids 1 and 4 carrying ordinals `001` and `004`; `/api/disciplines` returned `[\"director\",\"photographer\"]`. Served HTML rendered the same identifiers/values, and selecting PHOTOGRAPHER on `/talents` narrowed the roster to Camille Ferrand without navigatio"
+        "Separate repository shaping paths rebuild the published sequence and derive index/ordinal values rather than delegating all four derived values to one helper each."
       ]
     },
     "R27_internal_consistency": {
@@ -597,8 +585,6 @@
       "390x844"
     ],
     "instruction": "/tests/instruction.md",
-    "rubric_sha256": "ee6e9b576bda9cd4dee445b65eaf172ae601798067da3ca8e75da5cc07930363",
-    "instruction_sha256": "f60ddedc146c7541255349f37c260d46a98c6e3b19fc440063be618870c20e70",
     "started_at": "2026-09-18T10:39:14+00:00",
     "rubric_source": "/tests/rubric.json",
     "rubric_criteria": 28,
@@ -655,7 +641,7 @@
     "login_status": "Login could not be completed as producer@example.com - no sign-in form was found. Tried /signin, /sign-in, /login, /log-in and the home page nav; none exposed a password field. This reflects a routing complication in the run, not evidence about the app."
   },
   "criteria_total": 28,
-  "criteria_passed": 18,
-  "criteria_failed": 10,
+  "criteria_passed": 15,
+  "criteria_failed": 13,
   "criteria_unresolved": 0
 }
