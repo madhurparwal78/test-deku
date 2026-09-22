@@ -84,9 +84,13 @@ fi
 
 if [ "$DEPLOYED" != "1.0" ]; then
   echo "app never became reachable at ${APP_PUBLIC_URL} - scoring 0" >&2
-  echo '{"reward": 0.0}' > /logs/verifier/reward.json
   printf '{"summary": {"reward": 0.0, "invalid": ["deploy_failed"]}}\n' \
     > /logs/verifier/workflows.json
+  python3 /tests/score.py --deploy-failed \
+    --rubric     /tests/rubric.json \
+    --workflows  /tests/workflows.yaml \
+    --out        /logs/verifier/final_score.json \
+    --reward-out /logs/verifier/reward.json
   exit 0
 fi
 
@@ -165,6 +169,13 @@ if [ ! -s /logs/verifier/ctrf.json ]; then
 else
   grep -q '"tests"[[:space:]]*:[[:space:]]*0[^0-9]' /logs/verifier/ctrf.json \
     && INVALID="no_tests_collected"
+  # A skip leaves the pytest denominator, so a snapshot the verifier failed to
+  # take would raise the score instead of lowering it. That is a harness fault.
+  if [ -z "$INVALID" ] \
+     && ! grep -q '"_snapshot_ok": *true' /logs/verifier/pre_browser_counts.json 2>/dev/null \
+     && grep -q '"skipped"[[:space:]]*:[[:space:]]*[1-9]' /logs/verifier/ctrf.json; then
+    INVALID="snapshot_failed"
+  fi
 fi
 
 python3 /tests/score.py \
