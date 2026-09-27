@@ -223,7 +223,7 @@ def build(ctrf, browser, judge, rubric, invalid=None, declared=None,
         combined = None
         _, applied = measured(components)
         reward = round(components["pytest"]["score"], 4)
-        basis = "partial_pending_human_review: " + ", ".join(pending)
+        basis = "partial_pending_review: " + ", ".join(pending)
     else:
         combined = combine(components["workflow"]["score"],
                            components["pytest"]["score"],
@@ -244,11 +244,11 @@ def build(ctrf, browser, judge, rubric, invalid=None, declared=None,
         "note": ("Combined score is a weighted geometric mean of the workflow "
                  "pass rate, the pytest pass rate and the rubric result "
                  "discounted by criteria coverage (weights 0.50 / 0.25 / 0.25); "
-                 "it is null while a channel is pending human review, and "
+                 "it is null while a channel is pending review, and "
                  "weights_applied names the channels that were measured. "
                  "reward.json holds the pytest pass rate ALONE -- the only "
-                 "channel this container grades deterministically, with no LLM "
-                 "and no human in the loop, so a client on stock Harbor "
+                 "channel this container grades deterministically, with no API key "
+                 "and no network access, so a client on stock Harbor "
                  "reproduces it byte for byte. A failed deploy or a verifier "
                  "fault forces it to 0.0. Read combined_score, not reward, for "
                  "how well the app was actually built."),
@@ -478,7 +478,7 @@ def self_test() -> int:
     assert held["combined_score"] is None
     assert held["reward"] == round(2 / 3, 4), held["reward"]
     assert held["weights_applied"] == {"pytest": 1.0}
-    assert held["scoring"]["basis"].startswith("partial_pending_human_review")
+    assert held["scoring"]["basis"].startswith("partial_pending_review")
     perfect_pytest = build({"results": {"summary": {"tests": 9, "passed": 9}}},
                            None, None, [], declared=spec)
     assert perfect_pytest["components"]["pytest"]["score"] == 1.0

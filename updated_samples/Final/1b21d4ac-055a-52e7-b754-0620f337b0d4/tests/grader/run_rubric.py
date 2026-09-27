@@ -5,7 +5,7 @@ DIAGNOSTIC ONLY. PLAN.md 1.4 and 4.7: `judge_score` is recorded but NEVER
 drives training -- a judge-only reward is trivially gamed. This tool:
 
   * writes its own artifact (``judge.json``), never ``reward.json``;
-  * never imports, calls, or influences ``harness/verifier/score.py``;
+  * never imports, calls, or influences ``grader/score.py``;
   * states advisory-only status in ``--help`` and in the emitted JSON.
 
 The binary substep grader (``run_workflows.py``) owns the RL reward. This
@@ -56,20 +56,21 @@ import httpx
 
 try:
     from run_workflows import (  # type: ignore
-        Anthropic, Browser, CodexResponses, read_credentials,
-        _resolve_provider, _use_codex_responses,
+        Anthropic, Browser, OpenAI, read_credentials,
+        _resolve_provider, _wire_dialect,
         GRADER_TEMPERATURE, GRADER_SEED,
     )
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from run_workflows import (  # type: ignore
-        Anthropic, Browser, CodexResponses, read_credentials,
-        _resolve_provider, _use_codex_responses,
+        Anthropic, Browser, OpenAI, read_credentials,
+        _resolve_provider, _wire_dialect,
         GRADER_TEMPERATURE, GRADER_SEED,
     )
 
 
-DEFAULT_JUDGE_MODEL = os.environ.get("DEKU_JUDGE_MODEL_DEFAULT", "gpt-5.6-sol")
+DEFAULT_JUDGE_MODEL = (os.environ.get("DEKU_JUDGE_MODEL_DEFAULT")
+                       or "anthropic/claude-sonnet-4-6")
 ANTHROPIC_VERSION = "2023-06-01"
 DEFAULT_VIEWPORTS = "1920x1200,768x1024,390x844"
 DEFAULT_MAX_STEPS = 40
@@ -98,8 +99,8 @@ IMPORTANCE_WEIGHT = {
 DEFAULT_IMPORTANCE_WEIGHT = 1.0
 
 
-JUDGE_PANEL = [m.strip() for m in os.environ.get(
-    "DEKU_JUDGE_PANEL", "gpt-5.6-sol,gpt-5.5").split(",") if m.strip()]
+JUDGE_PANEL = [m.strip() for m in (os.environ.get("DEKU_JUDGE_PANEL")
+                                   or DEFAULT_JUDGE_MODEL).split(",") if m.strip()]
 
 
 def short_model(model: str) -> str:
@@ -446,12 +447,25 @@ class JudgeAnthropic(Anthropic):
         return super().message(system, messages, tools, max_tokens=max_tokens)
 
 
-class JudgeCodexResponses(CodexResponses):
-    """Codex Responses-API client with a rubric-sized output budget.
+def _temperature_applied(model: str) -> bool:
+    """Did the configured temperature actually reach the provider for `model`?
 
-    The gpt-5.6-sol default judge runs through the Codex OAuth bridge, which
-    speaks the Responses API. Same rationale as JudgeAnthropic: only the default
-    max_tokens differs; the shared transport (retry/backoff/usage) is inherited.
+    Every shipped transport sends it, so today this is simply whether one was
+    configured. It stays a per-model function because the report records the
+    flag per judge, and recording a configured value that never took effect is
+    exactly the claim this flag exists to prevent -- see _sends_seed, where a
+    provider really does refuse the parameter.
+    """
+    del model  # no provider currently refuses temperature
+    return GRADER_TEMPERATURE is not None
+
+
+class JudgeOpenAI(OpenAI):
+    """Chat Completions judge with a rubric-sized output budget.
+
+    Same rationale as JudgeAnthropic: only the default max_tokens differs, the
+    shared transport (retry/backoff/usage) is inherited. Serves every provider
+    whose wire dialect is "openai", Gemini and custom gateways included.
     """
 
     def message(self, system: str, messages: list[dict], tools: list[dict],  # type: ignore[override]
@@ -459,38 +473,17 @@ class JudgeCodexResponses(CodexResponses):
         return super().message(system, messages, tools, max_tokens=max_tokens)
 
 
-def _temperature_applied(model: str) -> bool:
-    """Did the configured temperature actually reach the provider for `model`?
-
-    False on the Codex Responses transport by construction: that backend accepts
-    no sampling parameter and answers `{"detail":"Unsupported parameter:
-    temperature"}`. Recording the configured value alone would claim a setting
-    that was never in force -- the audit's "no temperature recorded" complaint,
-    inverted.
-    """
-    if GRADER_TEMPERATURE is None:
-        return False
-    try:
-        from run_workflows import _use_codex_responses
-    except ImportError:
-        try:
-            from harness.eval.run_workflows import _use_codex_responses
-        except ImportError:
-            return True
-    return not (_resolve_provider(model) == "openai" and _use_codex_responses())
-
-
 def _make_judge_llm(model: str):
     """Pick the judge client for `model`, mirroring run_workflows.make_llm.
 
-    A gpt-*/o* model routed at the Codex bridge -> JudgeCodexResponses (Responses
-    API through the ChatGPT subscription). Anything else -> JudgeAnthropic. This
-    keeps the council (DEKU_JUDGE_PANEL) working with mixed providers: each
-    member gets the right transport for its own name.
+    An Anthropic-dialect model -> JudgeAnthropic. Every OpenAI-dialect
+    provider, Gemini and custom gateways included -> JudgeOpenAI. This keeps the
+    council (DEKU_JUDGE_PANEL) working with mixed providers: each member gets
+    the right transport for its own name.
     """
-    if _resolve_provider(model) == "openai" and _use_codex_responses():
-        return JudgeCodexResponses(model=model)
-    return JudgeAnthropic(model=model)
+    if _wire_dialect(model) == "anthropic":
+        return JudgeAnthropic(model=model)
+    return JudgeOpenAI(model=model)
 
 
 def cap_screenshot(page, out_path: Path, max_bytes: int = 900_000) -> tuple[str, str]:
@@ -1413,7 +1406,7 @@ def main() -> int:
         print(f"FATAL: {args.rubric} is unreadable ({exc}).\n"
               f"  The task's own criteria cannot be loaded, and this judge has no "
               f"other spec to fall back on.\n"
-              f"  Fix the file (harness/preflight.sh checks it) and re-run.",
+              f"  Fix the file and re-run.",
               file=sys.stderr)
         return 2
     if not task_criteria:
@@ -1427,7 +1420,8 @@ def main() -> int:
     shot_dir = args.screenshot_dir or (args.out.parent / "shots")
     viewports = parse_viewport_list(args.viewports)
     routes = [r.strip() for r in args.routes.split(",") if r.strip()] or None
-    model = os.environ.get("DEKU_JUDGE_MODEL", DEFAULT_JUDGE_MODEL)
+    # `or` not a get() default: an empty forwarded value must fall back.
+    model = os.environ.get("DEKU_JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
 
     meta: dict = {
         "graded_by": f"llm:{model}",
@@ -1489,40 +1483,24 @@ def main() -> int:
 
     if evidence_first and task_criteria:
         try:
-            from harness.eval.evidence import (
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from evidence import (
                 EvidenceClaim, load_workflow_evidence, load_pytest_evidence,
                 merge_evidence)
-            from harness.eval.claims import decompose_criterion
-            from harness.eval.probes import run_all_probes
-            from harness.eval.router import (
+            from claims import decompose_criterion
+            from probes import run_all_probes
+            from router import (
                 plan_grading, summarize_plan, _find_matching_workflow_evidence,
                 seed_workflow_evidence)
-            from harness.eval.active_evidence import (
-                acquire_evidence, ActiveAcquisitionBudget)
-            from harness.eval.adjudicator import (
+            from active_evidence import acquire_evidence, ActiveAcquisitionBudget
+            from adjudicator import (
                 MachineOutcome, Resolution, Verdict, adjudicate_all,
                 resolved_weighted_score, summarize_verdicts,
                 verdicts_to_judge_entries)
-        except ImportError:
-            try:
-                sys.path.insert(0, str(Path(__file__).resolve().parent))
-                from evidence import (
-                    EvidenceClaim, load_workflow_evidence, load_pytest_evidence,
-                    merge_evidence)
-                from claims import decompose_criterion
-                from probes import run_all_probes
-                from router import (
-                    plan_grading, summarize_plan, _find_matching_workflow_evidence,
-                    seed_workflow_evidence)
-                from active_evidence import acquire_evidence, ActiveAcquisitionBudget
-                from adjudicator import (
-                    MachineOutcome, Resolution, Verdict, adjudicate_all,
-                    resolved_weighted_score, summarize_verdicts,
-                    verdicts_to_judge_entries)
-            except ImportError as exc:
-                evidence_first = False
-                print(f"  [warn] evidence-first modules unavailable ({exc}); "
-                      "falling back to legacy council", file=sys.stderr)
+        except ImportError as exc:
+            evidence_first = False
+            print(f"  [warn] evidence-first modules unavailable ({exc}); "
+                  "falling back to legacy council", file=sys.stderr)
 
     if evidence_first and task_criteria:
         print("evidence-first pipeline: ON", file=sys.stderr)

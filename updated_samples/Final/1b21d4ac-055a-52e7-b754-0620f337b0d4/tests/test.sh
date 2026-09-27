@@ -146,9 +146,11 @@ if [ ! -s /logs/verifier/ctrf.json ]; then
 fi
 
 DEKU_GRADERS_ENABLED=1
-if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+# Any one provider key is enough. Concatenating them is empty only when every
+# one is unset, which is the unattended path (pytest-only, partial reward).
+if [ -z "${ANTHROPIC_API_KEY:-}${OPENAI_API_KEY:-}${GEMINI_API_KEY:-}${DEKU_LLM_API_KEY:-}" ]; then
   DEKU_GRADERS_ENABLED=0
-  echo "ANTHROPIC_API_KEY not set - skipping workflow and rubric channels; pytest still graded" >&2
+  echo "no grader API key set (ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY / DEKU_LLM_API_KEY) - skipping workflow and rubric channels; pytest still graded" >&2
 fi
 
 BROWSER_RESULTS=/logs/verifier/browser_results.json

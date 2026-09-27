@@ -29,7 +29,7 @@ COPY pytest.ini workflows.yaml rubric.json conftest.py test_output.py test.sh /t
 
 COPY grader/active_evidence.py grader/adjudicator.py grader/appclient.py \
      grader/capabilities.py grader/claims.py grader/deku_state.py \
-     grader/evidence.py grader/grader_compress.py grader/probes.py \
+     grader/evidence.py grader/probes.py \
      grader/router.py grader/run_rubric.py grader/run_workflows.py \
      grader/score.py /tests/grader/
 

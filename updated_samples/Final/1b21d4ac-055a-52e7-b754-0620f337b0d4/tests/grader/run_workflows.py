@@ -44,17 +44,7 @@ from typing import Any
 import httpx
 import yaml
 
-try:
-    from grader_compress import compress_messages  # type: ignore
-except ImportError:
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    try:
-        from grader_compress import compress_messages  # type: ignore
-    except ImportError:
-        def compress_messages(model, messages):  # type: ignore[misc]
-            return messages
-
-DEFAULT_GRADER_MODEL = "gpt-5.6-sol"
+DEFAULT_GRADER_MODEL = "anthropic/claude-sonnet-4-6"
 
 RETRY_ATTEMPTS = 4
 RETRY_BASE_SEC = 45.0
@@ -1064,24 +1054,122 @@ TOOLS = [
 ]
 
 
-def _resolve_provider(model: str) -> str:
-    """Pick the client for this grader model.
+# Provider registry, keyed the way Harbor/litellm name models -- "<provider>/
+# <model>", the split harbor.llms.utils.split_provider_model_name performs -- so
+# a model string that works in a Harbor job works here unchanged.
+#
+# Fields: (wire dialect, API-key env var, base-URL env var, default base URL,
+# accepts the OpenAI `seed` parameter).
+#
+# Gemini is deliberately NOT a third transport. Google serves an
+# OpenAI-compatible surface at /v1beta/openai that speaks chat/completions
+# including tool calls, so Gemini reuses the OpenAI client verbatim and only its
+# credentials and base URL differ. Adding a provider that does the same costs
+# one row here and no new request/response code.
+_PROVIDERS: dict[str, tuple[str, str, str, str, bool]] = {
+    "anthropic": ("anthropic", "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL",
+                  "https://api.anthropic.com", False),
+    "openai": ("openai", "OPENAI_API_KEY", "OPENAI_BASE_URL",
+               "https://api.openai.com/v1", True),
+    # Gemini rejects `seed` with HTTP 400 `Unknown name "seed"`, which fails the
+    # whole request rather than being ignored, so it must not be sent.
+    "gemini": ("openai", "GEMINI_API_KEY", "GEMINI_BASE_URL",
+               "https://generativelanguage.googleapis.com/v1beta/openai", False),
+}
 
-    DEKU_GRADER_PROVIDER wins when set; otherwise infer from the model name, so
-    `--model gpt-4o` does the obvious thing with no second flag to remember.
+# Any provider name absent from the table above is treated as an
+# OpenAI-compatible endpoint configured entirely from this pair. That is what
+# lets a third party bring their own gateway with nothing but a name, a key and
+# a base URL, without this file having to know the vendor exists.
+# `seed` is standard OpenAI Chat Completions, so a compatible gateway is
+# assumed to take it; Gemini above is the documented exception.
+_CUSTOM_PROVIDER = ("openai", "DEKU_LLM_API_KEY", "DEKU_LLM_BASE_URL", "", True)
+_CUSTOM_PROVIDER_ID = "custom"
+
+
+def _split_model(model: str) -> tuple[str | None, str]:
+    """Split "<provider>/<model>" when the prefix names a provider we know.
+
+    Only a prefix present in _PROVIDERS is stripped. Plenty of real model names
+    carry a vendor segment that belongs to the upstream name itself
+    ("meta-llama/Llama-3-70b" on a custom gateway); eating that would ask the
+    endpoint for a model it cannot find.
+    """
+    prefix, _, rest = model.partition("/")
+    if rest and prefix.lower() in _PROVIDERS:
+        return prefix.lower(), rest
+    return None, model
+
+
+def _resolve_provider(model: str) -> str:
+    """Provider id for this model: a key of _PROVIDERS, or a custom name.
+
+    DEKU_GRADER_PROVIDER wins when set; otherwise a Harbor-style
+    "<provider>/<model>" prefix decides; otherwise infer from the bare model
+    name, so `--model gpt-4o` still does the obvious thing with no second flag.
+
+    An unrecognised name is NOT an error -- it selects the custom
+    OpenAI-compatible path, which is the whole point of DEKU_LLM_BASE_URL.
     """
     explicit = os.environ.get("DEKU_GRADER_PROVIDER", "").strip().lower()
     if explicit:
-        if explicit not in ("anthropic", "openai"):
-            raise RuntimeError(
-                f"DEKU_GRADER_PROVIDER={explicit!r} is not a known provider "
-                f"(expected 'anthropic' or 'openai')"
-            )
         return explicit
+    prefix, _ = _split_model(model)
+    if prefix:
+        return prefix
+    if "/" in model:
+        # A slash whose prefix names no provider we know: an OpenAI-compatible
+        # gateway addressed by its own model path. Without this the bare-name
+        # inference below would miss and default to anthropic, pointing a
+        # custom endpoint at the wrong wire dialect entirely.
+        return _CUSTOM_PROVIDER_ID
     name = model.lower()
     if name.startswith(("gpt-", "o1", "o3", "o4", "chatgpt")):
         return "openai"
+    if name.startswith(("gemini-", "gemma-")):
+        return "gemini"
     return "anthropic"
+
+
+def _wire_dialect(model: str) -> str:
+    """Which HTTP shape this model's provider speaks: "anthropic" or "openai"."""
+    return _PROVIDERS.get(_resolve_provider(model), _CUSTOM_PROVIDER)[0]
+
+
+def _sends_seed(model: str) -> bool:
+    """Whether this provider accepts OpenAI's `seed` sampling parameter.
+
+    Determinism is worth having, but a provider that rejects the field fails the
+    entire request, so an unsupported `seed` is dropped rather than risked. When
+    it is dropped, `grader_seed_applied` in the report says so -- the same
+    honesty rule _temperature_applied applies to temperature.
+    """
+    return _PROVIDERS.get(_resolve_provider(model), _CUSTOM_PROVIDER)[4]
+
+
+def _provider_credentials(model: str) -> tuple[str, str]:
+    """(api_key, base_url) for this model's provider.
+
+    Falls back to the custom DEKU_LLM_* pair whenever the provider's own
+    variables are unset, so one key/URL pair can drive any provider without the
+    operator having to know which vendor name their gateway impersonates.
+    """
+    provider = _resolve_provider(model)
+    spec = _PROVIDERS.get(provider, _CUSTOM_PROVIDER)
+    key_env, base_env, default_base = spec[1], spec[2], spec[3]
+    api_key = (os.environ.get(key_env, "").strip()
+               or os.environ.get(_CUSTOM_PROVIDER[1], "").strip())
+    base_url = (os.environ.get(base_env, "").strip()
+                or os.environ.get(_CUSTOM_PROVIDER[2], "").strip()
+                or default_base)
+    if not base_url:
+        where = (base_env if base_env == _CUSTOM_PROVIDER[2]
+                 else f"{base_env} or {_CUSTOM_PROVIDER[2]}")
+        raise RuntimeError(
+            f"provider {provider!r} has no built-in endpoint, so it needs a "
+            f"base URL: set {where}"
+        )
+    return api_key, base_url.rstrip("/")
 
 
 class _GraderLLM:
@@ -1093,7 +1181,13 @@ class _GraderLLM:
     """
 
     def __init__(self, model: str):
-        self.model = model
+        self.provider = _resolve_provider(model)
+        self._key_env = _PROVIDERS.get(self.provider, _CUSTOM_PROVIDER)[1]
+        self.sends_seed = _sends_seed(model)
+        self.api_key, self.base_url = _provider_credentials(model)
+        # Upstream APIs know nothing of the Harbor "<provider>/" prefix: report
+        # the full name the operator configured, but send only the bare one.
+        self.model = _split_model(model)[1]
         self.client = httpx.Client(timeout=LLM_TIMEOUT_SEC)
         self._cooled = False
         self.usage = {
@@ -1108,9 +1202,8 @@ class _GraderLLM:
     def _record_usage(self, block, openai_shape: bool = False) -> None:
         """Fold one response's usage into the running total.
 
-        Normalises BOTH providers to the Anthropic field names, which is the
-        contract harness/finance/pricing.py documents ("usage uses the Anthropic
-        names, which is what run_workflows normalises both providers into").
+        Normalises EVERY provider to the Anthropic field names, so cost
+        reporting reads one set of counters no matter who graded.
 
         The two providers disagree about what the input count includes:
           Anthropic -- input_tokens EXCLUDES cache reads, which are reported
@@ -1146,7 +1239,7 @@ class _GraderLLM:
     def usage_snapshot(self) -> dict:
         """Totals for this grader, shaped for `meta.usage` in the report JSON.
 
-        harness/finance/usage.py reads exactly this to build a judge_lines entry.
+        Cost reporting reads exactly this to build a judge_lines entry.
         """
         return dict(self.usage)
 
@@ -1179,13 +1272,11 @@ class _GraderLLM:
     def _retry_after_seconds(headers) -> float:
         """Seconds from a `retry-after` header, or 0.0 if it says nothing usable.
 
-        NEVER raises. A malformed value must cost one back-off, not a workflow:
-        on 2026-08-13 the bridge emitted the header twice (`retry-after` from
-        upstream plus its own `Retry-After`), httpx joined them to "0, 1", and
-        the bare float() below raised ValueError -- inside the handler whose job
-        is to survive a 429. Eleven workflows died at steps_used=0 and the run
-        was discarded. The bridge no longer duplicates it; this makes the grader
-        immune to any upstream that does.
+        NEVER raises. A malformed value must cost one back-off, not a workflow.
+        A proxy that forwards `retry-after` and adds its own leaves httpx a
+        joined value like "0, 1"; a bare float() on that raises ValueError
+        inside the very handler whose job is to survive a 429, losing every
+        in-flight workflow at steps_used=0. Take the first field instead.
         """
         raw = (headers.get("retry-after") or "").split(",")[0].strip()
         try:
@@ -1225,42 +1316,12 @@ class _GraderLLM:
             return r.json()
         raise RuntimeError(f"exhausted {RETRY_ATTEMPTS} attempts")
 
-    def _post_with_retry_raw(self, send):
-        """Like _post_with_retry but returns the raw httpx.Response.
-
-        The Responses API replies with an SSE stream, not JSON, so its client
-        parses the body itself rather than calling r.json(). The 429/5xx ladder
-        and breaker are identical -- duplicated here only in what is returned.
-        """
-        global _RATE_LIMITED, _last_call_at
-        for attempt in range(RETRY_ATTEMPTS):
-            _last_call_at = time.monotonic()
-            r = send()
-            if r.status_code == 429 or r.status_code >= 500:
-                if attempt == RETRY_ATTEMPTS - 1:
-                    if r.status_code == 429:
-                        _RATE_LIMITED = True
-                        raise GraderUnavailable(
-                            f"HTTP 429 after {RETRY_ATTEMPTS} attempts; grader quota exhausted"
-                        )
-                    r.raise_for_status()
-                delay = self._retry_after_seconds(r.headers) or min(
-                    RETRY_BASE_SEC * (2 ** attempt), RETRY_MAX_SEC
-                )
-                print(f"  [retry] HTTP {r.status_code}, sleeping {delay:.0f}s "
-                      f"({attempt + 1}/{RETRY_ATTEMPTS})", file=sys.stderr)
-                time.sleep(delay)
-                continue
-            r.raise_for_status()
-            return r
-        raise RuntimeError(f"exhausted {RETRY_ATTEMPTS} attempts")
-
 
 class Anthropic(_GraderLLM):
-    def __init__(self, model: str):
-        super().__init__(model)
-        self.api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        self.base_url = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
+    """Grader backed by the Anthropic Messages API.
+
+    Credentials and base URL come from _GraderLLM via the provider registry.
+    """
 
     def message(self, system: str, messages: list[dict], tools: list[dict],
                 max_tokens: int = 1024) -> dict:
@@ -1276,9 +1337,8 @@ class Anthropic(_GraderLLM):
         a cap. 5xx is retried on the same path since it is equally transient.
         """
         if not self.api_key:
-            raise RuntimeError("ANTHROPIC_API_KEY not set")
+            raise RuntimeError(f"{self._key_env} not set")
         self._preflight()
-        messages = compress_messages(self.model, messages)
         payload = self._post_with_retry(lambda: self.client.post(
             f"{self.base_url}/v1/messages",
             headers={
@@ -1436,19 +1496,18 @@ class OpenAI(_GraderLLM):
 
     Exists so the grader can run on a quota the agent cannot drain. Selected by
     DEKU_GRADER_PROVIDER=openai, or automatically for gpt-*/o*-family models.
-    """
 
-    def __init__(self, model: str):
-        super().__init__(model)
-        self.api_key = os.environ.get("OPENAI_API_KEY", "")
-        self.base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    Also serves every other provider whose wire dialect is "openai" -- Gemini
+    through its /v1beta/openai surface, and any custom OpenAI-compatible
+    gateway -- since only the credentials and base URL differ. Those arrive
+    from _GraderLLM via the provider registry.
+    """
 
     def message(self, system: str, messages: list[dict], tools: list[dict],
                 max_tokens: int = 1024) -> dict:
         if not self.api_key:
-            raise RuntimeError("OPENAI_API_KEY not set")
+            raise RuntimeError(f"{self._key_env} not set")
         self._preflight()
-        messages = compress_messages(self.model, messages)
         payload = self._post_with_retry(lambda: self.client.post(
             f"{self.base_url}/chat/completions",
             headers={
@@ -1462,394 +1521,19 @@ class OpenAI(_GraderLLM):
                 "tools": _tools_to_openai(tools),
                 **({"temperature": GRADER_TEMPERATURE}
                    if GRADER_TEMPERATURE is not None else {}),
-                **({"seed": GRADER_SEED} if GRADER_SEED is not None else {}),
+                **({"seed": GRADER_SEED}
+                   if GRADER_SEED is not None and self.sends_seed else {}),
             },
         ))
         self._record_usage(payload.get("usage"), openai_shape=True)
         return _response_to_anthropic(payload)
 
 
-def _use_codex_responses() -> bool:
-    """Whether the OpenAI-family grader should speak the Responses API.
-
-    True when the Codex OAuth bridge is in play. The bridge (and the ChatGPT
-    backend it fronts) serves ONLY /responses, never /chat/completions, so a
-    grader pointed at it must use CodexResponses. Detected by:
-      * DEKU_GRADER_OPENAI_API=responses  (explicit), or
-      * an OPENAI_BASE_URL that names a Codex backend / the bridge default port.
-    A plain api.openai.com base keeps the Chat Completions path.
-    """
-    explicit = os.environ.get("DEKU_GRADER_OPENAI_API", "").strip().lower()
-    if explicit:
-        return explicit == "responses"
-    base = os.environ.get("OPENAI_BASE_URL", "").strip().lower()
-    if not base:
-        key = os.environ.get("OPENAI_API_KEY", "").strip()
-        if not key:
-            return False
-        return not key.startswith("sk-")
-    if "api.openai.com" in base:
-        return False
-    return True
-
-
-def _tools_to_responses(tools: list[dict]) -> list[dict]:
-    """Anthropic {name, description, input_schema} -> Responses API function tools.
-
-    The Responses API flattens the function fields (name/description/parameters)
-    onto the tool object itself, unlike Chat Completions which nests them under
-    a "function" key.
-    """
-    return [
-        {
-            "type": "function",
-            "name": t["name"],
-            "description": t.get("description", ""),
-            "parameters": t.get("input_schema", {"type": "object", "properties": {}}),
-        }
-        for t in tools
-    ]
-
-
-def _messages_to_responses(system: str, messages: list[dict]) -> tuple[str, list[dict]]:
-    """Anthropic content-block conversation -> (instructions, Responses `input`).
-
-    The system prompt becomes the top-level ``instructions`` field. Each turn
-    becomes an input item:
-      - plain string / text blocks  -> {role, content:[{type:input_text|output_text}]}
-      - assistant tool_use blocks   -> {type:"function_call", ...}
-      - user tool_result blocks     -> {type:"function_call_output", ...}
-    """
-    items: list[dict] = []
-    for m in messages:
-        role = m.get("role")
-        content = m.get("content")
-        if isinstance(content, str):
-            ctype = "output_text" if role == "assistant" else "input_text"
-            items.append({"role": role, "content": [{"type": ctype, "text": content}]})
-            continue
-
-        blocks = content or []
-        if role == "assistant":
-            text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
-            if text:
-                items.append({"role": "assistant",
-                              "content": [{"type": "output_text", "text": text}]})
-            for b in blocks:
-                if b.get("type") == "tool_use":
-                    items.append({
-                        "type": "function_call",
-                        "call_id": b.get("id", ""),
-                        "name": b.get("name", ""),
-                        "arguments": json.dumps(b.get("input", {})),
-                    })
-            continue
-
-        plain: list[str] = []
-        pending_images: list[dict] = []
-        for b in blocks:
-            if b.get("type") == "tool_result":
-                raw = b.get("content", "")
-                c = raw
-                if isinstance(raw, list):
-                    texts = [x.get("text", "") for x in raw if x.get("type") == "text"]
-                    undeliverable = 0
-                    for x in raw:
-                        if x.get("type") != "image":
-                            continue
-                        src = x.get("source") or {}
-                        if src.get("type") == "base64" and src.get("data"):
-                            media = src.get("media_type", "image/png")
-                            pending_images.append({
-                                "type": "input_image",
-                                "image_url": f"data:{media};base64,{src['data']}",
-                            })
-                        else:
-                            undeliverable += 1
-                    if undeliverable:
-                        texts.append(f"[{undeliverable} image(s) omitted: "
-                                     f"unsupported source encoding]")
-                    c = " ".join(texts)
-                items.append({
-                    "type": "function_call_output",
-                    "call_id": b.get("tool_use_id", ""),
-                    "output": str(c),
-                })
-                if pending_images:
-                    items.append({
-                        "role": "user",
-                        "content": [{"type": "input_text",
-                                     "text": f"Screenshot(s) from the preceding tool "
-                                             f"call ({len(pending_images)}):"}]
-                                   + pending_images,
-                    })
-            elif b.get("type") == "text":
-                plain.append(b.get("text", ""))
-        if plain or pending_images:
-            content: list[dict] = []
-            if plain:
-                content.append({"type": "input_text", "text": "\n".join(plain)})
-            if pending_images:
-                content.append({"type": "input_text",
-                                "text": f"[{len(pending_images)} screenshot(s) from the "
-                                        f"tool call above]"})
-                content.extend(pending_images)
-            items.append({"role": "user", "content": content})
-
-    answered = {it.get("call_id") for it in items
-                if it.get("type") == "function_call_output"}
-    patched: list[dict] = []
-    for it in items:
-        patched.append(it)
-        if it.get("type") == "function_call" and it.get("call_id") not in answered:
-            patched.append({
-                "type": "function_call_output",
-                "call_id": it.get("call_id", ""),
-                "output": "[no result recorded for this tool call]",
-            })
-            answered.add(it.get("call_id"))
-    return system, patched
-
-
-def _parse_responses_sse(text: str) -> dict:
-    """Collapse a Responses API SSE stream into a final ``response`` object.
-
-    The stream carries output in pieces, and the terminal ``response.completed``
-    snapshot frequently ships an EMPTY ``output`` array (observed on gpt-5.6-sol
-    via the Codex bridge). So we assemble output ourselves from the stream:
-      * response.output_text.delta            -> accumulated assistant text
-      * response.output_item.done (message)   -> assistant text item
-      * function_call item + function_call_arguments.delta -> a function_call
-        with its arguments string reassembled from the deltas
-    and fold in usage from response.completed.
-    """
-    text_acc: list[str] = []
-    fcalls: dict[str, dict] = {}
-    order: list[str] = []
-    usage: dict = {}
-    status = "completed"
-
-    def _fc(key: str) -> dict:
-        if key not in fcalls:
-            fcalls[key] = {"type": "function_call", "call_id": key,
-                           "name": "", "arguments": ""}
-            order.append(key)
-        return fcalls[key]
-
-    for line in text.splitlines():
-        line = line.strip()
-        if not line.startswith("data:"):
-            continue
-        data = line[5:].strip()
-        if not data or data == "[DONE]":
-            continue
-        try:
-            evt = json.loads(data)
-        except json.JSONDecodeError:
-            continue
-        etype = evt.get("type")
-
-        if etype == "response.output_text.delta":
-            d = evt.get("delta")
-            if isinstance(d, str):
-                text_acc.append(d)
-
-        elif etype == "response.output_item.added":
-            item = evt.get("item") or {}
-            if item.get("type") == "function_call":
-                key = item.get("call_id") or item.get("id") or str(len(order))
-                fc = _fc(key)
-                fc["name"] = item.get("name") or fc["name"]
-                fc["id"] = item.get("id", "")
-                if item.get("arguments"):
-                    fc["arguments"] += item["arguments"]
-
-        elif etype == "response.function_call_arguments.delta":
-            key = evt.get("call_id") or evt.get("item_id") or (order[-1] if order else "0")
-            target = None
-            for k, v in fcalls.items():
-                if v.get("id") == evt.get("item_id"):
-                    target = v
-                    break
-            if target is None:
-                target = _fc(key)
-            d = evt.get("delta")
-            if isinstance(d, str):
-                target["arguments"] += d
-
-        elif etype == "response.output_item.done":
-            item = evt.get("item") or {}
-            if item.get("type") == "function_call":
-                key = item.get("call_id") or item.get("id") or str(len(order))
-                fc = _fc(key)
-                fc["name"] = item.get("name") or fc["name"]
-                fc["id"] = item.get("id", fc.get("id", ""))
-                if item.get("arguments"):
-                    fc["arguments"] = item["arguments"]
-            elif item.get("type") == "message":
-                for part in item.get("content") or []:
-                    if part.get("type") in ("output_text", "text") and part.get("text"):
-                        text_acc.append(part["text"])
-
-        elif etype in ("response.completed", "response.done"):
-            resp = evt.get("response") or {}
-            usage = resp.get("usage") or {}
-            status = resp.get("status", status)
-
-    output: list[dict] = []
-    joined = "".join(text_acc)
-    if joined:
-        output.append({"type": "message",
-                       "content": [{"type": "output_text", "text": joined}]})
-    for key in order:
-        fc = fcalls[key]
-        output.append({"type": "function_call", "call_id": fc["call_id"],
-                       "id": fc.get("id", ""), "name": fc["name"],
-                       "arguments": fc["arguments"] or "{}"})
-    return {"status": status, "output": output, "usage": usage,
-            "_text_fallback": joined}
-
-
-def _responses_to_anthropic(resp: dict) -> dict:
-    """Responses API response object -> {"content": [blocks], "stop_reason": str}.
-
-    Mirrors _response_to_anthropic so run_substep()/grade_dimension() are
-    identical regardless of which provider graded. Output items of type
-    ``function_call`` become tool_use blocks; ``message`` items (or the text
-    fallback) become a text block.
-    """
-    blocks: list[dict] = []
-    has_tool = False
-    text_parts: list[str] = []
-
-    for item in resp.get("output") or []:
-        itype = item.get("type")
-        if itype == "message":
-            for part in item.get("content") or []:
-                if part.get("type") in ("output_text", "text"):
-                    t = part.get("text")
-                    if t:
-                        text_parts.append(t)
-        elif itype == "function_call":
-            has_tool = True
-            raw = item.get("arguments") or "{}"
-            try:
-                parsed = json.loads(raw)
-            except (json.JSONDecodeError, TypeError):
-                print(f"  [warn] unparseable tool arguments from grader: {raw[:200]!r}",
-                      file=sys.stderr)
-                parsed = {}
-            blocks.append({
-                "type": "tool_use",
-                "id": item.get("call_id") or item.get("id", ""),
-                "name": item.get("name", ""),
-                "input": parsed,
-            })
-
-    if not text_parts and resp.get("_text_fallback"):
-        text_parts.append(resp["_text_fallback"])
-    if text_parts:
-        blocks.insert(0, {"type": "text", "text": "".join(text_parts)})
-
-    status = resp.get("status")
-    stop_reason = "tool_use" if has_tool else (
-        "max_tokens" if status == "incomplete" else "end_turn"
-    )
-    return {"content": blocks, "stop_reason": stop_reason}
-
-
-class CodexResponses(_GraderLLM):
-    """Grader backed by the OpenAI Responses API through the Codex OAuth bridge.
-
-    The ChatGPT Codex backend (and the deku-harness codex_code bridge that
-    fronts it) serves ONLY /responses, so a gpt-*/o* grader pointed at the
-    bridge speaks this dialect rather than /chat/completions. The request/
-    response are translated to and from the Anthropic content-block shape the
-    grader loop and the rubric judge already expect, so swapping the grader
-    model changes only WHO grades, not HOW a verdict is read.
-    """
-
-    def __init__(self, model: str):
-        super().__init__(model)
-        self.api_key = os.environ.get("OPENAI_API_KEY", "")
-        self.base_url = os.environ.get(
-            "OPENAI_BASE_URL", "https://chatgpt.com/backend-api/codex"
-        ).rstrip("/")
-
-    def message(self, system: str, messages: list[dict], tools: list[dict],
-                max_tokens: int = 1024) -> dict:
-        if not self.api_key:
-            raise RuntimeError("OPENAI_API_KEY not set (bridge secret expected)")
-        self._preflight()
-        messages = compress_messages(self.model, messages)
-        instructions, input_items = _messages_to_responses(system, messages)
-        body = {
-            "model": self.model,
-            "instructions": instructions,
-            "input": input_items,
-            "tools": _tools_to_responses(tools),
-            "store": False,
-            "stream": True,
-
-            "prompt_cache_key": _prompt_cache_key(self.model),
-        }
-        _ = max_tokens
-        r = self._post_with_retry_raw(lambda: self.client.post(
-            f"{self.base_url}/responses",
-            headers={
-                "authorization": f"Bearer {self.api_key}",
-                "content-type": "application/json",
-                "accept": "text/event-stream",
-            },
-            json=body,
-        ))
-        ctype = (r.headers.get("content-type") or "").lower()
-        if "text/event-stream" in ctype or r.text.lstrip().startswith("event:") \
-                or "data:" in r.text[:64]:
-            final = _parse_responses_sse(r.text)
-        else:
-            try:
-                final = r.json()
-            except ValueError:
-                final = _parse_responses_sse(r.text)
-        self._record_usage(_responses_usage(final), openai_shape=True)
-        return _responses_to_anthropic(final)
-
-
-def _prompt_cache_key(model: str) -> str:
-    """Stable per-model cache key for the grader's shared prompt prefix.
-
-    Deliberately NOT unique per call or per run: the whole point is that every
-    substep reuses one cache entry. It is scoped by model because a different
-    model tokenises differently and must not share a prefix.
-
-    Override with DEKU_GRADER_CACHE_KEY when two concurrent runs should not
-    share an entry.
-    """
-    override = os.environ.get("DEKU_GRADER_CACHE_KEY", "").strip()
-    return override or "deku-grader-{}".format(re.sub(r"[^A-Za-z0-9_.-]", "-", model))
-
-
-def _responses_usage(resp: dict) -> dict:
-    """Responses usage {input_tokens, output_tokens, input_tokens_details} ->
-    the OpenAI-shaped block _GraderLLM._record_usage(openai_shape=True) reads."""
-    u = (resp or {}).get("usage") or {}
-    cached = int((u.get("input_tokens_details") or {}).get("cached_tokens") or 0)
-    return {
-        "prompt_tokens": int(u.get("input_tokens") or 0),
-        "completion_tokens": int(u.get("output_tokens") or 0),
-        "prompt_tokens_details": {"cached_tokens": cached},
-    }
-
-
 def make_llm(model: str) -> _GraderLLM:
     """Construct the grader client for `model`, honouring DEKU_GRADER_PROVIDER."""
-    provider = _resolve_provider(model)
-    if provider == "openai":
-        if _use_codex_responses():
-            return CodexResponses(model)
-        return OpenAI(model)
-    return Anthropic(model)
+    if _wire_dialect(model) == "anthropic":
+        return Anthropic(model)
+    return OpenAI(model)
 
 
 def run_substep(
@@ -2196,15 +1880,18 @@ def main() -> int:
     started = now_iso()
     workflows = load_workflows(args.workflows)
 
-    model = os.environ.get("DEKU_GRADER_MODEL", DEFAULT_GRADER_MODEL)
+    # `or` not a get() default: the var is forwarded as "" when unset, and
+    # an empty model would be sent upstream verbatim.
+    model = os.environ.get("DEKU_GRADER_MODEL") or DEFAULT_GRADER_MODEL
     meta = {
         "graded_by": f"llm:{model}",
         "grader_model": model,
         "grader_provider": _resolve_provider(model),
         "grader_temperature": GRADER_TEMPERATURE,
-        "grader_temperature_applied": bool(
-            GRADER_TEMPERATURE is not None and not _use_codex_responses()),
+        "grader_temperature_applied": GRADER_TEMPERATURE is not None,
         "grader_seed": GRADER_SEED,
+        "grader_seed_applied": bool(
+            GRADER_SEED is not None and _sends_seed(model)),
         "viewport": f"{args.viewport[0]}x{args.viewport[1]}",
         "url": args.url,
         "max_steps": args.max_steps,
