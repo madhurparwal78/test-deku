@@ -1424,7 +1424,7 @@ def main() -> int:
     model = os.environ.get("DEKU_JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
 
     meta: dict = {
-        "graded_by": f"llm:{model}",
+        "evaluated_by": f"llm:{model}",
         "grader_model": model,
         "judge_temperature": GRADER_TEMPERATURE,
         "judge_temperature_applied": _temperature_applied(model),

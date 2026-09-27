@@ -1884,7 +1884,7 @@ def main() -> int:
     # an empty model would be sent upstream verbatim.
     model = os.environ.get("DEKU_GRADER_MODEL") or DEFAULT_GRADER_MODEL
     meta = {
-        "graded_by": f"llm:{model}",
+        "evaluated_by": f"llm:{model}",
         "grader_model": model,
         "grader_provider": _resolve_provider(model),
         "grader_temperature": GRADER_TEMPERATURE,

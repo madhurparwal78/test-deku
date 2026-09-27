@@ -106,7 +106,7 @@ combined_score = workflow^0.50 · pytest^0.25 · rubric_discounted^0.25
 
 **All pytest tests pass ⇒ `reward` is exactly 1.0.** That is the acceptance bar: a task does not ship
 unless its reference solution reaches `reward == 1.0`. pytest is the only channel graded
-deterministically inside the verifier container, with no API key and no network access, so a client
+deterministically inside the verifier container, with no API key and no network access, so a user
 on stock Harbor reproduces that number exactly, and a failure is always a real defect rather than a
 disagreement.
 
@@ -136,7 +136,7 @@ running pytest:
 no grader API key set (ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY / DEKU_LLM_API_KEY) - skipping workflow and rubric channels; pytest still graded
 ```
 
-That is the default path for a client on stock Harbor with no credentials, and it is deliberate:
+That is the default path for a user on stock Harbor with no credentials, and it is deliberate:
 
 | | pytest | workflow | rubric | `reward` | `combined_score` |
 | --- | --- | --- | --- | --- | --- |
@@ -144,7 +144,7 @@ That is the default path for a client on stock Harbor with no credentials, and i
 | with a grader | runs | runs | runs | pytest pass rate | all three channels |
 
 `reward` means the same thing either way, so the oracle reaches 1.0 with or without credentials and a
-client reproduces the acceptance verdict without an API key. Supplying a grader adds `combined_score`
+user reproduces the acceptance verdict without an API key. Supplying a grader adds `combined_score`
 and the per-channel detail; it never changes `reward`.
 
 ### Choosing the grading model
@@ -197,7 +197,6 @@ deku-samples/
 ├── README.md                 # this document
 ├── images/                   # charts ship in -light and -dark variants
 │   ├── hero.{svg,png}
-│   ├── make_figures.py       # regenerates every chart from the run directories
 │   ├── pass_rate_by_model-{light,dark}.{svg,png}
 │   ├── pass_rate_by_run-{light,dark}.{svg,png}
 │   ├── pass_rate_by_tier-{light,dark}.{svg,png}
@@ -217,9 +216,8 @@ document: `1b21d4ac` is `deku/talent-roster-reel` (python), `63376906` is
 the reference solution, the grader, and all sixteen trajectories recorded against it.
 
 Every chart below is derived from the shipped `final_score.json`, `workflows.json` and `usage.json`
-files by [`images/make_figures.py`](images/make_figures.py), which reads the run directories directly;
-see [Reproduction](#reproduction). Nothing in the figures is hand-entered. The banner is hand-drawn
-artwork and carries no data.
+files, read directly from the run directories. Nothing in the figures is hand-entered. The banner is
+hand-drawn artwork and carries no data.
 
 Every results figure shows both cohorts. `tasks_by_domain` is the one exception: it describes corpus
 composition rather than results, and has no model dimension.
@@ -547,10 +545,11 @@ Only one of the three is machine-produced, and that asymmetry is why `reward` is
 alone. Pytest is executed by the verifier container. The browser workflow and rubric channels are
 **process-based**: each is settled against recorded evidence, written to `browser_results.json` and
 `judge.json` respectively, and `final_score.json` carries the per-channel attribution as
-`scoring.workflow_graded_by` and `scoring.rubric_graded_by` so every verdict stays traceable.
+`scoring.workflow_evaluated_by` and `scoring.rubric_evaluated_by` so every verdict stays
+traceable.
 
 **A `combined_score` you produce is not interchangeable with an archived one**, because the
-process-based channels are resolved independently per run; `meta.graded_by` in each evidence file
+process-based channels are resolved independently per run; `meta.evaluated_by` in each evidence file
 records which resolution a number came from. `reward` does not have this problem: pytest is
 deterministic and identical in both, which is the other reason it is the number that gates.
 `score.py` needs no network or credentials to recompute either.
@@ -656,7 +655,7 @@ Pytest is the only channel a machine can settle. With neither `browser_results.j
 `judge.json` on disk both process-based channels report `missing` and `combined_score` goes `null` rather
 than 0, while the weights renormalise onto what was actually graded -- `weights_applied` becomes
 `{"pytest": 1.0}` -- so `reward` is the pytest pass rate on its own. That is the same number the
-reward contract above gates on, which is why an unattended client reproduces the acceptance verdict
+reward contract above gates on, which is why an unattended user reproduces the acceptance verdict
 without a grader.
 
 | Baseline | `combined_score` | `reward` | `scoring.basis` |
@@ -756,13 +755,6 @@ for m in opus-5 glm-5.3; do
 done
 # -> opus-5   {"workflows":"101/416","browser":"635/952","pytest":"796/1240","critical_failed":427}
 # -> glm-5.3  {"workflows":"76/416","browser":"625/952","pytest":"639/1240","critical_failed":573}
-```
-
-**Regenerate every chart.** `images/make_figures.py` reads the run directories directly and rewrites
-both theme variants of all six figures:
-
-```bash
-python3 images/make_figures.py
 ```
 
 **Regenerate the `.png` fallbacks from the SVGs.** Each `.png` in `images/` is a browser-rendered

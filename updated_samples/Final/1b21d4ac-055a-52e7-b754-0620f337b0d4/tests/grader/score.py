@@ -115,11 +115,11 @@ def workflow_component(declared, browser, ctrf) -> dict:
             "declared": len(declared),
             "missing": graded < len(declared)}
 
-def graded_by(artifact) -> str:
+def evaluated_by(artifact) -> str:
     if not isinstance(artifact, dict):
         return "missing"
     meta = artifact.get("meta")
-    who = str((meta or {}).get("graded_by") or "").strip()
+    who = str((meta or {}).get("evaluated_by") or "").strip()
     return who or "unattributed"
 
 def rubric_component(judge, rubric) -> dict:
@@ -248,15 +248,15 @@ def build(ctrf, browser, judge, rubric, invalid=None, declared=None,
                  "weights_applied names the channels that were measured. "
                  "reward.json holds the pytest pass rate ALONE -- the only "
                  "channel this container grades deterministically, with no API key "
-                 "and no network access, so a client on stock Harbor "
+                 "and no network access, so a user on stock Harbor "
                  "reproduces it byte for byte. A failed deploy or a verifier "
                  "fault forces it to 0.0. Read combined_score, not reward, for "
                  "how well the app was actually built."),
         "scoring": {"kind": "weighted_geometric_mean", "basis": basis,
                     "workflow_pass_ratio": WORKFLOW_PASS_RATIO,
-                    "pytest_graded_by": "this container",
-                    "workflow_graded_by": graded_by(browser),
-                    "rubric_graded_by": graded_by(judge)},
+                    "pytest_evaluated_by": "this container",
+                    "workflow_evaluated_by": evaluated_by(browser),
+                    "rubric_evaluated_by": evaluated_by(judge)},
     }
 
 def reward_payload(result) -> dict:
@@ -279,7 +279,7 @@ def templates(workflows, rubric) -> tuple[dict, dict]:
                       for step in (workflow.get("substeps") or [])
                       if step.get("kind") != "pytest"]}
         for workflow in workflows or []],
-        "meta": {"graded_by": "", "graded_at": ""}}
+        "meta": {"evaluated_by": "", "graded_at": ""}}
 
     dimensions = {}
     total = sum(_criterion_weight(c) for c in rubric or []) or 1.0
@@ -304,7 +304,7 @@ def templates(workflows, rubric) -> tuple[dict, dict]:
             "passed": None, "satisfied": None, "score": None,
             "rationale": "", "evidence": []}
     return browser, {"dimensions": dimensions, "criteria_total": len(dimensions),
-                     "meta": {"graded_by": "", "graded_at": ""}}
+                     "meta": {"evaluated_by": "", "graded_at": ""}}
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
